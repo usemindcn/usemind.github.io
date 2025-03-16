@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maggie读书打卡</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        primaryLight: '#7B7AE4',
+                        primaryDark: '#4A49B8',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 6px;
+        }
+        
+        .day-cell {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            padding: 4px 2px;
+            background-color: white;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            color: #4B5563;
+        }
+        
+        .dark .day-cell {
+            background-color: #1F2937;
+            border-color: #374151;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            color: #D1D5DB;
+        }
+        
+        .day-cell .date {
+            font-size: 0.65rem;
+            font-weight: normal;
+            color: #9CA3AF;
+            margin-top: 2px;
+        }
+        
+        .dark .day-cell .date {
+            color: #6B7280;
+        }
+        
+        .day-cell.checked-full {
+            background-color: #5D5CDE;
+            color: white;
+            border-color: #4A49B8;
+            transform: scale(0.95);
+        }
+        
+        .dark .day-cell.checked-full {
+            background-color: #7B7AE4;
+            border-color: #5D5CDE;
+        }
+        
+        .day-cell.checked-partial {
+            background-color: rgba(93, 92, 222, 0.4);
+            color: white;
+            border-color: rgba(93, 92, 222, 0.6);
+            transform: scale(0.95);
+        }
+        
+        .dark .day-cell.checked-partial {
+            background-color: rgba(123, 122, 228, 0.4);
+            border-color: rgba(123, 122, 228, 0.6);
+        }
+        
+        .dark .day-cell:not(.checked) {
+            background-color: rgba(123, 122, 228, 0.2);
+            color: #A3A2F0;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .pop-animation {
+            animation: pop 0.3s ease-out;
+        }
+        
+        /* 撒花动画 */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #5D5CDE;
+            opacity: 0.8;
+            border-radius: 2px;
+            animation: confetti-fall 3s ease-in forwards;
+        }
+        
+        .cheer-message {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #5D5CDE;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            text-align: center;
+            opacity: 0;
+            animation: message-fade 3s ease-in-out forwards;
+        }
+        
+        .dark .cheer-message {
+            background-color: rgba(31, 41, 55, 0.9);
+            color: #7B7AE4;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-10px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes message-fade {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -30%);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+            80% {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -70%);
+            }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 min-h-screen flex flex-col">
+    <div class="container mx-auto px-4 py-6 flex-1 flex flex-col">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-primary dark:text-primaryLight">Maggie读书打卡</h1>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">每天阅读，快乐成长！</p>
+        </header>
+        
+        <main class="flex-1 flex flex-col">
+            <div class="mb-4 flex justify-end">
+                <div class="text-sm text-gray-600 dark:text-gray-400" id="streak-display"></div>
+            </div>
+            
+            <div class="calendar-grid mb-6 flex-1">
+                <!-- Day cells will be generated by JavaScript -->
+            </div>
+            
+            <div class="mt-auto grid grid-cols-2 gap-4">
+                <button id="check-in-full" class="py-3 bg-primary hover:bg-primaryLight text-white font-bold rounded-lg transition-colors shadow-md dark:bg-primaryDark dark:hover:bg-primary">
+                    阅读超过30分钟
+                </button>
+                <button id="check-in-partial" class="py-3 bg-primary hover:bg-primaryLight text-white font-bold rounded-lg transition-colors shadow-md dark:bg-primaryDark dark:hover:bg-primary">
+                    阅读不足30分钟
+                </button>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // Calendar functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarGrid = document.querySelector('.calendar-grid');
+            const checkInFullBtn = document.getElementById('check-in-full');
+            const checkInPartialBtn = document.getElementById('check-in-partial');
+            const monthDisplay = document.getElementById('month-display');
+            const streakDisplay = document.getElementById('streak-display');
+            
+            // Get current date
+            const today = new Date();
+            const currentDay = today.getDate();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            
+            // Storage key for reading data
+            const storageKey = `maggie-reading-data`;
+            
+            // Load reading data from storage
+            // Format: { "YYYY-MM-DD": "full", "YYYY-MM-DD": "partial", ... }
+            let readingData = {};
+            try {
+                const savedData = localStorage.getItem(storageKey);
+                if (savedData) {
+                    readingData = JSON.parse(savedData);
+                }
+            } catch (e) {
+                console.error('Error loading data from localStorage:', e);
+                readingData = {};
+            }
+            
+            // Format date as YYYY-MM-DD
+            function formatDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            
+            // Format date as MM-DD
+            function formatShortDate(date) {
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${month}-${day}`;
+            }
+            
+            // Get today's date as YYYY-MM-DD
+            const todayDateStr = formatDate(today);
+            
+            // Generate calendar cells for 60 days
+            for (let i = 0; i < 60; i++) {
+                const cellDate = new Date(today);
+                cellDate.setDate(today.getDate() + i);
+                
+                const dayCell = document.createElement('div');
+                dayCell.className = 'day-cell';
+                dayCell.dataset.day = i + 1;
+                dayCell.dataset.date = formatDate(cellDate);
+                
+                // Create day number element
+                const dayNumber = document.createElement('div');
+                dayNumber.textContent = i + 1;
+                dayCell.appendChild(dayNumber);
+                
+                // Create date element
+                const dateElement = document.createElement('div');
+                dateElement.className = 'date';
+                dateElement.textContent = formatShortDate(cellDate);
+                dayCell.appendChild(dateElement);
+                
+                // Apply appropriate class based on reading data
+                const dateKey = formatDate(cellDate);
+                if (readingData[dateKey] === 'full') {
+                    dayCell.classList.add('checked-full');
+                } else if (readingData[dateKey] === 'partial') {
+                    dayCell.classList.add('checked-partial');
+                }
+                
+                calendarGrid.appendChild(dayCell);
+            }
+            
+            // Update current streak
+            updateStats();
+            
+            // Full reading check-in button functionality
+            checkInFullBtn.addEventListener('click', function() {
+                checkIn('full');
+            });
+            
+            // Partial reading check-in button functionality
+            checkInPartialBtn.addEventListener('click', function() {
+                checkIn('partial');
+            });
+            
+            // 创建撒花动画效果
+            function createConfetti() {
+                // 创建容器
+                const confettiContainer = document.createElement('div');
+                confettiContainer.className = 'confetti-container';
+                document.body.appendChild(confettiContainer);
+                
+                // 创建鼓励消息
+                const cheerMessage = document.createElement('div');
+                cheerMessage.className = 'cheer-message';
+                cheerMessage.textContent = 'Maggie你是最棒的！坚持加油！';
+                confettiContainer.appendChild(cheerMessage);
+                
+                // 彩色纸屑的颜色
+                const colors = [
+                    '#5D5CDE', '#FF9AA2', '#FFB7B2', '#FFDAC1', 
+                    '#E2F0CB', '#B5EAD7', '#C7CEEA', '#F7C2D2'
+                ];
+                
+                // 创建80个彩色纸屑
+                for (let i = 0; i < 80; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    
+                    // 随机颜色
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.backgroundColor = color;
+                    
+                    // 随机位置、大小和动画延迟
+                    const size = Math.random() * 10 + 5;
+                    const left = Math.random() * 100;
+                    const delay = Math.random() * 1.5;
+                    
+                    confetti.style.width = `${size}px`;
+                    confetti.style.height = `${size}px`;
+                    confetti.style.left = `${left}%`;
+                    confetti.style.animationDelay = `${delay}s`;
+                    
+                    // 随机形状
+                    if (Math.random() > 0.6) {
+                        confetti.style.borderRadius = '50%';
+                    } else if (Math.random() > 0.5) {
+                        confetti.style.transform = 'rotate(45deg)';
+                    }
+                    
+                    confettiContainer.appendChild(confetti);
+                }
+                
+                // 动画完成后移除元素
+                setTimeout(() => {
+                    document.body.removeChild(confettiContainer);
+                }, 4500);
+            }
+            
+            // Check-in function
+            function checkIn(readingType) {
+                // Use today's date as the key
+                const dateKey = todayDateStr;
+                
+                // If already checked in today, show message
+                if (readingData[dateKey]) {
+                    showButtonMessage(readingType === 'full' ? checkInFullBtn : checkInPartialBtn, '今天已打卡');
+                    return;
+                }
+                
+                // Mark today with appropriate reading type
+                readingData[dateKey] = readingType;
+                
+                // Update UI
+                const todayCell = document.querySelector(`.day-cell[data-date="${dateKey}"]`);
+                if (todayCell) {
+                    todayCell.classList.remove('checked-full', 'checked-partial');
+                    todayCell.classList.add(`checked-${readingType}`, 'pop-animation');
+                    setTimeout(() => {
+                        todayCell.classList.remove('pop-animation');
+                    }, 300);
+                }
+                
+                // 显示撒花和鼓励文字
+                createConfetti();
+                
+                // Save to localStorage
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(readingData));
+                } catch (e) {
+                    console.error('Error saving data to localStorage:', e);
+                }
+                
+                // Update streak and stats
+                updateStats();
+            }
+            
+            // Show temporary message on button
+            function showButtonMessage(button, message) {
+                const originalText = button.textContent;
+                button.classList.add('opacity-50');
+                button.textContent = message;
+                
+                setTimeout(() => {
+                    button.classList.remove('opacity-50');
+                    button.textContent = originalText;
+                }, 1500);
+            }
+            
+            // Function to update streak and statistics display
+            function updateStats() {
+                // Count checked days
+                const checkedDays = Object.keys(readingData).length;
+                const fullReadingDays = Object.values(readingData).filter(type => type === 'full').length;
+                
+                streakDisplay.textContent = `总计打卡: ${checkedDays}天 | 充分阅读: ${fullReadingDays}天`;
+                
+                // Calculate current streak
+                let currentStreak = 0;
+                const checkDatesForStreak = [];
+                
+                // Get all dates up to today and sort them
+                for (let i = 0; i < 30; i++) {  // Check up to 30 days back
+                    const checkDate = new Date(today);
+                    checkDate.setDate(today.getDate() - i);
+                    checkDatesForStreak.push(formatDate(checkDate));
+                }
+                
+                // Find consecutive days from today backwards
+                for (const dateStr of checkDatesForStreak) {
+                    if (readingData[dateStr]) {
+                        currentStreak++;
+                    } else {
+                        break;  // Stop at first missed day
+                    }
+                }
+                
+                if (currentStreak > 0) {
+                    streakDisplay.textContent += ` | 连续打卡: ${currentStreak}天`;
+                }
+            }
+            
+            // WeChat web browser specific handling for better storage capability
+            if (navigator.userAgent.toLowerCase().indexOf('micromessenger') !== -1) {
+                // For WeChat browser, we'll additionally try to use the WeixinJSBridge if available
+                document.addEventListener('WeixinJSBridgeReady', function onBridgeReady() {
+                    // This is just a placeholder - actual WeChat JS-SDK integration would require 
+                    // official account configuration which is beyond the scope of this app
+                    console.log('WeChat browser detected, extended storage capabilities may be available');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
