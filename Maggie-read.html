@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Maggie读书打卡</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -22,8 +22,14 @@
     <style>
         .calendar-grid {
             display: grid;
-            grid-template-columns: repeat(9, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 6px;
+        }
+        
+        @media (min-width: 640px) {
+            .calendar-grid {
+                grid-template-columns: repeat(9, 1fr);
+            }
         }
         
         .day-cell {
@@ -204,6 +210,29 @@
     </div>
     
     <script>
+        // 禁用双指缩放
+        document.addEventListener('touchstart', function(event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+        
+        // 禁用特定的双指手势
+        document.addEventListener('gesturestart', function(event) {
+            event.preventDefault();
+        }, { passive: false });
+        
+        // 防止双击缩放
+        let lastTapTime = 0;
+        document.addEventListener('touchend', function(event) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            if (tapLength < 300 && tapLength > 0) {
+                event.preventDefault();
+            }
+            lastTapTime = currentTime;
+        }, { passive: false });
+        
         // Dark mode detection
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.classList.add('dark');
