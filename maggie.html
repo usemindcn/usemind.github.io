@@ -369,6 +369,30 @@
         .history-table tr:hover {
             background-color: rgba(255, 192, 211, 0.2);
         }
+        
+        /* 数据状态指示器 */
+        .data-status {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #FF5C8D;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 999;
+        }
+        
+        .data-status.show {
+            opacity: 1;
+        }
+        
+        .dark .data-status {
+            background-color: rgba(45, 42, 51, 0.8);
+            color: #FFB6C1;
+        }
     </style>
 </head>
 <body>
@@ -474,6 +498,9 @@
         </div>
     </div>
     
+    <!-- 数据状态指示器 -->
+    <div id="data-status" class="data-status">数据已保存</div>
+    
     <!-- 兑换奖品模态窗口 -->
     <div id="rewards-modal" class="modal">
         <div class="modal-content">
@@ -564,6 +591,149 @@
         
         // 本地存储键名
         const STORAGE_KEY = 'maggie_flower_data';
+        const dataStatusEl = document.getElementById('data-status');
+        
+        // 增强的存储系统，处理多种浏览器环境
+        const storageSystem = {
+            // 检测存储可用性
+            isLocalStorageAvailable: function() {
+                try {
+                    localStorage.setItem('test', 'test');
+                    localStorage.removeItem('test');
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            },
+            
+            isSessionStorageAvailable: function() {
+                try {
+                    sessionStorage.setItem('test', 'test');
+                    sessionStorage.removeItem('test');
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            },
+            
+            // Cookies作为备选存储方式
+            setCookie: function(name, value, days) {
+                let expires = "";
+                if (days) {
+                    const date = new Date();
+                    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                    expires = "; expires=" + date.toUTCString();
+                }
+                document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + expires + "; path=/";
+            },
+            
+            getCookie: function(name) {
+                const nameEQ = name + "=";
+                const ca = document.cookie.split(';');
+                for(let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) === 0) {
+                        try {
+                            return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+                        } catch (e) {
+                            return null;
+                        }
+                    }
+                }
+                return null;
+            },
+            
+            // 保存数据，尝试多种存储方式
+            saveData: function(key, data) {
+                let savedSuccessfully = false;
+                
+                // 尝试使用localStorage
+                if (this.isLocalStorageAvailable()) {
+                    try {
+                        localStorage.setItem(key, JSON.stringify(data));
+                        savedSuccessfully = true;
+                        showDataStatus("数据已保存到本地");
+                    } catch (e) {
+                        console.warn("localStorage保存失败", e);
+                    }
+                }
+                
+                // 如果localStorage失败，尝试sessionStorage
+                if (!savedSuccessfully && this.isSessionStorageAvailable()) {
+                    try {
+                        sessionStorage.setItem(key, JSON.stringify(data));
+                        savedSuccessfully = true;
+                        showDataStatus("数据已保存到会话");
+                    } catch (e) {
+                        console.warn("sessionStorage保存失败", e);
+                    }
+                }
+                
+                // 如果以上都失败，使用Cookie
+                if (!savedSuccessfully) {
+                    try {
+                        this.setCookie(key, data, 30); // 30天有效期
+                        savedSuccessfully = true;
+                        showDataStatus("数据已保存到Cookie");
+                    } catch (e) {
+                        console.error("所有存储方式都失败", e);
+                        showDataStatus("数据保存失败", true);
+                    }
+                }
+                
+                return savedSuccessfully;
+            },
+            
+            // 加载数据，尝试多种存储方式
+            loadData: function(key) {
+                let data = null;
+                
+                // 尝试从localStorage加载
+                if (this.isLocalStorageAvailable()) {
+                    try {
+                        const storedData = localStorage.getItem(key);
+                        if (storedData) {
+                            data = JSON.parse(storedData);
+                            showDataStatus("从本地存储加载数据");
+                        }
+                    } catch (e) {
+                        console.warn("从localStorage加载失败", e);
+                    }
+                }
+                
+                // 如果localStorage没有数据，尝试sessionStorage
+                if (!data && this.isSessionStorageAvailable()) {
+                    try {
+                        const storedData = sessionStorage.getItem(key);
+                        if (storedData) {
+                            data = JSON.parse(storedData);
+                            showDataStatus("从会话存储加载数据");
+                        }
+                    } catch (e) {
+                        console.warn("从sessionStorage加载失败", e);
+                    }
+                }
+                
+                // 如果以上都没有数据，尝试Cookie
+                if (!data) {
+                    try {
+                        data = this.getCookie(key);
+                        if (data) {
+                            showDataStatus("从Cookie加载数据");
+                        }
+                    } catch (e) {
+                        console.warn("从Cookie加载失败", e);
+                    }
+                }
+                
+                if (!data) {
+                    showDataStatus("没有找到保存的数据", true);
+                }
+                
+                return data;
+            }
+        };
         
         // 奖品列表
         const rewards = [
@@ -601,57 +771,77 @@
         const historyTableBody = document.getElementById('history-table-body');
         const noHistoryMessage = document.getElementById('no-history');
         
+        // 显示数据存储状态
+        function showDataStatus(message, isError = false) {
+            dataStatusEl.textContent = message;
+            dataStatusEl.style.color = isError ? '#F44336' : '#FF5C8D';
+            dataStatusEl.classList.add('show');
+            
+            setTimeout(() => {
+                dataStatusEl.classList.remove('show');
+            }, 2000);
+        }
+        
         // 本地存储相关方法
         function saveData() {
             const data = {
                 score: score,
                 seconds: seconds,
                 isRunning: isRunning,
-                exchangeHistory: exchangeHistory
+                exchangeHistory: exchangeHistory,
+                lastSaved: new Date().getTime()
             };
             
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-                console.log('数据已保存');
+                storageSystem.saveData(STORAGE_KEY, data);
             } catch (error) {
                 console.error('保存数据失败:', error);
+                showDataStatus('保存数据失败', true);
             }
         }
         
         function loadData() {
             try {
-                const data = localStorage.getItem(STORAGE_KEY);
+                const data = storageSystem.loadData(STORAGE_KEY);
                 
                 if (data) {
-                    const parsedData = JSON.parse(data);
-                    
                     // 恢复分数
-                    score = parsedData.score || 0;
-                    updateScoreDisplay();
+                    score = data.score || 0;
+                    updateScoreDisplay(false); // 不要再次保存，防止循环
                     
                     // 恢复计时器状态
-                    seconds = parsedData.seconds || 0;
+                    seconds = data.seconds || 0;
                     timerEl.textContent = formatTime(seconds);
                     
                     // 恢复是否正在计时
-                    if (parsedData.isRunning) {
-                        startTimer();
+                    if (data.isRunning) {
+                        startTimer(false); // 不要再次保存，防止循环
                     }
                     
                     // 恢复兑换历史
-                    exchangeHistory = parsedData.exchangeHistory || [];
+                    exchangeHistory = data.exchangeHistory || [];
                     
-                    console.log('数据已加载', parsedData);
+                    // 显示上次保存时间
+                    if (data.lastSaved) {
+                        const lastSavedDate = new Date(data.lastSaved);
+                        const timeStr = lastSavedDate.toLocaleTimeString();
+                        showDataStatus(`数据已恢复 (${timeStr})`);
+                    } else {
+                        showDataStatus('数据已恢复');
+                    }
+                    
+                    console.log('数据已加载', data);
                 } else {
                     console.log('没有找到保存的数据');
                 }
             } catch (error) {
                 console.error('加载数据失败:', error);
+                showDataStatus('加载数据失败', true);
             }
         }
         
         // 更新分数显示
-        function updateScoreDisplay() {
+        function updateScoreDisplay(shouldSave = true) {
             totalScoreEl.textContent = score;
             totalScoreEl.classList.add('bounce');
             setTimeout(() => {
@@ -659,7 +849,10 @@
             }, 500);
             modalFlowerCount.textContent = score;
             updateFlowers();
-            saveData();
+            
+            if (shouldSave) {
+                saveData();
+            }
         }
         
         // 更新小红花显示
@@ -716,13 +909,16 @@
         }
         
         // 开始计时器
-        function startTimer() {
+        function startTimer(shouldSave = true) {
             if (!isRunning) {
                 isRunning = true;
                 timerInterval = setInterval(updateTimer, 1000);
                 startBtn.classList.add('bg-opacity-50');
                 pauseBtn.classList.remove('bg-opacity-50');
-                saveData();
+                
+                if (shouldSave) {
+                    saveData();
+                }
             }
         }
         
@@ -925,7 +1121,7 @@
         }
         
         // 事件监听器
-        startBtn.addEventListener('click', startTimer);
+        startBtn.addEventListener('click', () => startTimer());
         pauseBtn.addEventListener('click', pauseTimer);
         resetBtn.addEventListener('click', resetTimer);
         exchangeBtn.addEventListener('click', openRewardsModal);
@@ -955,20 +1151,40 @@
             });
         });
         
-        // 页面加载时加载数据
-        document.addEventListener('DOMContentLoaded', () => {
+        // 增强的数据加载功能，确保页面完全加载后执行
+        function initializeApp() {
             loadData();
             updateExchangeHistory();
-        });
+            
+            // 立即显示初始数据
+            updateScoreDisplay(false);
+        }
         
-        // 定期保存数据（每30秒）
-        setInterval(saveData, 30000);
+        // 确保DOM完全加载后再初始化应用
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+        
+        // 每5秒自动保存一次数据
+        setInterval(saveData, 5000);
+        
+        // 页面可见性变化时保存数据（用户切换标签页或最小化浏览器）
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                saveData();
+            }
+        });
         
         // 页面关闭前保存数据
         window.addEventListener('beforeunload', saveData);
         
-        // 初始化显示
-        updateScoreDisplay();
+        // 在微信环境中可能需要的额外处理
+        // 微信网页SDK加载完成后执行
+        if (typeof WeixinJSBridge !== 'undefined') {
+            document.addEventListener('WeixinJSBridgeReady', saveData);
+        }
     </script>
 </body>
 </html>
