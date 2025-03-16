@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Maggie小红花计数器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -115,6 +115,27 @@
             filter: drop-shadow(0 0 2px rgba(255, 92, 141, 0.3));
         }
         
+        #flowers-container {
+            max-height: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #flowers-container.has-overflow::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
+            pointer-events: none;
+        }
+        
+        .dark #flowers-container.has-overflow::after {
+            background: linear-gradient(to bottom, rgba(45,42,51,0) 0%, rgba(45,42,51,1) 100%);
+        }
+        
         @keyframes appear {
             0% {
                 transform: scale(0) rotate(-45deg);
@@ -175,33 +196,6 @@
             50% {
                 transform: translateY(-10px);
             }
-        }
-        
-        #toggle-sound {
-            transition: all 0.3s ease;
-        }
-        
-        #toggle-sound:hover {
-            transform: scale(1.1);
-        }
-        
-        .sound-status {
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            opacity: 0;
-            transition: opacity 0.3s;
-            white-space: nowrap;
-        }
-        
-        .show-status {
-            opacity: 1;
         }
         
         /* 奖品模态窗口 */
@@ -341,6 +335,40 @@
         .btn-pink-gradient:hover {
             background: linear-gradient(to right, #FF7694, #FF4D7E);
         }
+        
+        /* 历史记录表格样式 */
+        .history-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .history-table th,
+        .history-table td {
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .history-table th {
+            background-color: #FFF0F5;
+            font-weight: 600;
+        }
+        
+        .dark .history-table th {
+            background-color: #3A3644;
+        }
+        
+        .history-table tr:nth-child(even) {
+            background-color: rgba(255, 192, 211, 0.1);
+        }
+        
+        .dark .history-table tr:nth-child(even) {
+            background-color: rgba(255, 192, 211, 0.05);
+        }
+        
+        .history-table tr:hover {
+            background-color: rgba(255, 192, 211, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -479,6 +507,26 @@
                 </div>
             </div>
             
+            <!-- 兑换历史记录 -->
+            <div id="exchange-history" class="mt-6">
+                <h3 class="text-xl font-bold mb-2 text-girl-hotpink dark:text-girl-lightpink">兑换历史</h3>
+                <div class="exchange-history-container overflow-auto max-h-40">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th class="rounded-tl-lg">奖品</th>
+                                <th>花朵</th>
+                                <th class="rounded-tr-lg">时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- 历史记录将通过JS动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-history" class="text-center text-gray-500 py-4">暂无兑换记录</div>
+            </div>
+            
             <p class="text-gray-500 dark:text-gray-400 text-sm mt-4 text-center">
                 点击奖品查看详情并兑换
             </p>
@@ -491,14 +539,6 @@
             <div id="notification-icon" class="notification-icon">🎉</div>
             <div id="notification-message" class="font-bold text-lg">兑换成功!</div>
         </div>
-    </div>
-    
-    <!-- 声音控制按钮 -->
-    <div class="fixed bottom-3 right-3 z-10 relative">
-        <div id="sound-status" class="sound-status">点击启用声音</div>
-        <button id="toggle-sound" class="bg-white dark:bg-gray-800 p-3 rounded-full shadow-md hover:bg-girl-peach dark:hover:bg-gray-700">
-            <span id="sound-icon" class="text-xl">🔊</span>
-        </button>
     </div>
 
     <script>
@@ -520,6 +560,10 @@
         let seconds = 0;
         let isRunning = false;
         let selectedReward = null;
+        let exchangeHistory = [];
+        
+        // 本地存储键名
+        const STORAGE_KEY = 'maggie_flower_data';
         
         // 奖品列表
         const rewards = [
@@ -539,9 +583,6 @@
         const resetBtn = document.getElementById('reset-timer');
         const addButtons = document.querySelectorAll('.add-button');
         const flowersContainer = document.getElementById('flowers-container');
-        const toggleSoundBtn = document.getElementById('toggle-sound');
-        const soundIcon = document.getElementById('sound-icon');
-        const soundStatus = document.getElementById('sound-status');
         
         // 兑换奖品相关元素
         const rewardsModal = document.getElementById('rewards-modal');
@@ -557,54 +598,56 @@
         const exchangeNotification = document.getElementById('exchange-notification');
         const notificationIcon = document.getElementById('notification-icon');
         const notificationMessage = document.getElementById('notification-message');
+        const historyTableBody = document.getElementById('history-table-body');
+        const noHistoryMessage = document.getElementById('no-history');
         
-        // 声音设置
-        let isSoundOn = true;
-        let soundsInitialized = false;
-        let sounds = {
-            clap1: null,
-            clap2: null, 
-            clap3: null,
-            regret1: null,
-            regret2: null,
-            bgm: null,
-            success: null,
-            error: null,
-            click: null
-        };
-        
-        // 创建音频对象
-        function initSounds() {
-            if (soundsInitialized) return;
+        // 本地存储相关方法
+        function saveData() {
+            const data = {
+                score: score,
+                seconds: seconds,
+                isRunning: isRunning,
+                exchangeHistory: exchangeHistory
+            };
             
-            // 使用公共CDN的音频
-            sounds.clap1 = new Audio('https://cdn.jsdelivr.net/gh/mozibrishu/audio@latest/mixkit-achievement-bell-600.mp3');
-            sounds.clap2 = new Audio('https://cdn.jsdelivr.net/gh/mozibrishu/audio@latest/mixkit-cartoon-positive-sound-2255.mp3');
-            sounds.clap3 = new Audio('https://cdn.jsdelivr.net/gh/mozibrishu/audio@latest/mixkit-animated-small-group-applause-523.mp3');
-            sounds.regret1 = new Audio('https://cdn.jsdelivr.net/gh/mozibrishu/audio@latest/mixkit-wrong-answer-fail-notification-946.mp3');
-            sounds.regret2 = new Audio('https://cdn.jsdelivr.net/gh/mozibrishu/audio@latest/mixkit-game-show-wrong-answer-buzz-950.mp3');
-            sounds.bgm = new Audio('https://cdn.jsdelivr.net/gh/mozibrishu/audio@latest/happy-ukulele-93768.mp3');
-            sounds.success = new Audio('https://cdn.jsdelivr.net/gh/mozibrishu/audio@latest/mixkit-magical-coin-win-1936.mp3');
-            sounds.error = new Audio('https://cdn.jsdelivr.net/gh/mozibrishu/audio@latest/mixkit-alert-quick-chime-766.mp3');
-            sounds.click = new Audio('https://cdn.jsdelivr.net/gh/mozibrishu/audio@latest/mixkit-select-click-1109.mp3');
-            
-            // 配置循环播放
-            sounds.bgm.loop = true;
-            sounds.bgm.volume = 0.2;
-            
-            soundsInitialized = true;
-            
-            // 显示声音状态通知
-            showSoundStatus('声音已启用！');
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                console.log('数据已保存');
+            } catch (error) {
+                console.error('保存数据失败:', error);
+            }
         }
         
-        // 显示声音状态通知
-        function showSoundStatus(message) {
-            soundStatus.textContent = message;
-            soundStatus.classList.add('show-status');
-            setTimeout(() => {
-                soundStatus.classList.remove('show-status');
-            }, 2000);
+        function loadData() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                
+                if (data) {
+                    const parsedData = JSON.parse(data);
+                    
+                    // 恢复分数
+                    score = parsedData.score || 0;
+                    updateScoreDisplay();
+                    
+                    // 恢复计时器状态
+                    seconds = parsedData.seconds || 0;
+                    timerEl.textContent = formatTime(seconds);
+                    
+                    // 恢复是否正在计时
+                    if (parsedData.isRunning) {
+                        startTimer();
+                    }
+                    
+                    // 恢复兑换历史
+                    exchangeHistory = parsedData.exchangeHistory || [];
+                    
+                    console.log('数据已加载', parsedData);
+                } else {
+                    console.log('没有找到保存的数据');
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+            }
         }
         
         // 更新分数显示
@@ -616,20 +659,39 @@
             }, 500);
             modalFlowerCount.textContent = score;
             updateFlowers();
+            saveData();
         }
         
         // 更新小红花显示
         function updateFlowers() {
             flowersContainer.innerHTML = '';
             const flowerCount = Math.max(0, score); // 确保不显示负数的花
-            for (let i = 0; i < flowerCount; i++) {
+            
+            // 设置一个上限，防止显示太多花朵
+            const maxVisibleFlowers = 40; // 显示的最大花朵数量
+            const displayCount = Math.min(flowerCount, maxVisibleFlowers);
+            
+            for (let i = 0; i < displayCount; i++) {
                 const flower = document.createElement('span');
                 flower.className = 'flower';
                 flower.textContent = '🌺';
                 // 增加一点随机延迟，让花朵出现更自然
                 setTimeout(() => {
                     flowersContainer.appendChild(flower);
-                }, i * 100);
+                }, i * 50); // 减少延迟，加快显示速度
+            }
+            
+            // 如果实际花朵数量超过显示上限，添加"更多"的提示
+            if (flowerCount > maxVisibleFlowers) {
+                flowersContainer.classList.add('has-overflow');
+                
+                // 添加一个额外的显示，表明有更多花朵
+                const moreText = document.createElement('div');
+                moreText.className = 'text-girl-hotpink mt-2 text-sm font-bold';
+                moreText.textContent = `还有更多小红花...共 ${flowerCount} 朵`;
+                flowersContainer.appendChild(moreText);
+            } else {
+                flowersContainer.classList.remove('has-overflow');
             }
         }
 
@@ -650,6 +712,7 @@
         function updateTimer() {
             seconds++;
             timerEl.textContent = formatTime(seconds);
+            saveData();
         }
         
         // 开始计时器
@@ -659,10 +722,7 @@
                 timerInterval = setInterval(updateTimer, 1000);
                 startBtn.classList.add('bg-opacity-50');
                 pauseBtn.classList.remove('bg-opacity-50');
-                // 初始化声音
-                initSounds();
-                // 播放背景音乐
-                playBGM();
+                saveData();
             }
         }
         
@@ -673,6 +733,7 @@
                 clearInterval(timerInterval);
                 pauseBtn.classList.add('bg-opacity-50');
                 startBtn.classList.remove('bg-opacity-50');
+                saveData();
             }
         }
         
@@ -681,6 +742,7 @@
             pauseTimer();
             seconds = 0;
             timerEl.textContent = formatTime(seconds);
+            saveData();
         }
         
         // 显示分数变化动画
@@ -704,126 +766,16 @@
             }, 1000);
         }
         
-        // 播放掌声（根据分值选择不同的掌声强度）
-        function playClap(points) {
-            if (!isSoundOn || !soundsInitialized) return;
-            
-            try {
-                if (points === 1) {
-                    sounds.clap1.currentTime = 0;
-                    sounds.clap1.play();
-                } else if (points <= 3) {
-                    sounds.clap2.currentTime = 0;
-                    sounds.clap2.play();
-                } else {
-                    sounds.clap3.currentTime = 0;
-                    sounds.clap3.play();
-                }
-            } catch(e) {
-                console.log("播放掌声失败:", e);
-            }
-        }
-        
-        // 播放遗憾声音（根据扣分值选择不同的遗憾声音）
-        function playRegret(points) {
-            if (!isSoundOn || !soundsInitialized) return;
-            
-            try {
-                if (points >= -2) {
-                    sounds.regret1.currentTime = 0;
-                    sounds.regret1.play();
-                } else {
-                    sounds.regret2.currentTime = 0;
-                    sounds.regret2.play();
-                }
-            } catch(e) {
-                console.log("播放遗憾声音失败:", e);
-            }
-        }
-        
-        // 播放成功声音
-        function playSuccess() {
-            if (!isSoundOn || !soundsInitialized) return;
-            
-            try {
-                sounds.success.currentTime = 0;
-                sounds.success.play();
-            } catch(e) {
-                console.log("播放成功声音失败:", e);
-            }
-        }
-        
-        // 播放错误声音
-        function playError() {
-            if (!isSoundOn || !soundsInitialized) return;
-            
-            try {
-                sounds.error.currentTime = 0;
-                sounds.error.play();
-            } catch(e) {
-                console.log("播放错误声音失败:", e);
-            }
-        }
-        
-        // 播放点击声音
-        function playClick() {
-            if (!isSoundOn || !soundsInitialized) return;
-            
-            try {
-                sounds.click.currentTime = 0;
-                sounds.click.play();
-            } catch(e) {
-                console.log("播放点击声音失败:", e);
-            }
-        }
-        
-        // 播放背景音乐
-        function playBGM() {
-            if (!isSoundOn || !soundsInitialized) return;
-            
-            try {
-                sounds.bgm.play().catch(e => {
-                    console.log("播放背景音乐失败:", e);
-                    showSoundStatus('请点击页面启用声音');
-                });
-            } catch(e) {
-                console.log("播放背景音乐失败:", e);
-            }
-        }
-        
-        // 切换声音
-        function toggleSound() {
-            if (!soundsInitialized) {
-                initSounds();
-                return;
-            }
-            
-            isSoundOn = !isSoundOn;
-            
-            if (isSoundOn) {
-                soundIcon.textContent = '🔊';
-                playBGM();
-                showSoundStatus('声音已开启');
-            } else {
-                soundIcon.textContent = '🔇';
-                if (sounds.bgm) {
-                    sounds.bgm.pause();
-                }
-                showSoundStatus('声音已关闭');
-            }
-        }
-        
         // 打开奖品模态窗口
         function openRewardsModal() {
-            playClick();
             rewardsModal.classList.add('show');
             modalFlowerCount.textContent = score;
             renderRewards();
+            updateExchangeHistory();
         }
         
         // 关闭奖品模态窗口
         function closeRewardsModal() {
-            playClick();
             rewardsModal.classList.remove('show');
             rewardDetail.classList.add('hidden');
             selectedReward = null;
@@ -862,8 +814,6 @@
         
         // 选择奖品
         function selectReward(reward) {
-            playClick();
-            
             // 移除其他项的选中状态
             document.querySelectorAll('.reward-item').forEach(item => {
                 item.classList.remove('selected');
@@ -885,6 +835,41 @@
             rewardDetail.classList.remove('hidden');
         }
         
+        // 更新兑换历史记录
+        function updateExchangeHistory() {
+            historyTableBody.innerHTML = '';
+            
+            if (exchangeHistory.length === 0) {
+                noHistoryMessage.style.display = 'block';
+                return;
+            }
+            
+            noHistoryMessage.style.display = 'none';
+            
+            // 按照时间倒序排列
+            const sortedHistory = [...exchangeHistory].reverse();
+            
+            sortedHistory.forEach(record => {
+                const row = document.createElement('tr');
+                
+                const nameCell = document.createElement('td');
+                nameCell.innerHTML = `${record.emoji} ${record.name}`;
+                
+                const priceCell = document.createElement('td');
+                priceCell.innerHTML = `${record.price} <span class="flower">🌺</span>`;
+                
+                const dateCell = document.createElement('td');
+                const date = new Date(record.timestamp);
+                dateCell.textContent = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+                
+                row.appendChild(nameCell);
+                row.appendChild(priceCell);
+                row.appendChild(dateCell);
+                
+                historyTableBody.appendChild(row);
+            });
+        }
+        
         // 确认兑换奖品
         function confirmExchange() {
             if (!selectedReward) return;
@@ -894,9 +879,21 @@
                 score -= selectedReward.price;
                 updateScoreDisplay();
                 
+                // 添加到兑换历史
+                const exchange = {
+                    id: selectedReward.id,
+                    name: selectedReward.name,
+                    emoji: selectedReward.emoji,
+                    price: selectedReward.price,
+                    timestamp: new Date().getTime()
+                };
+                
+                exchangeHistory.push(exchange);
+                updateExchangeHistory();
+                saveData();
+                
                 // 显示成功通知
                 showExchangeNotification(true, `成功兑换 ${selectedReward.name}！`);
-                playSuccess();
                 
                 // 关闭模态窗口
                 setTimeout(() => {
@@ -911,8 +908,6 @@
                 setTimeout(() => {
                     modalFlowerCount.classList.remove('shake');
                 }, 500);
-                
-                playError();
             }
         }
         
@@ -933,7 +928,6 @@
         startBtn.addEventListener('click', startTimer);
         pauseBtn.addEventListener('click', pauseTimer);
         resetBtn.addEventListener('click', resetTimer);
-        toggleSoundBtn.addEventListener('click', toggleSound);
         exchangeBtn.addEventListener('click', openRewardsModal);
         closeModalBtn.addEventListener('click', closeRewardsModal);
         confirmExchangeBtn.addEventListener('click', confirmExchange);
@@ -944,14 +938,6 @@
                 closeRewardsModal();
             }
         });
-        
-        // 初始化点击事件监听
-        document.addEventListener('click', function initOnFirstClick() {
-            // 初始化声音系统
-            initSounds();
-            // 移除监听器，防止重复初始化
-            document.removeEventListener('click', initOnFirstClick);
-        }, { once: true });
         
         // 加/扣分按钮事件
         addButtons.forEach(button => {
@@ -966,29 +952,23 @@
                 setTimeout(() => {
                     button.classList.remove('scale-95');
                 }, 200);
-                
-                // 确保音频已初始化
-                if (!soundsInitialized) {
-                    initSounds();
-                }
-                
-                // 播放相应的声音
-                if (points > 0) {
-                    playClap(points);
-                } else {
-                    playRegret(points);
-                }
             });
         });
         
+        // 页面加载时加载数据
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            updateExchangeHistory();
+        });
+        
+        // 定期保存数据（每30秒）
+        setInterval(saveData, 30000);
+        
+        // 页面关闭前保存数据
+        window.addEventListener('beforeunload', saveData);
+        
         // 初始化显示
         updateScoreDisplay();
-        
-        // 显示初始提示
-        soundStatus.classList.add('show-status');
-        setTimeout(() => {
-            soundStatus.classList.remove('show-status');
-        }, 3000);
     </script>
 </body>
 </html>
