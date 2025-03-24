@@ -1,0 +1,2074 @@
+<!DOCTYPE html><html lang="zh"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>阅想家小红花计数器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&amp;family=Nunito:wght@400;600;700&amp;display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF85A1',
+                        secondary: '#FFC0D3',
+                        accent: '#FF5C8D',
+                        girl: {
+                            pink: '#FF85A1',
+                            lightpink: '#FFC0D3',
+                            hotpink: '#FF5C8D',
+                            lavender: '#E6E6FA',
+                            peach: '#FFDAB9',
+                            blush: '#FFB6C1',
+                        },
+                        pastel: {
+                            green: '#9DDAC6',
+                            blue: '#98D1EB',
+                            yellow: '#FFE082',
+                            pink: '#FFB6C1',
+                            purple: '#D8BFD8'
+                        }
+                    },
+                    borderRadius: {
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                        '3xl': '2rem'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #FFE6EE; /* 更简洁的浅粉色 */
+        }
+        
+        .dark body {
+            background-color: #332E3C; /* 暗色模式下的深紫粉色 */
+        }
+        
+        .score-change {
+            position: absolute;
+            animation: float-up 1s forwards;
+            font-weight: bold;
+            pointer-events: none;
+            font-size: 1.2rem;
+        }
+        
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-40px);
+            }
+        }
+        
+        .card {
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(255, 133, 161, 0.15);
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .score-card {
+            background-color: white;
+            border-color: #FFC0D3;
+        }
+        
+        .timer-card {
+            background-color: white;
+            border-color: #98D1EB;
+        }
+        
+        .dark .score-card {
+            background-color: #2D2A33;
+            color: white;
+            border-color: #FF85A1;
+        }
+        
+        .dark .timer-card {
+            background-color: #2D2A33;
+            color: white;
+            border-color: #74c0e3;
+        }
+        
+        .button-container {
+            position: relative;
+        }
+
+        .flower {
+            display: inline-block;
+            color: #FF5C8D;
+            font-size: 1.5rem;
+            animation: appear 0.5s ease-out;
+            margin: 0 2px;
+            filter: drop-shadow(0 0 2px rgba(255, 92, 141, 0.3));
+        }
+        
+        @keyframes appear {
+            0% {
+                transform: scale(0) rotate(-45deg);
+                opacity: 0;
+            }
+            70% {
+                transform: scale(1.2) rotate(15deg);
+            }
+            100% {
+                transform: scale(1) rotate(0);
+                opacity: 1;
+            }
+        }
+
+        .flower-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .cute-button {
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(255, 133, 161, 0.2);
+            transition: all 0.2s;
+            transform: translateY(0);
+        }
+        
+        .cute-button:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 2px rgba(255, 133, 161, 0.1);
+        }
+        
+        .add-button {
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            transform: translateY(0);
+        }
+        
+        .add-button:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .bounce {
+            animation: bounce 0.5s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        /* 奖品模态窗口 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 20px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.8);
+            transition: transform 0.3s;
+            box-shadow: 0 10px 25px rgba(255, 133, 161, 0.3);
+            border: 3px solid #FFC0D3;
+        }
+        
+        .dark .modal-content {
+            background-color: #2D2A33;
+            color: white;
+            border-color: #FF85A1;
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .reward-item {
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .reward-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .reward-item.selected {
+            border-color: #FF85A1;
+            background-color: rgba(255, 133, 161, 0.1);
+        }
+        
+        .dark .reward-item.selected {
+            background-color: rgba(255, 133, 161, 0.2);
+        }
+        
+        .reward-price {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            color: #FF5C8D;
+        }
+        
+        .reward-price .flower {
+            font-size: 1rem;
+            margin-left: 4px;
+        }
+        
+        .reward-image {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        .shake {
+            animation: shake 0.5s;
+        }
+        
+        @keyframes success-animation {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .success-animation {
+            animation: success-animation 0.5s;
+        }
+        
+        .exchange-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(255, 133, 161, 0.3);
+            z-index: 100;
+            display: none;
+            border: 2px solid #FFC0D3;
+        }
+        
+        .dark .exchange-notification {
+            background-color: #2D2A33;
+            color: white;
+            border-color: #FF85A1;
+        }
+        
+        .notification-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .btn-pink-gradient {
+            background: linear-gradient(to right, #FF85A1, #FF5C8D);
+        }
+        
+        .btn-pink-gradient:hover {
+            background: linear-gradient(to right, #FF7694, #FF4D7E);
+        }
+        
+        /* 历史记录表格样式 */
+        .history-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .history-table th,
+        .history-table td {
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        .history-table th {
+            background-color: #FFF0F5;
+            font-weight: 600;
+        }
+        
+        .dark .history-table th {
+            background-color: #3A3644;
+        }
+        
+        .history-table tr:nth-child(even) {
+            background-color: rgba(255, 192, 211, 0.1);
+        }
+        
+        .dark .history-table tr:nth-child(even) {
+            background-color: rgba(255, 192, 211, 0.05);
+        }
+        
+        .history-table tr:hover {
+            background-color: rgba(255, 192, 211, 0.2);
+        }
+        
+        /* 数据状态指示器 */
+        .data-status {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            color: #FF5C8D;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 999;
+        }
+        
+        .data-status.show {
+            opacity: 1;
+        }
+        
+        .dark .data-status {
+            background-color: rgba(45, 42, 51, 0.8);
+            color: #FFB6C1;
+        }
+        
+        /* Tab内容样式 */
+        .tab-content {
+            display: none;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 玻璃效果 */
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(255, 133, 161, 0.15);
+        }
+        
+        .dark .glass {
+            background: rgba(45, 42, 51, 0.7);
+            box-shadow: 0 4px 15px rgba(20, 20, 35, 0.3);
+            border: 1px solid rgba(80, 80, 100, 0.2);
+        }
+        
+        /* 设置页面样式 */
+        .setting-item {
+            background-color: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .dark .setting-item {
+            background-color: #2a2a3c;
+        }
+        
+        /* 统计图表容器 */
+        .log-container {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        /* 彩色进度条样式 */
+        .progress-container {
+            position: relative;
+            width: 100%;
+            height: 60px; /* 增加高度以确保完整显示 */
+            background-color: #f1f1f1;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 15px 0;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .dark .progress-container {
+            background-color: #333344;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(to right, #FFA8C4, #FF85A1, #FF5C8D);
+            width: 0;
+            transition: width 1s ease;
+            position: relative;
+            box-shadow: 0 0 10px rgba(255, 92, 141, 0.5);
+        }
+        
+        .progress-marker {
+            position: absolute;
+            top: -5px; /* 调整标记位置使其在进度条上方更合适的位置 */
+            transform: translateX(-50%);
+            z-index: 10;
+            text-align: center;
+        }
+        
+        .progress-marker-icon {
+            font-size: 1.8rem; /* 增加图标大小 */
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+        }
+        
+        .progress-marker-label {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #666;
+            margin-top: -5px;
+        }
+        
+        .dark .progress-marker-label {
+            color: #bbb;
+        }
+    </style>
+</head>
+<body class="pb-20">
+    <!-- 标签内容 -->
+    <div class="container mx-auto p-4 max-w-md">
+        <!-- Tab 1: 记录 -->
+        <div id="tab1" class="tab-content active">
+            <h1 class="text-3xl font-bold text-center text-girl-hotpink dark:text-girl-lightpink mb-6">
+                阅想家小红花计数器
+                <span class="flower">🌺</span>
+            </h1>
+            
+            <!-- 总分数显示 -->
+            <div class="card score-card p-6 mb-6 text-center transition-colors duration-300">
+                <h2 class="text-xl text-girl-hotpink dark:text-girl-lightpink mb-3 font-bold">小红花总数</h2>
+                <div class="flex justify-center items-center">
+                    <div class="text-5xl font-bold text-girl-hotpink" id="total-score">0</div>
+                    <!-- 移除了 "/ 220" 显示 -->
+                </div>
+                
+                <!-- 彩色进度条 -->
+                <div class="mt-4">
+                    <div class="progress-container">
+                        <div class="progress-bar" id="flower-progress-bar"></div>
+                        <!-- 进度标记将通过JS动态生成 -->
+                    </div>
+                    <!-- 移除了进度条下方的刻度显示 -->
+                </div>
+                
+                <!-- 兑换按钮 -->
+                <button id="exchange-button" class="mt-4 btn-pink-gradient text-white font-bold py-2 px-6 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105">
+                    <span class="flex items-center justify-center">
+                        🎁 兑换奖品
+                    </span>
+                </button>
+            </div>
+            
+            <!-- 计时器 -->
+            <div class="card timer-card p-5 mb-6 transition-colors duration-300">
+                <h2 class="text-xl text-blue-600 dark:text-blue-300 mb-3 text-center font-bold">学习时间</h2>
+                <div class="text-3xl font-mono text-center text-gray-700 dark:text-gray-100" id="timer">00:00:00</div>
+                <div class="flex justify-center mt-4 space-x-3">
+                    <button id="start-timer" class="cute-button bg-pastel-green hover:bg-green-400 text-green-800 font-medium py-2 px-4 rounded-xl">
+                        <span class="flex items-center">▶️ 开始</span>
+                    </button>
+                    <button id="pause-timer" class="cute-button bg-pastel-yellow hover:bg-yellow-300 text-yellow-800 font-medium py-2 px-4 rounded-xl">
+                        <span class="flex items-center">⏸️ 暂停</span>
+                    </button>
+                    <button id="reset-timer" class="cute-button bg-pastel-pink hover:bg-red-300 text-red-800 font-medium py-2 px-4 rounded-xl">
+                        <span class="flex items-center">🔄 重置</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 加分项 -->
+            <div class="mb-5">
+                <h2 class="text-xl font-bold mb-3 text-girl-hotpink dark:text-girl-lightpink flex items-center">
+                    <span class="mr-2">✨</span>加分项<span class="ml-2">✨</span>
+                </h2>
+                <div class="grid grid-cols-2 gap-3" id="add-buttons-container">
+                    <!-- 加分按钮将通过JS动态生成 -->
+                </div>
+            </div>
+            
+            <!-- 扣分项 -->
+            <div class="mb-5">
+                <h2 class="text-xl font-bold mb-3 text-pink-600 dark:text-pink-300 flex items-center">
+                    <span class="mr-2">⚠️</span>扣分项<span class="ml-2">⚠️</span>
+                </h2>
+                <div class="grid grid-cols-2 gap-3" id="deduct-buttons-container">
+                    <!-- 扣分按钮将通过JS动态生成 -->
+                </div>
+            </div>
+            
+            <div class="py-3 text-center text-girl-hotpink dark:text-girl-lightpink text-sm">
+                🌟 联系开发者微信：Qiqiyiyi2023 🌟
+            </div>
+        </div>
+        
+        <!-- Tab 2: 统计 -->
+        <div id="tab2" class="tab-content">
+            <div class="mb-6 p-4 rounded-xl glass">
+                <h2 class="text-lg font-semibold mb-3 text-girl-hotpink dark:text-girl-lightpink">今日数据统计</h2>
+                <div class="h-64">
+                    <canvas id="pointsChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="p-4 rounded-xl glass">
+                <h2 class="text-lg font-semibold mb-3 text-girl-hotpink dark:text-girl-lightpink">积分记录</h2>
+                <div class="log-container">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-300 text-sm">时间</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-300 text-sm">事项</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-300 text-sm">分值</th>
+                                <th class="text-left py-2 text-gray-600 dark:text-gray-300 text-sm">累计</th>
+                            </tr>
+                        </thead>
+                        <tbody id="log-table-body">
+                            <!-- 记录将通过JS动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab 3: 设置 -->
+        <div id="tab3" class="tab-content">
+            <div class="mb-6 p-4 rounded-xl glass">
+                <h2 class="text-lg font-semibold mb-3 text-girl-hotpink dark:text-girl-lightpink">加分项设置</h2>
+                <div id="add-points-settings">
+                    <!-- 加分项设置将通过JS动态生成 -->
+                </div>
+                <button id="add-new-add-item" class="mt-3 px-4 py-2 bg-girl-hotpink text-white rounded-lg shadow-md hover:bg-girl-pink focus:outline-none">
+                    添加加分项
+                </button>
+            </div>
+            
+            <div class="mb-6 p-4 rounded-xl glass">
+                <h2 class="text-lg font-semibold mb-3 text-girl-hotpink dark:text-girl-lightpink">扣分项设置</h2>
+                <div id="deduct-points-settings">
+                    <!-- 扣分项设置将通过JS动态生成 -->
+                </div>
+                <button id="add-new-deduct-item" class="mt-3 px-4 py-2 bg-girl-hotpink text-white rounded-lg shadow-md hover:bg-girl-pink focus:outline-none">
+                    添加扣分项
+                </button>
+            </div>
+            
+            <!-- 新增：奖品设置 -->
+            <div class="mb-6 p-4 rounded-xl glass">
+                <h2 class="text-lg font-semibold mb-3 text-girl-hotpink dark:text-girl-lightpink">奖品设置</h2>
+                <div id="rewards-settings">
+                    <!-- 奖品设置将通过JS动态生成 -->
+                </div>
+                <button id="add-new-reward" class="mt-3 px-4 py-2 bg-girl-hotpink text-white rounded-lg shadow-md hover:bg-girl-pink focus:outline-none">
+                    添加新奖品
+                </button>
+            </div>
+            
+            <div class="p-4 rounded-xl glass">
+                <h2 class="text-lg font-semibold mb-3 text-girl-hotpink dark:text-girl-lightpink">数据管理</h2>
+                <button id="reset-today-data" class="mr-2 px-4 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 focus:outline-none">
+                    重置今日数据
+                </button>
+            </div>
+        </div>
+        
+        <!-- Tab 4: 导出 -->
+        <div id="tab4" class="tab-content">
+            <div class="p-4 rounded-xl glass">
+                <h2 class="text-lg font-semibold mb-3 text-girl-hotpink dark:text-girl-lightpink">数据导出</h2>
+                <p class="mb-4 text-gray-600 dark:text-gray-300">导出数据为 CSV 格式，可用于电子表格软件中查看分析。</p>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 dark:text-gray-300 mb-2">选择导出范围</label>
+                    <select id="export-range" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-md">
+                        <option value="today">今天</option>
+                        <option value="week">本周</option>
+                        <option value="month">本月</option>
+                        <option value="all">全部数据</option>
+                    </select>
+                </div>
+                
+                <button id="export-csv" class="px-4 py-2 bg-girl-hotpink text-white rounded-lg shadow-md hover:bg-girl-pink focus:outline-none">
+                    导出 CSV
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部Tab导航 -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-md" style="z-index: 1000;">
+        <div class="flex justify-around py-3">
+            <div class="tab-item flex flex-col items-center cursor-pointer" data-tab="tab1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-girl-hotpink" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <span class="text-xs mt-1">记录</span>
+            </div>
+            <div class="tab-item flex flex-col items-center cursor-pointer" data-tab="tab2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <span class="text-xs mt-1">统计</span>
+            </div>
+            <div class="tab-item flex flex-col items-center cursor-pointer" data-tab="tab3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span class="text-xs mt-1">设置</span>
+            </div>
+            <div class="tab-item flex flex-col items-center cursor-pointer" data-tab="tab4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span class="text-xs mt-1">导出</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 数据状态指示器 -->
+    <div id="data-status" class="data-status">数据已保存</div>
+    
+    <!-- 兑换奖品模态窗口 -->
+    <div id="rewards-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-girl-hotpink dark:text-girl-lightpink">奖品兑换中心</h2>
+                <button id="close-modal" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-2xl">
+                    ×
+                </button>
+            </div>
+            
+            <p class="text-gray-600 dark:text-gray-300 mb-4">
+               当前的小红花: <span id="modal-flower-count" class="font-bold text-girl-hotpink">0</span>
+            </p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4" id="rewards-container">
+                <!-- 奖品将通过JS动态生成 -->
+            </div>
+            
+            <div id="reward-detail" class="hidden p-4 bg-girl-lavender dark:bg-gray-800 rounded-xl mt-4">
+                <h3 id="detail-title" class="text-xl font-bold mb-2 text-girl-hotpink dark:text-girl-lightpink">奖品名称</h3>
+                <p id="detail-description" class="text-gray-600 dark:text-gray-300 mb-3">奖品描述...</p>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <span>价格: </span>
+                        <span id="detail-price" class="font-bold text-girl-hotpink ml-1">20</span>
+                        <span class="ml-1">🌺</span>
+                    </div>
+                    <button id="confirm-exchange" class="bg-gradient-to-r from-girl-pink to-girl-hotpink hover:from-girl-hotpink hover:to-girl-pink text-white font-bold py-2 px-4 rounded-lg">
+                        确认兑换
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 兑换历史记录 -->
+            <div id="exchange-history" class="mt-6">
+                <h3 class="text-xl font-bold mb-2 text-girl-hotpink dark:text-girl-lightpink">兑换历史</h3>
+                <div class="exchange-history-container overflow-auto max-h-40">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th class="rounded-tl-lg">奖品</th>
+                                <th>花朵</th>
+                                <th class="rounded-tr-lg">时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- 历史记录将通过JS动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-history" class="text-center text-gray-500 py-4">暂无兑换记录</div>
+            </div>
+            
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-4 text-center">
+                点击奖品查看详情并兑换
+            </p>
+        </div>
+    </div>
+    
+    <!-- 兑换结果通知 -->
+    <div id="exchange-notification" class="exchange-notification">
+        <div class="text-center">
+            <div id="notification-icon" class="notification-icon">🎉</div>
+            <div id="notification-message" class="font-bold text-lg">兑换成功!</div>
+        </div>
+    </div>
+
+    <script>
+        // 检测暗黑模式
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // 初始化变量
+        let score = 0;
+        let timerInterval = null;
+        let seconds = 0;
+        let isRunning = false;
+        let selectedReward = null;
+        let exchangeHistory = [];
+        let pointsLog = []; // 积分变动记录
+        let addItems = []; // 加分项列表
+        let deductItems = []; // 扣分项列表
+        let pointsChart = null; // 图表对象
+        let rewards = []; // 奖品列表
+        
+        // 最大积分值
+        const MAX_SCORE = 220;
+        
+        // 本地存储键名
+        const STORAGE_KEY = 'maggie_flower_data';
+        const dataStatusEl = document.getElementById('data-status');
+        
+        // 增强的存储系统，处理多种浏览器环境
+        const storageSystem = {
+            // 检测存储可用性
+            isLocalStorageAvailable: function() {
+                try {
+                    localStorage.setItem('test', 'test');
+                    localStorage.removeItem('test');
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            },
+            
+            isSessionStorageAvailable: function() {
+                try {
+                    sessionStorage.setItem('test', 'test');
+                    sessionStorage.removeItem('test');
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            },
+            
+            // Cookies作为备选存储方式
+            setCookie: function(name, value, days) {
+                let expires = "";
+                if (days) {
+                    const date = new Date();
+                    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                    expires = "; expires=" + date.toUTCString();
+                }
+                document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + expires + "; path=/";
+            },
+            
+            getCookie: function(name) {
+                const nameEQ = name + "=";
+                const ca = document.cookie.split(';');
+                for(let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) === 0) {
+                        try {
+                            return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+                        } catch (e) {
+                            return null;
+                        }
+                    }
+                }
+                return null;
+            },
+            
+            // 保存数据，尝试多种存储方式
+            saveData: function(key, data) {
+                let savedSuccessfully = false;
+                
+                // 尝试使用localStorage
+                if (this.isLocalStorageAvailable()) {
+                    try {
+                        localStorage.setItem(key, JSON.stringify(data));
+                        savedSuccessfully = true;
+                        showDataStatus("数据已保存到本地");
+                    } catch (e) {
+                        console.warn("localStorage保存失败", e);
+                    }
+                }
+                
+                // 如果localStorage失败，尝试sessionStorage
+                if (!savedSuccessfully && this.isSessionStorageAvailable()) {
+                    try {
+                        sessionStorage.setItem(key, JSON.stringify(data));
+                        savedSuccessfully = true;
+                        showDataStatus("数据已保存到会话");
+                    } catch (e) {
+                        console.warn("sessionStorage保存失败", e);
+                    }
+                }
+                
+                // 如果以上都失败，使用Cookie
+                if (!savedSuccessfully) {
+                    try {
+                        this.setCookie(key, data, 30); // 30天有效期
+                        savedSuccessfully = true;
+                        showDataStatus("数据已保存到Cookie");
+                    } catch (e) {
+                        console.error("所有存储方式都失败", e);
+                        showDataStatus("数据保存失败", true);
+                    }
+                }
+                
+                return savedSuccessfully;
+            },
+            
+            // 加载数据，尝试多种存储方式
+            loadData: function(key) {
+                let data = null;
+                
+                // 尝试从localStorage加载
+                if (this.isLocalStorageAvailable()) {
+                    try {
+                        const storedData = localStorage.getItem(key);
+                        if (storedData) {
+                            data = JSON.parse(storedData);
+                            showDataStatus("从本地存储加载数据");
+                        }
+                    } catch (e) {
+                        console.warn("从localStorage加载失败", e);
+                    }
+                }
+                
+                // 如果localStorage没有数据，尝试sessionStorage
+                if (!data && this.isSessionStorageAvailable()) {
+                    try {
+                        const storedData = sessionStorage.getItem(key);
+                        if (storedData) {
+                            data = JSON.parse(storedData);
+                            showDataStatus("从会话存储加载数据");
+                        }
+                    } catch (e) {
+                        console.warn("从sessionStorage加载失败", e);
+                    }
+                }
+                
+                // 如果以上都没有数据，尝试Cookie
+                if (!data) {
+                    try {
+                        data = this.getCookie(key);
+                        if (data) {
+                            showDataStatus("从Cookie加载数据");
+                        }
+                    } catch (e) {
+                        console.warn("从Cookie加载失败", e);
+                    }
+                }
+                
+                if (!data) {
+                    showDataStatus("没有找到保存的数据", true);
+                }
+                
+                return data;
+            }
+        };
+        
+        // 默认奖品列表
+        const DEFAULT_REWARDS = [
+            { id: 1, name: '糖果', emoji: '🍬', description: '美味的糖果，小小的甜蜜！', price: 25 },
+            { id: 2, name: '动画片20分钟', emoji: '📺', description: '看20分钟你最喜欢的动画片！', price: 50 },
+            { id: 3, name: '饮料', emoji: '🥤', description: '好喝的饮料，解渴又美味！', price: 70 },
+            { id: 4, name: '冰淇淋', emoji: '🍦', description: '美味的冰淇淋，甜蜜清凉的享受！', price: 100 },
+            { id: 5, name: '旋转木马', emoji: '🎠', description: '坐旋转木马，童话般的美好体验！', price: 150 },
+            { id: 6, name: '汉堡', emoji: '🍔', description: '美味的汉堡，大大的满足！', price: 200 }
+        ];
+        
+        // 默认加分项
+        const DEFAULT_ADD_ITEMS = [
+            { name: "坐姿端正", points: 2, emoji: "🧍‍♀️" },
+            { name: "回答正确", points: 1, emoji: "✅" },
+            { name: "专心学习", points: 3, emoji: "📚" },
+            { name: "完成作业", points: 5, emoji: "🎉" }
+        ];
+        
+        // 默认扣分项
+        const DEFAULT_DEDUCT_ITEMS = [
+            { name: "坐姿不端正", points: -1, emoji: "😖" },
+            { name: "走神", points: -2, emoji: "🙄" },
+            { name: "做其他事情", points: -3, emoji: "🎮" },
+            { name: "拒绝完成", points: -5, emoji: "❌" }
+        ];
+        
+        // 获取DOM元素
+        const totalScoreEl = document.getElementById('total-score');
+        const timerEl = document.getElementById('timer');
+        const startBtn = document.getElementById('start-timer');
+        const pauseBtn = document.getElementById('pause-timer');
+        const resetBtn = document.getElementById('reset-timer');
+        const progressBar = document.getElementById('flower-progress-bar');
+        const addButtonsContainer = document.getElementById('add-buttons-container');
+        const deductButtonsContainer = document.getElementById('deduct-buttons-container');
+        
+        // 兑换奖品相关元素
+        const rewardsModal = document.getElementById('rewards-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const exchangeBtn = document.getElementById('exchange-button');
+        const rewardsContainer = document.getElementById('rewards-container');
+        const modalFlowerCount = document.getElementById('modal-flower-count');
+        const rewardDetail = document.getElementById('reward-detail');
+        const detailTitle = document.getElementById('detail-title');
+        const detailDescription = document.getElementById('detail-description');
+        const detailPrice = document.getElementById('detail-price');
+        const confirmExchangeBtn = document.getElementById('confirm-exchange');
+        const exchangeNotification = document.getElementById('exchange-notification');
+        const notificationIcon = document.getElementById('notification-icon');
+        const notificationMessage = document.getElementById('notification-message');
+        const historyTableBody = document.getElementById('history-table-body');
+        const noHistoryMessage = document.getElementById('no-history');
+        
+        // 统计页面相关元素
+        const logTableBody = document.getElementById('log-table-body');
+        
+        // 设置页面相关元素
+        const addPointsSettings = document.getElementById('add-points-settings');
+        const deductPointsSettings = document.getElementById('deduct-points-settings');
+        const rewardsSettings = document.getElementById('rewards-settings');
+        const addNewAddItemBtn = document.getElementById('add-new-add-item');
+        const addNewDeductItemBtn = document.getElementById('add-new-deduct-item');
+        const addNewRewardBtn = document.getElementById('add-new-reward');
+        const resetTodayDataBtn = document.getElementById('reset-today-data');
+        
+        // 导出页面相关元素
+        const exportRangeSelect = document.getElementById('export-range');
+        const exportCsvBtn = document.getElementById('export-csv');
+        
+        // 标签导航相关元素
+        const tabItems = document.querySelectorAll('.tab-item');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // 显示数据存储状态
+        function showDataStatus(message, isError = false) {
+            dataStatusEl.textContent = message;
+            dataStatusEl.style.color = isError ? '#F44336' : '#FF5C8D';
+            dataStatusEl.classList.add('show');
+            
+            setTimeout(() => {
+                dataStatusEl.classList.remove('show');
+            }, 2000);
+        }
+        
+        // 标签切换
+        function setupTabs() {
+            tabItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // 更新标签外观
+                    tabItems.forEach(tab => {
+                        const svg = tab.querySelector('svg');
+                        if (tab === this) {
+                            svg.classList.remove('text-gray-500');
+                            svg.classList.add('text-girl-hotpink');
+                        } else {
+                            svg.classList.remove('text-girl-hotpink');
+                            svg.classList.add('text-gray-500');
+                        }
+                    });
+                    
+                    // 显示选中的标签内容
+                    tabContents.forEach(content => {
+                        if (content.id === tabId) {
+                            content.classList.add('active');
+                            
+                            // 如果切换到统计标签，更新图表
+                            if (tabId === 'tab2') {
+                                updateStatistics();
+                                updateLogTable();
+                            }
+                            
+                            // 如果切换到设置标签，更新设置UI
+                            if (tabId === 'tab3') {
+                                updateSettingsUI();
+                            }
+                        } else {
+                            content.classList.remove('active');
+                        }
+                    });
+                });
+            });
+        }
+        
+        // 本地存储相关方法
+        function saveData() {
+            const data = {
+                score: score,
+                seconds: seconds,
+                isRunning: isRunning,
+                exchangeHistory: exchangeHistory,
+                pointsLog: pointsLog,
+                addItems: addItems,
+                deductItems: deductItems,
+                rewards: rewards,
+                lastSaved: new Date().getTime()
+            };
+            
+            try {
+                storageSystem.saveData(STORAGE_KEY, data);
+            } catch (error) {
+                console.error('保存数据失败:', error);
+                showDataStatus('保存数据失败', true);
+            }
+        }
+        
+        function loadData() {
+            try {
+                const data = storageSystem.loadData(STORAGE_KEY);
+                
+                if (data) {
+                    // 恢复分数
+                    score = data.score || 0;
+                    
+                    // 恢复计时器状态
+                    seconds = data.seconds || 0;
+                    timerEl.textContent = formatTime(seconds);
+                    
+                    // 恢复是否正在计时
+                    if (data.isRunning) {
+                        startTimer(false); // 不要再次保存，防止循环
+                    }
+                    
+                    // 恢复兑换历史
+                    exchangeHistory = data.exchangeHistory || [];
+                    
+                    // 恢复积分记录
+                    pointsLog = data.pointsLog || [];
+                    
+                    // 恢复加分项和扣分项设置
+                    addItems = data.addItems || DEFAULT_ADD_ITEMS;
+                    deductItems = data.deductItems || DEFAULT_DEDUCT_ITEMS;
+                    
+                    // 恢复奖品设置
+                    rewards = data.rewards || DEFAULT_REWARDS;
+                    
+                    // 显示上次保存时间
+                    if (data.lastSaved) {
+                        const lastSavedDate = new Date(data.lastSaved);
+                        const timeStr = lastSavedDate.toLocaleTimeString();
+                        showDataStatus(`数据已恢复 (${timeStr})`);
+                    } else {
+                        showDataStatus('数据已恢复');
+                    }
+                    
+                    console.log('数据已加载', data);
+                } else {
+                    // 初始化默认值
+                    addItems = DEFAULT_ADD_ITEMS;
+                    deductItems = DEFAULT_DEDUCT_ITEMS;
+                    rewards = DEFAULT_REWARDS;
+                    console.log('没有找到保存的数据，使用默认值');
+                }
+                
+                // 更新UI
+                updateScoreDisplay(false);
+                updatePointButtons();
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                showDataStatus('加载数据失败', true);
+                
+                // 初始化默认值
+                addItems = DEFAULT_ADD_ITEMS;
+                deductItems = DEFAULT_DEDUCT_ITEMS;
+                rewards = DEFAULT_REWARDS;
+                updatePointButtons();
+                updateScoreDisplay(false);
+            }
+        }
+        
+        // 更新分数显示
+        function updateScoreDisplay(shouldSave = true) {
+            totalScoreEl.textContent = score;
+            totalScoreEl.classList.add('bounce');
+            setTimeout(() => {
+                totalScoreEl.classList.remove('bounce');
+            }, 500);
+            modalFlowerCount.textContent = score;
+            
+            // 更新进度条
+            updateProgressBar();
+            
+            if (shouldSave) {
+                saveData();
+            }
+        }
+        
+        // 更新进度条和里程碑
+        function updateProgressBar() {
+            // 计算进度百分比，最大为100%
+            const percent = Math.min(100, (score / MAX_SCORE) * 100);
+            progressBar.style.width = `${percent}%`;
+            
+            // 清除现有标记点
+            const existingMarkers = document.querySelectorAll('.progress-marker');
+            existingMarkers.forEach(marker => marker.remove());
+            
+            // 添加奖品里程碑
+            const progressContainer = document.querySelector('.progress-container');
+            
+            rewards.forEach(reward => {
+                // 只显示小于或等于最大分数的里程碑
+                if (reward.price <= MAX_SCORE) {
+                    // 计算位置百分比
+                    const markerPercent = (reward.price / MAX_SCORE) * 100;
+                    
+                    // 创建标记点
+                    const marker = document.createElement('div');
+                    marker.className = 'progress-marker';
+                    marker.style.left = `${markerPercent}%`;
+                    
+                    // 为已达到的里程碑添加不同的样式
+                    const isReached = score >= reward.price;
+                    
+                    marker.innerHTML = `
+                        <div class="progress-marker-icon ${isReached ? 'opacity-100' : 'opacity-50'}">${reward.emoji}</div>
+                        <div class="progress-marker-label">${reward.price}</div>
+                    `;
+                    
+                    progressContainer.appendChild(marker);
+                }
+            });
+        }
+
+        // 格式化时间
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const secs = totalSeconds % 60;
+            
+            return [
+                hours.toString().padStart(2, '0'),
+                minutes.toString().padStart(2, '0'),
+                secs.toString().padStart(2, '0')
+            ].join(':');
+        }
+        
+        // 更新计时器
+        function updateTimer() {
+            seconds++;
+            timerEl.textContent = formatTime(seconds);
+            saveData();
+        }
+        
+        // 开始计时器
+        function startTimer(shouldSave = true) {
+            if (!isRunning) {
+                isRunning = true;
+                timerInterval = setInterval(updateTimer, 1000);
+                startBtn.classList.add('bg-opacity-50');
+                pauseBtn.classList.remove('bg-opacity-50');
+                
+                if (shouldSave) {
+                    saveData();
+                }
+            }
+        }
+        
+        // 暂停计时器
+        function pauseTimer() {
+            if (isRunning) {
+                isRunning = false;
+                clearInterval(timerInterval);
+                pauseBtn.classList.add('bg-opacity-50');
+                startBtn.classList.remove('bg-opacity-50');
+                saveData();
+            }
+        }
+        
+        // 重置计时器
+        function resetTimer() {
+            pauseTimer();
+            seconds = 0;
+            timerEl.textContent = formatTime(seconds);
+            saveData();
+        }
+        
+        // 显示分数变化动画
+        function showScoreChange(button, points) {
+            const scoreChange = document.createElement('div');
+            scoreChange.className = 'score-change';
+            scoreChange.textContent = points > 0 ? `+${points}` : points;
+            scoreChange.style.color = points > 0 ? '#FF5C8D' : '#F44336';
+            
+            button.parentElement.appendChild(scoreChange);
+            
+            // 定位在按钮上方中央
+            const buttonRect = button.getBoundingClientRect();
+            
+            scoreChange.style.left = `${buttonRect.width / 2 - scoreChange.offsetWidth / 2}px`;
+            scoreChange.style.top = `${-scoreChange.offsetHeight}px`;
+            
+            // 移除元素
+            setTimeout(() => {
+                scoreChange.remove();
+            }, 1000);
+        }
+        
+        // 打开奖品模态窗口
+        function openRewardsModal() {
+            rewardsModal.classList.add('show');
+            modalFlowerCount.textContent = score;
+            renderRewards();
+            updateExchangeHistory();
+        }
+        
+        // 关闭奖品模态窗口
+        function closeRewardsModal() {
+            rewardsModal.classList.remove('show');
+            rewardDetail.classList.add('hidden');
+            selectedReward = null;
+            
+            // 移除选中状态
+            document.querySelectorAll('.reward-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+        
+        // 渲染奖品列表
+        function renderRewards() {
+            rewardsContainer.innerHTML = '';
+            
+            // 按积分排序
+            const sortedRewards = [...rewards].sort((a, b) => a.price - b.price);
+            
+            sortedRewards.forEach(reward => {
+                const rewardItem = document.createElement('div');
+                rewardItem.className = 'reward-item rounded-xl p-3 bg-white dark:bg-gray-700 shadow-md';
+                rewardItem.dataset.id = reward.id;
+                
+                rewardItem.innerHTML = `
+                    <div class="reward-image mb-2">${reward.emoji}</div>
+                    <h3 class="font-bold text-gray-800 dark:text-gray-100 text-center mb-1">${reward.name}</h3>
+                    <div class="reward-price justify-center">
+                        <span>${reward.price}</span>
+                        <span class="flower">🌺</span>
+                    </div>
+                `;
+                
+                rewardItem.addEventListener('click', () => {
+                    selectReward(reward);
+                });
+                
+                rewardsContainer.appendChild(rewardItem);
+            });
+        }
+        
+        // 选择奖品
+        function selectReward(reward) {
+            // 移除其他项的选中状态
+            document.querySelectorAll('.reward-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // 添加选中状态到当前项
+            const selectedItem = document.querySelector(`.reward-item[data-id="${reward.id}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+            }
+            
+            // 更新详情区域
+            selectedReward = reward;
+            detailTitle.textContent = reward.name;
+            detailDescription.textContent = reward.description;
+            detailPrice.textContent = reward.price;
+            
+            // 显示详情区域
+            rewardDetail.classList.remove('hidden');
+        }
+        
+        // 更新兑换历史记录
+        function updateExchangeHistory() {
+            historyTableBody.innerHTML = '';
+            
+            if (exchangeHistory.length === 0) {
+                noHistoryMessage.style.display = 'block';
+                return;
+            }
+            
+            noHistoryMessage.style.display = 'none';
+            
+            // 按照时间倒序排列
+            const sortedHistory = [...exchangeHistory].reverse();
+            
+            sortedHistory.forEach(record => {
+                const row = document.createElement('tr');
+                
+                const nameCell = document.createElement('td');
+                nameCell.innerHTML = `${record.emoji} ${record.name}`;
+                
+                const priceCell = document.createElement('td');
+                priceCell.innerHTML = `${record.price} <span class="flower">🌺</span>`;
+                
+                const dateCell = document.createElement('td');
+                const date = new Date(record.timestamp);
+                dateCell.textContent = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+                
+                row.appendChild(nameCell);
+                row.appendChild(priceCell);
+                row.appendChild(dateCell);
+                
+                historyTableBody.appendChild(row);
+            });
+        }
+        
+        // 确认兑换奖品
+        function confirmExchange() {
+            if (!selectedReward) return;
+            
+            if (score >= selectedReward.price) {
+                // 扣减分数
+                score -= selectedReward.price;
+                
+                // 添加到积分记录
+                const now = new Date();
+                pointsLog.push({
+                    time: now.toISOString(),
+                    item: `兑换奖品: ${selectedReward.name}`,
+                    points: -selectedReward.price,
+                    totalPoints: score
+                });
+                
+                updateScoreDisplay();
+                
+                // 添加到兑换历史
+                const exchange = {
+                    id: selectedReward.id,
+                    name: selectedReward.name,
+                    emoji: selectedReward.emoji,
+                    price: selectedReward.price,
+                    timestamp: now.getTime()
+                };
+                
+                exchangeHistory.push(exchange);
+                updateExchangeHistory();
+                saveData();
+                
+                // 显示成功通知
+                showExchangeNotification(true, `成功兑换 ${selectedReward.name}！`);
+                
+                // 关闭模态窗口
+                setTimeout(() => {
+                    closeRewardsModal();
+                }, 500);
+            } else {
+                // 余额不足，显示错误
+                showExchangeNotification(false, `小红花不足，还需要 ${selectedReward.price - score} 朵小红花`);
+                
+                // 显示分数抖动动画
+                modalFlowerCount.classList.add('shake');
+                setTimeout(() => {
+                    modalFlowerCount.classList.remove('shake');
+                }, 500);
+            }
+        }
+        
+        // 显示兑换通知
+        function showExchangeNotification(success, message) {
+            notificationIcon.textContent = success ? '🎉' : '❗';
+            notificationMessage.textContent = message;
+            exchangeNotification.style.display = 'block';
+            exchangeNotification.classList.add('success-animation');
+            
+            setTimeout(() => {
+                exchangeNotification.classList.remove('success-animation');
+                exchangeNotification.style.display = 'none';
+            }, 2000);
+        }
+        
+        // 更新积分按钮
+        function updatePointButtons() {
+            if (!addButtonsContainer || !deductButtonsContainer) return;
+            
+            // 清空容器
+            addButtonsContainer.innerHTML = '';
+            deductButtonsContainer.innerHTML = '';
+            
+            // 添加加分按钮
+            addItems.forEach((item) => {
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+                
+                const button = document.createElement('button');
+                button.dataset.points = item.points;
+                button.className = 'add-button w-full bg-gradient-to-br from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-medium py-3 px-4 rounded-xl';
+                button.innerHTML = `<span class="flex items-center justify-center">${item.emoji} ${item.name} +${item.points}</span>`;
+                
+                button.addEventListener('click', () => {
+                    addPoints(item, button);
+                });
+                
+                buttonContainer.appendChild(button);
+                addButtonsContainer.appendChild(buttonContainer);
+            });
+            
+            // 添加扣分按钮
+            deductItems.forEach((item) => {
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+                
+                const button = document.createElement('button');
+                button.dataset.points = item.points;
+                button.className = 'add-button w-full bg-gradient-to-br from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white font-medium py-3 px-4 rounded-xl';
+                button.innerHTML = `<span class="flex items-center justify-center">${item.emoji} ${item.name} ${item.points}</span>`;
+                
+                button.addEventListener('click', () => {
+                    deductPoints(item, button);
+                });
+                
+                buttonContainer.appendChild(button);
+                deductButtonsContainer.appendChild(buttonContainer);
+            });
+        }
+        
+        // 添加积分
+        function addPoints(item, button) {
+            score += item.points;
+            
+            // 记录到积分日志
+            const now = new Date();
+            pointsLog.push({
+                time: now.toISOString(),
+                item: item.name,
+                points: item.points,
+                totalPoints: score
+            });
+            
+            showScoreChange(button, item.points);
+            
+            // 添加按钮动画
+            button.classList.add('scale-95');
+            setTimeout(() => {
+                button.classList.remove('scale-95');
+            }, 200);
+            
+            updateScoreDisplay();
+        }
+        
+        // 扣减积分
+        function deductPoints(item, button) {
+            score += item.points; // 注意扣分项的分数是负数
+            
+            // 记录到积分日志
+            const now = new Date();
+            pointsLog.push({
+                time: now.toISOString(),
+                item: item.name,
+                points: item.points,
+                totalPoints: score
+            });
+            
+            showScoreChange(button, item.points);
+            
+            // 添加按钮动画
+            button.classList.add('scale-95');
+            setTimeout(() => {
+                button.classList.remove('scale-95');
+            }, 200);
+            
+            updateScoreDisplay();
+        }
+        
+        // 更新积分记录表
+        function updateLogTable() {
+            const tableBody = document.getElementById('log-table-body');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = '';
+            
+            // 按时间倒序排列
+            const sortedLog = [...pointsLog].sort((a, b) => new Date(b.time) - new Date(a.time));
+            
+            sortedLog.forEach(log => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200';
+                
+                const logTime = new Date(log.time);
+                const timeStr = `${logTime.getHours().toString().padStart(2, '0')}:${logTime.getMinutes().toString().padStart(2, '0')}`;
+                
+                row.innerHTML = `
+                    <td class="py-2">${timeStr}</td>
+                    <td class="py-2">${log.item}</td>
+                    <td class="py-2 ${log.points > 0 ? 'text-green-500' : 'text-red-500'}">${log.points > 0 ? '+' + log.points : log.points}</td>
+                    <td class="py-2">${log.totalPoints}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 更新统计图表
+        function updateStatistics() {
+            const ctx = document.getElementById('pointsChart');
+            if (!ctx) return;
+            
+            // 处理图表数据
+            const hourlyData = processHourlyData();
+            
+            // 如果图表已存在，销毁它
+            if (pointsChart) {
+                pointsChart.destroy();
+            }
+            
+            // 创建新图表
+            pointsChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: hourlyData.hours,
+                    datasets: [
+                        {
+                            label: '累计积分',
+                            data: hourlyData.totalPoints,
+                            borderColor: '#FF5C8D',
+                            backgroundColor: 'rgba(255, 92, 141, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: '累计加分',
+                            data: hourlyData.addPoints,
+                            borderColor: '#10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: '累计扣分',
+                            data: hourlyData.deductPoints,
+                            borderColor: '#EF4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 处理每小时数据用于图表
+        function processHourlyData() {
+            const hours = [];
+            const addPoints = [];
+            const deductPoints = [];
+            const totalPoints = [];
+            
+            // 生成小时标签
+            for (let h = 0; h < 24; h++) {
+                hours.push(`${h}:00`);
+                
+                // 初始化为零
+                addPoints.push(0);
+                deductPoints.push(0);
+                totalPoints.push(0);
+            }
+            
+            // 处理日志数据
+            pointsLog.forEach(log => {
+                const logTime = new Date(log.time);
+                const logHour = logTime.getHours();
+                
+                if (log.points > 0) {
+                    addPoints[logHour] += log.points;
+                } else {
+                    deductPoints[logHour] += Math.abs(log.points);
+                }
+            });
+            
+            // 计算累计总分
+            let runningTotal = 0;
+            for (let h = 0; h < 24; h++) {
+                runningTotal += (addPoints[h] - deductPoints[h]);
+                totalPoints[h] = runningTotal;
+            }
+            
+            return { hours, addPoints, deductPoints, totalPoints };
+        }
+        
+        // 更新设置UI
+        function updateSettingsUI() {
+            updateAddDeductSettings();
+            updateRewardsSettings();
+        }
+        
+        // 更新加分扣分设置
+        function updateAddDeductSettings() {
+            if (!addPointsSettings || !deductPointsSettings) return;
+            
+            // 清空容器
+            addPointsSettings.innerHTML = '';
+            deductPointsSettings.innerHTML = '';
+            
+            // 加分项设置
+            addItems.forEach((item, index) => {
+                const settingItem = document.createElement('div');
+                settingItem.className = 'setting-item flex items-center mb-3';
+                settingItem.innerHTML = `
+                    <div class="flex-grow mr-2">
+                        <div class="flex mb-2">
+                            <input type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-l-md text-base" 
+                                value="${item.name}" placeholder="项目名称" id="add-name-${index}">
+                            <input type="text" class="w-10 p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 border-l-0 text-base text-center"
+                                value="${item.emoji}" placeholder="🎮" id="add-emoji-${index}">
+                        </div>
+                        <div class="flex">
+                            <input type="number" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-l-md text-base" 
+                                value="${item.points}" placeholder="分值" id="add-points-${index}" min="1">
+                            <span class="bg-gray-100 dark:bg-gray-700 p-2 border border-gray-300 dark:border-gray-600 border-l-0 rounded-r-md">分</span>
+                        </div>
+                    </div>
+                    <button class="delete-add-btn px-3 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 focus:outline-none" data-index="${index}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                `;
+                
+                // 添加事件监听
+                addPointsSettings.appendChild(settingItem);
+                
+                const nameInput = document.getElementById(`add-name-${index}`);
+                const emojiInput = document.getElementById(`add-emoji-${index}`);
+                const pointsInput = document.getElementById(`add-points-${index}`);
+                
+                nameInput.addEventListener('change', () => {
+                    addItems[index].name = nameInput.value;
+                    saveData();
+                    updatePointButtons();
+                });
+                
+                emojiInput.addEventListener('change', () => {
+                    addItems[index].emoji = emojiInput.value;
+                    saveData();
+                    updatePointButtons();
+                });
+                
+                pointsInput.addEventListener('change', () => {
+                    addItems[index].points = Math.max(1, parseInt(pointsInput.value) || 1);
+                    saveData();
+                    updatePointButtons();
+                });
+                
+                settingItem.querySelector('.delete-add-btn').addEventListener('click', () => {
+                    addItems.splice(index, 1);
+                    saveData();
+                    updateSettingsUI();
+                    updatePointButtons();
+                });
+            });
+            
+            // 扣分项设置
+            deductItems.forEach((item, index) => {
+                const settingItem = document.createElement('div');
+                settingItem.className = 'setting-item flex items-center mb-3';
+                settingItem.innerHTML = `
+                    <div class="flex-grow mr-2">
+                        <div class="flex mb-2">
+                            <input type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-l-md text-base" 
+                                value="${item.name}" placeholder="项目名称" id="deduct-name-${index}">
+                            <input type="text" class="w-10 p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 border-l-0 text-base text-center"
+                                value="${item.emoji}" placeholder="🎮" id="deduct-emoji-${index}">
+                        </div>
+                        <div class="flex">
+                            <input type="number" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-l-md text-base" 
+                                value="${Math.abs(item.points)}" placeholder="分值" id="deduct-points-${index}" min="1">
+                            <span class="bg-gray-100 dark:bg-gray-700 p-2 border border-gray-300 dark:border-gray-600 border-l-0 rounded-r-md">分</span>
+                        </div>
+                    </div>
+                    <button class="delete-deduct-btn px-3 py-2 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 focus:outline-none" data-index="${index}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                `;
+                
+                // 添加事件监听
+                deductPointsSettings.appendChild(settingItem);
+                
+                const nameInput = document.getElementById(`deduct-name-${index}`);
+                const emojiInput = document.getElementById(`deduct-emoji-${index}`);
+                const pointsInput = document.getElementById(`deduct-points-${index}`);
+                
+                nameInput.addEventListener('change', () => {
+                    deductItems[index].name = nameInput.value;
+                    saveData();
+                    updatePointButtons();
+                });
+                
+                emojiInput.addEventListener('change', () => {
+                    deductItems[index].emoji = emojiInput.value;
+                    saveData();
+                    updatePointButtons();
+                });
+                
+                pointsInput.addEventListener('change', () => {
+                    deductItems[index].points = -Math.max(1, parseInt(pointsInput.value) || 1);
+                    saveData();
+                    updatePointButtons();
+                });
+                
+                settingItem.querySelector('.delete-deduct-btn').addEventListener('click', () => {
+                    deductItems.splice(index, 1);
+                    saveData();
+                    updateSettingsUI();
+                    updatePointButtons();
+                });
+            });
+        }
+        
+        // 更新奖品设置
+        function updateRewardsSettings() {
+            if (!rewardsSettings) return;
+            
+            // 清空容器
+            rewardsSettings.innerHTML = '';
+            
+            // 按积分排序
+            const sortedRewards = [...rewards].sort((a, b) => a.price - b.price);
+            
+            // 奖品设置项
+            sortedRewards.forEach((reward, index) => {
+                const settingItem = document.createElement('div');
+                settingItem.className = 'setting-item flex flex-col mb-3';
+                settingItem.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-semibold text-girl-hotpink dark:text-girl-lightpink">${reward.name}</h3>
+                        <button class="delete-reward-btn px-2 py-1 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 focus:outline-none" data-index="${index}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mb-2">
+                        <div>
+                            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">表情符号</label>
+                            <input type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-md text-base" 
+                                value="${reward.emoji}" placeholder="🎮" id="reward-emoji-${index}">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">奖品名称</label>
+                            <input type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-md text-base" 
+                                value="${reward.name}" placeholder="奖品名称" id="reward-name-${index}">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">描述</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-md text-base" 
+                            value="${reward.description}" placeholder="奖品描述" id="reward-description-${index}">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">所需积分</label>
+                        <div class="flex">
+                            <input type="number" class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 rounded-l-md text-base" 
+                                value="${reward.price}" placeholder="积分" id="reward-price-${index}" min="1" max="${MAX_SCORE}">
+                            <span class="bg-gray-100 dark:bg-gray-700 p-2 border border-gray-300 dark:border-gray-600 border-l-0 rounded-r-md">🌺</span>
+                        </div>
+                    </div>
+                `;
+                
+                // 添加到容器
+                rewardsSettings.appendChild(settingItem);
+                
+                // 添加事件监听
+                const emojiInput = document.getElementById(`reward-emoji-${index}`);
+                const nameInput = document.getElementById(`reward-name-${index}`);
+                const descriptionInput = document.getElementById(`reward-description-${index}`);
+                const priceInput = document.getElementById(`reward-price-${index}`);
+                
+                emojiInput.addEventListener('change', () => {
+                    rewards[index].emoji = emojiInput.value;
+                    saveData();
+                    updateProgressBar();
+                });
+                
+                nameInput.addEventListener('change', () => {
+                    rewards[index].name = nameInput.value;
+                    saveData();
+                });
+                
+                descriptionInput.addEventListener('change', () => {
+                    rewards[index].description = descriptionInput.value;
+                    saveData();
+                });
+                
+                priceInput.addEventListener('change', () => {
+                    // 确保价格在有效范围内
+                    const price = Math.min(MAX_SCORE, Math.max(1, parseInt(priceInput.value) || 1));
+                    rewards[index].price = price;
+                    priceInput.value = price; // 更新输入框值以反映任何被限制的值
+                    saveData();
+                    updateProgressBar();
+                });
+                
+                // 删除按钮
+                settingItem.querySelector('.delete-reward-btn').addEventListener('click', () => {
+                    rewards.splice(index, 1);
+                    saveData();
+                    updateRewardsSettings();
+                    updateProgressBar();
+                });
+            });
+        }
+        
+        // 添加新加分项
+        function addNewAddItem() {
+            addItems.push({ name: "新加分项", points: 1, emoji: "✨" });
+            saveData();
+            updateSettingsUI();
+            updatePointButtons();
+        }
+        
+        // 添加新扣分项
+        function addNewDeductItem() {
+            deductItems.push({ name: "新扣分项", points: -1, emoji: "❌" });
+            saveData();
+            updateSettingsUI();
+            updatePointButtons();
+        }
+        
+        // 添加新奖品
+        function addNewReward() {
+            // 生成一个未使用的ID
+            const maxId = rewards.reduce((max, reward) => Math.max(max, reward.id), 0);
+            const newId = maxId + 1;
+            
+            rewards.push({
+                id: newId,
+                name: "新奖品",
+                emoji: "🎁",
+                description: "描述一下这个新奖品",
+                price: 30
+            });
+            
+            saveData();
+            updateRewardsSettings();
+            updateProgressBar();
+        }
+        
+        // 重置今日数据
+        function resetTodayData() {
+            score = 0;
+            pointsLog = [];
+            saveData();
+            updateScoreDisplay();
+            updateLogTable();
+            updateStatistics();
+        }
+        
+        // 导出CSV数据
+        function exportToCSV() {
+            const range = document.getElementById('export-range').value;
+            const data = getDataForExport(range);
+            
+            // 创建CSV内容
+            let csvContent = "时间,事项,分值,累计分值\n";
+            
+            data.forEach(entry => {
+                const time = new Date(entry.time);
+                const dateStr = `${time.getFullYear()}-${(time.getMonth() + 1).toString().padStart(2, '0')}-${time.getDate().toString().padStart(2, '0')}`;
+                const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`;
+                
+                csvContent += `${dateStr} ${timeStr},${entry.item},${entry.points},${entry.totalPoints}\n`;
+            });
+            
+            // 由于直接下载可能不被支持，我们显示数据让用户复制
+            const csvDisplay = document.createElement('textarea');
+            csvDisplay.value = csvContent;
+            csvDisplay.style.width = '100%';
+            csvDisplay.style.height = '200px';
+            csvDisplay.style.marginTop = '20px';
+            csvDisplay.style.padding = '10px';
+            
+            const tab4 = document.getElementById('tab4');
+            
+            // 创建CSV数据容器
+            const csvContainer = document.createElement('div');
+            csvContainer.className = 'p-4 mt-4 rounded-xl glass';
+            csvContainer.innerHTML = `
+                <h3 class="text-lg font-semibold mb-3 text-girl-hotpink dark:text-girl-lightpink">CSV 数据（请复制以下内容）</h3>
+                <p class="mb-2 text-gray-600 dark:text-gray-300">全选下方文本框内容，复制后粘贴到文本编辑器中保存为 .csv 文件</p>
+            `;
+            csvContainer.appendChild(csvDisplay);
+            
+            // 检查是否已有数据显示区域
+            const existingContainer = tab4.querySelector('.mt-4');
+            if (existingContainer) {
+                existingContainer.remove();
+            }
+            
+            // 添加到标签页
+            tab4.appendChild(csvContainer);
+        }
+        
+        // 获取导出数据
+        function getDataForExport(range) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            switch(range) {
+                case 'today':
+                    return pointsLog.filter(entry => new Date(entry.time) >= today);
+                    
+                case 'week':
+                    const weekStart = new Date(today);
+                    weekStart.setDate(today.getDate() - today.getDay());
+                    return pointsLog.filter(entry => new Date(entry.time) >= weekStart);
+                    
+                case 'month':
+                    const monthStart = new Date(today);
+                    monthStart.setDate(1);
+                    return pointsLog.filter(entry => new Date(entry.time) >= monthStart);
+                    
+                case 'all':
+                default:
+                    return pointsLog;
+            }
+        }
+        
+        // 事件监听器
+        function setupEventListeners() {
+            // 计时器按钮
+            startBtn.addEventListener('click', () => startTimer());
+            pauseBtn.addEventListener('click', pauseTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            
+            // 奖品兑换相关
+            exchangeBtn.addEventListener('click', openRewardsModal);
+            closeModalBtn.addEventListener('click', closeRewardsModal);
+            confirmExchangeBtn.addEventListener('click', confirmExchange);
+            
+            // 点击模态窗口背景关闭
+            rewardsModal.addEventListener('click', (e) => {
+                if (e.target === rewardsModal) {
+                    closeRewardsModal();
+                }
+            });
+            
+            // 设置页面按钮
+            if (addNewAddItemBtn) {
+                addNewAddItemBtn.addEventListener('click', addNewAddItem);
+            }
+            
+            if (addNewDeductItemBtn) {
+                addNewDeductItemBtn.addEventListener('click', addNewDeductItem);
+            }
+            
+            if (addNewRewardBtn) {
+                addNewRewardBtn.addEventListener('click', addNewReward);
+            }
+            
+            if (resetTodayDataBtn) {
+                resetTodayDataBtn.addEventListener('click', resetTodayData);
+            }
+            
+            // 导出按钮
+            if (exportCsvBtn) {
+                exportCsvBtn.addEventListener('click', exportToCSV);
+            }
+        }
+        
+        // 增强的数据加载功能，确保页面完全加载后执行
+        function initializeApp() {
+            // 设置标签页切换
+            setupTabs();
+            
+            // 设置事件监听器
+            setupEventListeners();
+            
+            // 加载数据
+            loadData();
+            
+            // 更新兑换历史
+            updateExchangeHistory();
+        }
+        
+        // 确保DOM完全加载后再初始化应用
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+        
+        // 每5秒自动保存一次数据
+        setInterval(saveData, 5000);
+        
+        // 页面可见性变化时保存数据（用户切换标签页或最小化浏览器）
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                saveData();
+            }
+        });
+        
+        // 页面关闭前保存数据
+        window.addEventListener('beforeunload', saveData);
+        
+        // 在微信环境中可能需要的额外处理
+        // 微信网页SDK加载完成后执行
+        if (typeof WeixinJSBridge !== 'undefined') {
+            document.addEventListener('WeixinJSBridgeReady', saveData);
+        }
+    </script>
+
+
+</body></html>
