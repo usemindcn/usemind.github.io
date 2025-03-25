@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>番茄闹钟</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        'tomato-red': '#FF6347',
+                        'break-green': '#4CAF50',
+                        'long-break-blue': '#2196F3',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .timer-circle {
+            width: 280px;
+            height: 280px;
+        }
+        @media (max-width: 640px) {
+            .timer-circle {
+                width: 240px;
+                height: 240px;
+            }
+        }
+        
+        /* Progress Circle Animation */
+        @keyframes countdown {
+            from {
+                stroke-dashoffset: 0;
+            }
+            to {
+                stroke-dashoffset: var(--full-dash);
+            }
+        }
+        .timer-progress {
+            animation: countdown linear forwards;
+            animation-duration: var(--duration);
+            animation-play-state: paused;
+        }
+        
+        /* Dark mode styles */
+        .dark {
+            color-scheme: dark;
+        }
+    </style>
+</head>
+<body class="font-sans bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 flex flex-col items-center">
+        <h1 class="text-3xl font-bold text-primary mb-6">番茄闹钟</h1>
+        
+        <div class="timer-container relative flex flex-col items-center my-4">
+            <!-- Timer Display Circle -->
+            <div class="timer-circle relative">
+                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <!-- Background Circle -->
+                    <circle 
+                        cx="50" cy="50" r="45" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        stroke-width="2" 
+                        class="text-gray-200 dark:text-gray-700"
+                    />
+                    <!-- Progress Circle -->
+                    <circle 
+                        id="timer-progress"
+                        cx="50" cy="50" r="45" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        stroke-width="4" 
+                        stroke-linecap="round"
+                        stroke-dasharray="282.74" 
+                        class="timer-progress text-tomato-red"
+                    />
+                </svg>
+                
+                <!-- Timer Text -->
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <div id="timer-display" class="text-5xl font-semibold">25:00</div>
+                    <div id="phase-label" class="text-lg font-medium mt-2 text-tomato-red">专注工作</div>
+                </div>
+            </div>
+            
+            <!-- Control Buttons -->
+            <div class="flex gap-4 mt-6">
+                <button id="start-btn" class="px-6 py-2 bg-primary hover:bg-opacity-90 text-white font-medium rounded-lg shadow transition">
+                    开始
+                </button>
+                <button id="pause-btn" class="px-6 py-2 bg-gray-500 hover:bg-opacity-90 text-white font-medium rounded-lg shadow transition hidden">
+                    暂停
+                </button>
+                <button id="reset-btn" class="px-6 py-2 bg-gray-300 dark:bg-gray-700 hover:bg-opacity-90 text-gray-800 dark:text-gray-200 font-medium rounded-lg shadow transition">
+                    重置
+                </button>
+            </div>
+            
+            <!-- Session Counter -->
+            <div class="mt-4 text-center">
+                <span>完成: </span>
+                <span id="session-counter" class="font-semibold">0</span>
+                <span> 个番茄</span>
+            </div>
+        </div>
+        
+        <!-- Settings Area -->
+        <div class="w-full max-w-md mt-8 bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">设置</h2>
+            
+            <div class="grid grid-cols-1 gap-4">
+                <div class="flex items-center justify-between">
+                    <label for="work-duration" class="font-medium">工作时长 (分钟):</label>
+                    <input 
+                        type="number" 
+                        id="work-duration" 
+                        class="w-20 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-base"
+                        value="25" 
+                        min="1" 
+                        max="60"
+                    >
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label for="short-break" class="font-medium">短休息 (分钟):</label>
+                    <input 
+                        type="number" 
+                        id="short-break" 
+                        class="w-20 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-base"
+                        value="5" 
+                        min="1" 
+                        max="30"
+                    >
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label for="long-break" class="font-medium">长休息 (分钟):</label>
+                    <input 
+                        type="number" 
+                        id="long-break" 
+                        class="w-20 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-base"
+                        value="15" 
+                        min="1" 
+                        max="60"
+                    >
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label for="sessions-until-long-break" class="font-medium">长休息间隔:</label>
+                    <input 
+                        type="number" 
+                        id="sessions-until-long-break" 
+                        class="w-20 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-base"
+                        value="4" 
+                        min="1" 
+                        max="10"
+                    >
+                </div>
+                
+                <div class="flex items-center">
+                    <input 
+                        type="checkbox" 
+                        id="notification-sound" 
+                        class="w-4 h-4 text-primary border-gray-300 rounded"
+                        checked
+                    >
+                    <label for="notification-sound" class="ml-2">启用提示音</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // Timer elements
+        const timerDisplay = document.getElementById('timer-display');
+        const phaseLabel = document.getElementById('phase-label');
+        const startBtn = document.getElementById('start-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const sessionCounter = document.getElementById('session-counter');
+        const timerProgress = document.getElementById('timer-progress');
+        
+        // Settings elements
+        const workDurationInput = document.getElementById('work-duration');
+        const shortBreakInput = document.getElementById('short-break');
+        const longBreakInput = document.getElementById('long-break');
+        const sessionsUntilLongBreakInput = document.getElementById('sessions-until-long-break');
+        const notificationSoundCheckbox = document.getElementById('notification-sound');
+        
+        // Timer states
+        const PHASE = {
+            WORK: 'work',
+            SHORT_BREAK: 'short-break',
+            LONG_BREAK: 'long-break'
+        };
+        
+        let timer = null;
+        let timeLeft = workDurationInput.value * 60;
+        let isRunning = false;
+        let currentPhase = PHASE.WORK;
+        let sessionCount = 0;
+        
+        // Audio for notification
+        const audio = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAkJCQkJCQkJCQkJCQkJCQwMDAwMDAwMDAwMDAwMDAwMDg4ODg4ODg4ODg4ODg4ODg4P//////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQCkAAAAAAAAAGwzyd6pwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAANmAKIWUEQAArDSumnn7wwEAhZbZO7/ywa/8sMf5f8SHhl7zj5lhT/8vH51Rf/y/XK1evf5hiT/8WE5Q5fUf9D866De6eM8//+v3/9xSMdI//th0zz7tJx3/iFE9ZiVuv//+MYxBYOAAKwAZmQAA9M6K2sMN+4jDu4mCyj0Ti8jHiQ+QtqLyMxpTSPEhlPSTTOeRjNahhYnSWGElCGUSK1JpbWLaqamEJ3Frr9nyycvpzJlT6k//b9O7q+xTi7f3Vt8zN7Lwrb//MUxBoJQAKw8AAAABUut7adbdbcxiYpmMMPhweHh4ekCAcKDUzJkwnDU7CUpJSlkZrTzunlz59Xl5eXpSlKbuS3cluUpTd3JbkpSkp6lKbu5LdyW5kZpE9SlNjNIzRF3JSkpSA=');
+        
+        // Initialize timer display
+        updateTimerDisplay();
+        
+        // Utility functions
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // Update phase label and colors
+            switch(currentPhase) {
+                case PHASE.WORK:
+                    phaseLabel.textContent = '专注工作';
+                    phaseLabel.className = 'text-lg font-medium mt-2 text-tomato-red';
+                    timerProgress.classList.remove('text-break-green', 'text-long-break-blue');
+                    timerProgress.classList.add('text-tomato-red');
+                    break;
+                case PHASE.SHORT_BREAK:
+                    phaseLabel.textContent = '短休息';
+                    phaseLabel.className = 'text-lg font-medium mt-2 text-break-green';
+                    timerProgress.classList.remove('text-tomato-red', 'text-long-break-blue');
+                    timerProgress.classList.add('text-break-green');
+                    break;
+                case PHASE.LONG_BREAK:
+                    phaseLabel.textContent = '长休息';
+                    phaseLabel.className = 'text-lg font-medium mt-2 text-long-break-blue';
+                    timerProgress.classList.remove('text-tomato-red', 'text-break-green');
+                    timerProgress.classList.add('text-long-break-blue');
+                    break;
+            }
+            
+            // Update session counter
+            sessionCounter.textContent = sessionCount;
+        }
+        
+        function resetTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            
+            // Set time based on current phase
+            switch(currentPhase) {
+                case PHASE.WORK:
+                    timeLeft = workDurationInput.value * 60;
+                    break;
+                case PHASE.SHORT_BREAK:
+                    timeLeft = shortBreakInput.value * 60;
+                    break;
+                case PHASE.LONG_BREAK:
+                    timeLeft = longBreakInput.value * 60;
+                    break;
+            }
+            
+            updateTimerDisplay();
+            updateProgressCircle();
+            startBtn.classList.remove('hidden');
+            pauseBtn.classList.add('hidden');
+        }
+        
+        function updateProgressCircle() {
+            const timerProgressCircle = document.getElementById('timer-progress');
+            const circumference = 2 * Math.PI * 45; // 2πr where r=45
+            const dashArray = circumference;
+            
+            let duration;
+            switch(currentPhase) {
+                case PHASE.WORK:
+                    duration = workDurationInput.value * 60;
+                    break;
+                case PHASE.SHORT_BREAK:
+                    duration = shortBreakInput.value * 60;
+                    break;
+                case PHASE.LONG_BREAK:
+                    duration = longBreakInput.value * 60;
+                    break;
+            }
+            
+            // Reset animation
+            timerProgressCircle.style.animation = 'none';
+            timerProgressCircle.offsetHeight; // Trigger reflow to restart animation
+            
+            // Set the CSS variables for the animation
+            document.documentElement.style.setProperty('--full-dash', dashArray);
+            document.documentElement.style.setProperty('--duration', `${duration}s`);
+            
+            timerProgressCircle.style.strokeDasharray = dashArray;
+            timerProgressCircle.style.strokeDashoffset = 0;
+            
+            if (isRunning) {
+                timerProgressCircle.style.animation = '';
+                timerProgressCircle.style.animationPlayState = 'running';
+            } else {
+                // Calculate current position for paused state
+                const progress = timeLeft / duration;
+                const dashOffset = (1 - progress) * dashArray;
+                timerProgressCircle.style.strokeDashoffset = dashOffset;
+            }
+        }
+        
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+            
+            updateProgressCircle();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    
+                    // Play notification sound if enabled
+                    if (notificationSoundCheckbox.checked) {
+                        audio.play().catch(e => console.log('Error playing sound:', e));
+                    }
+                    
+                    // Switch phases
+                    if (currentPhase === PHASE.WORK) {
+                        sessionCount++;
+                        
+                        // Determine which break to take
+                        if (sessionCount % sessionsUntilLongBreakInput.value === 0) {
+                            currentPhase = PHASE.LONG_BREAK;
+                            timeLeft = longBreakInput.value * 60;
+                        } else {
+                            currentPhase = PHASE.SHORT_BREAK;
+                            timeLeft = shortBreakInput.value * 60;
+                        }
+                    } else {
+                        // After any break, go back to work
+                        currentPhase = PHASE.WORK;
+                        timeLeft = workDurationInput.value * 60;
+                    }
+                    
+                    updateTimerDisplay();
+                    updateProgressCircle();
+                    isRunning = false;
+                    startBtn.classList.remove('hidden');
+                    pauseBtn.classList.add('hidden');
+                }
+            }, 1000);
+        }
+        
+        function pauseTimer() {
+            if (!isRunning) return;
+            
+            clearInterval(timer);
+            isRunning = false;
+            startBtn.classList.remove('hidden');
+            pauseBtn.classList.add('hidden');
+            
+            // Pause the progress animation
+            const timerProgressCircle = document.getElementById('timer-progress');
+            timerProgressCircle.style.animationPlayState = 'paused';
+        }
+        
+        // Event listeners
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', () => {
+            // Only reset the current phase, don't change phases
+            resetTimer();
+        });
+        
+        // Update timer when settings change
+        const settingsInputs = [workDurationInput, shortBreakInput, longBreakInput, sessionsUntilLongBreakInput];
+        settingsInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                // Validate input values
+                if (input.value < input.min) input.value = input.min;
+                if (input.value > input.max) input.value = input.max;
+                
+                // Reset timer if not running
+                if (!isRunning) {
+                    resetTimer();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
