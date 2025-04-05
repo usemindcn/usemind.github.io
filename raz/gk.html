@@ -1,0 +1,989 @@
+<!DOCTYPE html><html lang="zh-CN" class="dark"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAZ-GK词汇量测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?d548e57fcc99d04c2c840696b7b8f8c8";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+    <style>
+        .character-card {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .character {
+            font-size: 1.5rem;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+        
+        @media (min-width: 640px) {
+            .character {
+                font-size: 1.75rem;
+            }
+        }
+        
+        /* Contact button flashing gradient */
+        #contact-btn {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 5s ease infinite;
+        }
+        
+        .contact-text {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+        
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        /* QR code container with glowing red gradient border */
+        .qr-code-container {
+            position: relative;
+            padding: 4px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .qr-code-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            z-index: -1;
+            background: linear-gradient(45deg, #ff0000, #ff6666, #ff9999, #ff0000);
+            background-size: 400% 400%;
+            animation: borderGradient 3s ease infinite;
+            border-radius: 10px;
+        }
+        
+        .qr-code-container img {
+            border-radius: 4px;
+            position: relative;
+            z-index: 1;
+            background: white;
+        }
+        
+        @keyframes borderGradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Enhanced character card active state */
+        .character-card[data-checked="true"] {
+            background-color: rgba(93, 92, 222, 0.3) !important; /* More vibrant color */
+            border-color: #5D5CDE !important;
+            transform: scale(1.05); /* Slightly enlarge */
+            box-shadow: 0 0 12px rgba(93, 92, 222, 0.4); /* Add glow effect */
+        }
+
+        /* Timer display styling */
+        #timer-display {
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+        
+        #timer-display.active {
+            background-color: rgba(93, 92, 222, 0.1);
+            border: 1px solid #5D5CDE;
+        }
+
+        /* Animation for character click */
+        @keyframes characterPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1.05); }
+        }
+
+        .character-pulse {
+            animation: characterPulse 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="mb-6 text-center relative">
+            <button id="export-btn" class="absolute right-0 top-0 bg-primary hover:bg-primary/90 text-white font-medium py-1 px-3 rounded flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                导出
+            </button>
+            <h1 class="text-2xl font-bold mb-2">RAZ-GK词汇量测试</h1>
+            <div class="flex justify-center items-center mb-4 text-lg">
+                <span>已认识：</span>
+                <span id="known-count" class="font-bold text-primary text-xl ml-1">0</span>
+                <span class="mx-1">/</span>
+                <span id="total-count" class="ml-1">0</span>
+                <span class="ml-2">个词</span>
+            </div>
+            <div class="flex justify-center flex-wrap gap-2 items-center mb-4">
+                <button id="start-btn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    开始
+                </button>
+                <div id="timer-display" class="text-xl font-mono bg-gray-800 px-3 py-1 rounded">00:00</div>
+                <button id="shuffle-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded flex items-center ml-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    随机排序
+                </button>
+            </div>
+            <div class="flex justify-center items-center mb-2">
+                <button id="check-all" class="bg-primary hover:bg-primary/90 text-white font-medium py-1 px-3 rounded mr-2">
+                    全选
+                </button>
+                <button id="uncheck-all" class="bg-gray-700 hover:bg-gray-600 font-medium py-1 px-3 rounded">
+                    全不选
+                </button>
+            </div>
+        </div>
+
+        <!-- Level Tabs -->
+        <div class="mb-6 overflow-x-auto">
+            <div class="flex border-b border-gray-700">
+                <button class="level-tab px-4 py-2 font-medium border-b-2 border-primary text-primary" data-level="aa">
+                    aa级别 (<span class="level-count">0</span>词)
+                </button>
+                <button class="level-tab px-4 py-2 font-medium border-b-2 border-transparent hover:text-primary" data-level="A">
+                    A级别 (<span class="level-count">0</span>词)
+                </button>
+                <button class="level-tab px-4 py-2 font-medium border-b-2 border-transparent hover:text-primary" data-level="B">
+                    B级别 (<span class="level-count">0</span>词)
+                </button>
+                <button class="level-tab px-4 py-2 font-medium border-b-2 border-transparent hover:text-primary" data-level="C">
+                    C级别 (<span class="level-count">0</span>词)
+                </button>
+            </div>
+        </div>
+
+        <!-- Character Grid Container -->
+        <div id="character-container" class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2 sm:gap-3">
+            <!-- Character cards will be added here -->
+        </div>
+    </div>
+
+    <!-- Import & Contact Buttons -->
+    <div class="text-center my-6 flex flex-col items-center">
+        <div class="flex space-x-4 mb-3">
+            <button id="import-btn" class="bg-gray-700 hover:bg-gray-600 text-gray-200 font-medium py-1 px-3 rounded flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v-1a3 3 0 013-3h10a3 3 0 013 3v1m-4-8l-4-4m0 0l-4 4m4-4v12"></path>
+                </svg>
+                导入数据
+            </button>
+        </div>
+        <button id="contact-btn" class="inline-block px-6 py-2 rounded-full font-bold text-lg relative overflow-hidden">
+            <span class="relative z-10 contact-text">点击联系开发者</span>
+        </button>
+    </div>
+    
+    <!-- Import Modal -->
+    <div id="import-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 max-w-xl w-full max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">导入数据</h3>
+                <button id="close-import-modal" class="text-gray-400 hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm mb-2">粘贴之前导出的CSV数据：</p>
+                <textarea id="import-content" class="w-full h-40 text-xs p-3 border border-gray-600 rounded bg-gray-700 text-gray-200" placeholder="在此粘贴CSV数据..."></textarea>
+            </div>
+            <div class="flex justify-end">
+                <button id="process-import" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded">
+                    导入数据
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Developer Modal -->
+    <div id="contact-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-sm w-full flex flex-col items-center">
+            <div class="flex justify-between w-full mb-4">
+                <h3 class="text-lg font-medium">扫码联系开发者</h3>
+                <button id="close-contact-modal" class="text-gray-400 hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="qr-code-container">
+                <img src="https://usemind.cn/wechat.png" alt="WeChat QR Code" class="w-64 h-64 object-contain">
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 max-w-3xl w-full max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">导出数据</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="overflow-auto flex-grow mb-4">
+                <pre id="export-content" class="text-xs whitespace-pre-wrap bg-gray-700 p-4 rounded h-full overflow-auto"></pre>
+            </div>
+            <div class="flex flex-col space-y-2">
+                <p class="text-sm">请选择以下方式导出数据：</p>
+                <div class="flex flex-wrap gap-2">
+                    <button id="copy-csv" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                        </svg>
+                        复制CSV内容
+                    </button>
+                    <button id="download-csv" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        下载CSV文件
+                    </button>
+                </div>
+                <div class="text-xs text-gray-400 mt-2">
+                    <p><span class="font-semibold">微信/移动浏览器用户:</span> 请使用"复制CSV内容"，然后粘贴到其他应用中保存。</p>
+                    <p><span class="font-semibold">PC用户:</span> 可以直接点击"下载CSV文件"按钮下载。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Original vocabulary data by level
+        const originalVocabularyData = {
+            "aa": "ball big blue can car come down find for go help here I in is it jump little look make me my not one play red run said see the to two up we yellow you",
+            "A": "all am are at ate be black brown but came did do eat four get good have he into like must new no now on our out please pretty ran ride saw say she so soon that there they this too under want was well went what white who will with yes",
+            "B": "again always around away because been before best both buy call cold does don't fast first five found gave goes green its made many off or pull read right sing sit sleep tell their these those upon us use very wash which why wish work would write your",
+            "C": "about better bring carry clean cut done draw drink eight fall far full got grow hold hot hurt if keep kind laugh light long much myself never only own pick seven shall show six small start stop ten today together try warm",
+        };
+
+        // Process vocabulary data to remove duplicates
+        function removeDuplicates(data) {
+            const processed = {};
+            const seen = new Set();
+            
+            // First pass: identify unique words for each level
+            for (let level in originalVocabularyData) {
+                const words = originalVocabularyData[level].split(" ");
+                processed[level] = [];
+                
+                for (let i = 0; i < words.length; i++) {
+                    const word = words[i];
+                    if (!seen.has(word)) {
+                        seen.add(word);
+                        processed[level].push(word);
+                    }
+                }
+            }
+            
+            return processed;
+        }
+        
+        // Shuffle words in an array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Vocabulary data with duplicates removed
+        const vocabularyData = removeDuplicates(originalVocabularyData);
+        
+        // Shuffle each level's words initially
+        for (let level in vocabularyData) {
+            vocabularyData[level] = shuffleArray(vocabularyData[level]);
+        }
+
+        // Timer implementation
+        let timerInterval = null;
+        let startTime = 0;
+        let timerRunning = false;
+
+        function startTimer() {
+            if (!timerRunning) {
+                timerRunning = true;
+                startTime = Date.now() - (startTime > 0 ? Date.now() - startTime : 0);
+                document.getElementById('timer-display').classList.add('active');
+                timerInterval = setInterval(updateTimer, 1000);
+                document.getElementById('start-btn').innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    暂停
+                `;
+            } else {
+                timerRunning = false;
+                clearInterval(timerInterval);
+                document.getElementById('timer-display').classList.remove('active');
+                document.getElementById('start-btn').innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    继续
+                `;
+            }
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const seconds = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${minutes}:${seconds}`;
+        }
+
+        function resetTimer() {
+            if (timerRunning) {
+                clearInterval(timerInterval);
+                timerRunning = false;
+            }
+            startTime = 0;
+            document.getElementById('timer-display').textContent = '00:00';
+            document.getElementById('timer-display').classList.remove('active');
+            document.getElementById('start-btn').innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                开始
+            `;
+        }
+
+        // Load saved data
+        let checkedWords = {};
+        try {
+            const saved = localStorage.getItem('checkedVocabulary');
+            if (saved) {
+                checkedWords = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.log('Could not load saved data');
+        }
+
+        // Count total words
+        let totalWords = 0;
+        for (const level in vocabularyData) {
+            totalWords += vocabularyData[level].length;
+            // Update the level count in the tab
+            const tabElements = document.querySelectorAll(`.level-tab[data-level="${level}"] .level-count`);
+            tabElements.forEach(el => {
+                el.textContent = vocabularyData[level].length;
+            });
+        }
+        document.getElementById('total-count').textContent = totalWords;
+
+        // Function to render words for a specific level
+        function renderLevel(levelName) {
+            const container = document.getElementById('character-container');
+            container.innerHTML = '';
+            
+            const words = vocabularyData[levelName];
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                const wordId = `level${levelName}-word-${i}`;
+                const isChecked = checkedWords[wordId] || false;
+                
+                const card = document.createElement('div');
+                card.className = `character-card border ${isChecked ? 'bg-primary/10 border-primary' : 'bg-gray-800 border-gray-700'} hover:border-primary hover:shadow-sm transition-all cursor-pointer`;
+                card.setAttribute('data-id', wordId);
+                card.setAttribute('data-checked', isChecked ? 'true' : 'false');
+                
+                card.innerHTML = `
+                    <div class="character">${word}</div>
+                `;
+                
+                container.appendChild(card);
+            }
+            
+            // Update tab styling
+            document.querySelectorAll('.level-tab').forEach(tab => {
+                const tabLevel = tab.getAttribute('data-level');
+                if (tabLevel === levelName) {
+                    tab.classList.add('border-primary', 'text-primary');
+                    tab.classList.remove('border-transparent');
+                } else {
+                    tab.classList.remove('border-primary', 'text-primary');
+                    tab.classList.add('border-transparent');
+                }
+            });
+            
+            updateCounter();
+        }
+
+        // Add event listeners for level tabs
+        document.querySelectorAll('.level-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const levelName = tab.getAttribute('data-level');
+                renderLevel(levelName);
+            });
+        });
+
+        // Add event listener for card clicks
+        document.addEventListener('click', e => {
+            // Find if we clicked on a card or any of its children
+            const card = e.target.closest('.character-card');
+            if (card) {
+                // Start timer if not running
+                if (!timerRunning) {
+                    startTimer();
+                }
+                
+                const wordId = card.getAttribute('data-id');
+                const isCurrentlyChecked = card.getAttribute('data-checked') === 'true';
+                const newCheckedState = !isCurrentlyChecked;
+                
+                // Add pulse animation
+                card.classList.add('character-pulse');
+                setTimeout(() => {
+                    card.classList.remove('character-pulse');
+                }, 300);
+                
+                // Update card styling
+                if (newCheckedState) {
+                    card.classList.add('bg-primary/10', 'border-primary');
+                    card.classList.remove('bg-gray-800', 'border-gray-700');
+                } else {
+                    card.classList.remove('bg-primary/10', 'border-primary');
+                    card.classList.add('bg-gray-800', 'border-gray-700');
+                }
+                
+                // Update card data attribute
+                card.setAttribute('data-checked', newCheckedState ? 'true' : 'false');
+                
+                // Update saved data
+                checkedWords[wordId] = newCheckedState;
+                saveData();
+                updateCounter();
+            }
+        });
+
+        // Add event listeners for bulk actions
+        document.getElementById('check-all').addEventListener('click', () => {
+            const cards = document.querySelectorAll('.character-card');
+            
+            cards.forEach(card => {
+                const wordId = card.getAttribute('data-id');
+                
+                // Update card styling
+                card.classList.add('bg-primary/10', 'border-primary');
+                card.classList.remove('bg-gray-800', 'border-gray-700');
+                
+                // Update card data attribute
+                card.setAttribute('data-checked', 'true');
+                
+                // Update data
+                checkedWords[wordId] = true;
+            });
+            
+            saveData();
+            updateCounter();
+        });
+
+        document.getElementById('uncheck-all').addEventListener('click', () => {
+            const cards = document.querySelectorAll('.character-card');
+            
+            cards.forEach(card => {
+                const wordId = card.getAttribute('data-id');
+                
+                // Update card styling
+                card.classList.remove('bg-primary/10', 'border-primary');
+                card.classList.add('bg-gray-800', 'border-gray-700');
+                
+                // Update card data attribute
+                card.setAttribute('data-checked', 'false');
+                
+                // Update data
+                checkedWords[wordId] = false;
+            });
+            
+            saveData();
+            updateCounter();
+        });
+
+        // Start button click handler
+        document.getElementById('start-btn').addEventListener('click', () => {
+            startTimer();
+        });
+
+        // Shuffle button click handler
+        document.getElementById('shuffle-btn').addEventListener('click', () => {
+            const currentLevel = getCurrentLevel();
+            vocabularyData[currentLevel] = shuffleArray(vocabularyData[currentLevel]);
+            renderLevel(currentLevel);
+            
+            // Show shuffle feedback
+            const button = document.getElementById('shuffle-btn');
+            const originalText = button.innerHTML;
+            button.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                已随机排序
+            `;
+            button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            button.classList.add('bg-green-600', 'hover:bg-green-700');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                button.classList.add('bg-blue-500', 'hover:bg-blue-600');
+            }, 1500);
+        });
+
+        // Helper functions
+        function getCurrentLevel() {
+            const activeTab = document.querySelector('.level-tab.border-primary');
+            return activeTab.getAttribute('data-level');
+        }
+
+        function updateCounter() {
+            let count = 0;
+            for (const id in checkedWords) {
+                if (checkedWords[id]) {
+                    count++;
+                }
+            }
+            document.getElementById('known-count').textContent = count;
+        }
+
+        // Enhanced data saving with feedback and fallbacks
+        function saveData() {
+            const dataToSave = JSON.stringify(checkedWords);
+            // Try primary storage method first
+            try {
+                localStorage.setItem('checkedVocabulary', dataToSave);
+                // Add a subtle visual indicator that data was saved
+                showSaveIndicator(true);
+                return true;
+            } catch (e) {
+                console.log('localStorage error:', e);
+                // Try alternative storage as fallback for private browsing mode
+                try {
+                    // Try sessionStorage as a temporary solution
+                    sessionStorage.setItem('checkedVocabulary', dataToSave);
+                    showSaveIndicator(false);
+                    return true;
+                } catch (err) {
+                    console.log('All storage methods failed:', err);
+                    showSaveIndicator(false, true);
+                    return false;
+                }
+            }
+        }
+        
+        // Add a save indicator notification
+        function showSaveIndicator(isPermanent = true, isError = false) {
+            // Check if indicator already exists, remove it if so
+            const existingIndicator = document.getElementById('save-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+            
+            // Create new indicator
+            const indicator = document.createElement('div');
+            indicator.id = 'save-indicator';
+            
+            if (isError) {
+                indicator.className = 'fixed bottom-4 left-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
+                indicator.textContent = '数据保存失败';
+            } else {
+                indicator.className = 'fixed bottom-4 left-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
+                indicator.textContent = isPermanent ? '数据已保存' : '数据临时保存';
+            }
+            
+            document.body.appendChild(indicator);
+            
+            // Remove the indicator after a delay
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+                indicator.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => indicator.remove(), 500);
+            }, 1500);
+        }
+
+        // Initialize the app with the first level
+        renderLevel('aa');
+
+        // Export functionality
+        document.getElementById('export-btn').addEventListener('click', () => {
+            // Generate CSV content
+            let csvContent = "级别,单词,状态\n"; // CSV header
+
+            // Process each level
+            for (let level in vocabularyData) {
+                const words = vocabularyData[level];
+                for (let i = 0; i < words.length; i++) {
+                    const word = words[i];
+                    const wordId = `level${level}-word-${i}`;
+                    const status = checkedWords[wordId] ? "认识" : "不认识";
+                    
+                    // Add to CSV (properly escape characters if they contain commas)
+                    csvContent += `${level},"${word}",${status}\n`;
+                }
+            }
+
+            // Show the modal with content
+            document.getElementById('export-content').textContent = csvContent;
+            document.getElementById('export-modal').classList.remove('hidden');
+        });
+
+        // Close modal
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('export-modal').classList.add('hidden');
+        });
+
+        // Copy CSV content
+        document.getElementById('copy-csv').addEventListener('click', () => {
+            const csvContent = document.getElementById('export-content').textContent;
+            
+            // Try clipboard API first (newer browsers)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(csvContent)
+                    .then(() => {
+                        showCopySuccess('copy-csv', '已复制!');
+                    })
+                    .catch(err => {
+                        console.error('Clipboard API error:', err);
+                        // Fallback to selection method for mobile devices
+                        copyTextFallback(csvContent);
+                    });
+            } else {
+                // Fallback for browsers without clipboard API
+                copyTextFallback(csvContent);
+            }
+        });
+        
+        // Download CSV file
+        document.getElementById('download-csv').addEventListener('click', () => {
+            const csvContent = document.getElementById('export-content').textContent;
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            // Create a hidden link and trigger click
+            try {
+                // Create filename with date
+                const date = new Date();
+                const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+                const filename = `RAZ-GK词汇测试_${dateStr}.csv`;
+                
+                if (navigator.msSaveBlob) { // IE/Edge support
+                    navigator.msSaveBlob(blob, filename);
+                    showCopySuccess('download-csv', '已下载!');
+                } else {
+                    const link = document.createElement('a');
+                    // Create object URL
+                    const url = URL.createObjectURL(blob);
+                    
+                    link.href = url;
+                    link.download = filename;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    
+                    // Trigger download
+                    link.click();
+                    
+                    // Clean up
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                    }, 100);
+                    
+                    showCopySuccess('download-csv', '已下载!');
+                }
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('下载失败，请使用复制功能');
+            }
+        });
+        
+        // Text selection fallback method for copying
+        function copyTextFallback(text) {
+            // Create a temporary textarea
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed'; // Avoid scrolling to bottom
+            document.body.appendChild(textArea);
+            
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess('copy-csv', '已复制!');
+                } else {
+                    alert('复制失败，请手动选择文本并复制');
+                }
+            } catch (err) {
+                console.error('execCommand error:', err);
+                // Show instructions for manual copying
+                alert('自动复制失败，请手动选择文本框中的内容，然后长按选择"复制"');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        // Helper for showing success message
+        function showCopySuccess(buttonId, message) {
+            const button = document.getElementById(buttonId);
+            const originalText = button.innerHTML;
+            const originalBg = button.className;
+            
+            // Update button text (keeping the icon)
+            const icon = button.querySelector('svg');
+            const iconHtml = icon ? icon.outerHTML : '';
+            button.innerHTML = iconHtml + ' ' + message;
+            
+            // Add success class
+            button.classList.add('bg-green-600');
+            button.classList.remove('bg-primary', 'hover:bg-primary/90', 'bg-green-600', 'hover:bg-green-700');
+            
+            // Reset after delay
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.className = originalBg;
+            }, 2000);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('export-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('export-modal')) {
+                document.getElementById('export-modal').classList.add('hidden');
+            }
+        });
+        
+        // Contact developer functionality
+        document.getElementById('contact-btn').addEventListener('click', () => {
+            document.getElementById('contact-modal').classList.remove('hidden');
+        });
+        
+        document.getElementById('close-contact-modal').addEventListener('click', () => {
+            document.getElementById('contact-modal').classList.add('hidden');
+        });
+        
+        // Close contact modal when clicking outside
+        document.getElementById('contact-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('contact-modal')) {
+                document.getElementById('contact-modal').classList.add('hidden');
+            }
+        });
+        
+        // Import functionality
+        document.getElementById('import-btn').addEventListener('click', () => {
+            document.getElementById('import-modal').classList.remove('hidden');
+        });
+        
+        document.getElementById('close-import-modal').addEventListener('click', () => {
+            document.getElementById('import-modal').classList.add('hidden');
+        });
+        
+        // Process import data when clicking the import button
+        document.getElementById('process-import').addEventListener('click', () => {
+            const csvContent = document.getElementById('import-content').value.trim();
+            
+            if (!csvContent) {
+                alert('请先粘贴CSV数据');
+                return;
+            }
+            
+            try {
+                // Parse CSV content
+                const lines = csvContent.split('\n');
+                
+                // Validate header
+                const header = lines[0];
+                if (!header.includes('级别') || !header.includes('单词') || !header.includes('状态')) {
+                    throw new Error('CSV格式不正确，请确保包含"级别,单词,状态"列');
+                }
+                
+                // Track imported data
+                let importedCount = 0;
+                let newRecognizedCount = 0;
+                
+                // Process data lines
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue; // Skip empty lines
+                    
+                    // Split the line and handle quoted values
+                    let parts = [];
+                    let inQuotes = false;
+                    let currentPart = '';
+                    
+                    for (let j = 0; j < line.length; j++) {
+                        const char = line[j];
+                        
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            parts.push(currentPart);
+                            currentPart = '';
+                        } else {
+                            currentPart += char;
+                        }
+                    }
+                    parts.push(currentPart); // Add the last part
+                    
+                    // Ensure we have three parts
+                    if (parts.length < 3) continue;
+                    
+                    const level = parts[0];
+                    const word = parts[1].replace(/^"|"$/g, ''); // Remove quotes if present
+                    const status = parts[2];
+                    
+                    // Validate data
+                    if (!level || !word || !status) {
+                        continue;
+                    }
+                    
+                    // Find the word in our data
+                    if (!vocabularyData[level]) continue;
+                    
+                    const wordIndex = vocabularyData[level].indexOf(word);
+                    if (wordIndex === -1) continue;
+                    
+                    // Create the wordId and update our data
+                    const wordId = `level${level}-word-${wordIndex}`;
+                    const isRecognized = status.includes('认识');
+                    
+                    // Only count as new if changing from not recognized to recognized
+                    if (isRecognized && !checkedWords[wordId]) {
+                        newRecognizedCount++;
+                    }
+                    
+                    checkedWords[wordId] = isRecognized;
+                    importedCount++;
+                }
+                
+                // Save the updated data
+                saveData();
+                
+                // Update the display
+                renderLevel(getCurrentLevel());
+                
+                // Show success message
+                alert(`导入成功！处理了 ${importedCount} 个单词，新增认识 ${newRecognizedCount} 个词。`);
+                
+                // Close modal
+                document.getElementById('import-modal').classList.add('hidden');
+                
+            } catch (err) {
+                console.error('Import error:', err);
+                alert('导入失败: ' + err.message);
+            }
+        });
+        
+        // Close import modal when clicking outside
+        document.getElementById('import-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('import-modal')) {
+                document.getElementById('import-modal').classList.add('hidden');
+            }
+        });
+        
+        // Add browser compatibility check on startup
+        (function checkBrowserCompatibility() {
+            // Check for localStorage support with actual write test
+            let storageAvailable = false;
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                storageAvailable = true;
+            } catch (e) {
+                console.log('localStorage not available:', e);
+            }
+            
+            // Check for WeChat browser
+            const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+            
+            // Check for mobile browser
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            // Show compatibility notice if needed
+            if (!storageAvailable) {
+                const notice = document.createElement('div');
+                notice.className = 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 mx-4 rounded';
+                notice.innerHTML = `
+                    <p class="font-bold">浏览器兼容性提示</p>
+                    <p>您的浏览器似乎不支持本地数据存储，这可能是因为：</p>
+                    <ul class="list-disc ml-5 mt-2">
+                        <li>您使用了隐私浏览模式</li>
+                        <li>浏览器禁用了存储功能</li>
+                        <li>存储空间已满</li>
+                    </ul>
+                    <p class="mt-2">建议：请导出您的数据，以免丢失。</p>
+                `;
+                document.querySelector('.container').prepend(notice);
+            }
+            
+            // Special handling for WeChat browser
+            if (isWeChat) {
+                console.log('WeChat browser detected, enabling additional compatibility.');
+                // Any WeChat-specific adjustments can go here
+            }
+        })();
+    </script>
+
+
+</body></html>
