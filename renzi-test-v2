@@ -1,0 +1,1025 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>认识字统计</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .character-card {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .character {
+            font-size: 1.5rem;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+        
+        @media (min-width: 640px) {
+            .character {
+                font-size: 1.75rem;
+            }
+        }
+        
+        /* Contact button flashing gradient */
+        #contact-btn {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 5s ease infinite;
+        }
+        
+        .contact-text {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+        
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        /* QR code container with glowing red gradient border */
+        .qr-code-container {
+            position: relative;
+            padding: 4px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .qr-code-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            z-index: -1;
+            background: linear-gradient(45deg, #ff0000, #ff6666, #ff9999, #ff0000);
+            background-size: 400% 400%;
+            animation: borderGradient 3s ease infinite;
+            border-radius: 10px;
+        }
+        
+        .qr-code-container img {
+            border-radius: 4px;
+            position: relative;
+            z-index: 1;
+            background: white;
+        }
+        
+        @keyframes borderGradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Enhanced character card active state */
+        .character-card[data-checked="true"] {
+            background-color: rgba(93, 92, 222, 0.3) !important; /* More vibrant color */
+            border-color: #5D5CDE !important;
+            transform: scale(1.05); /* Slightly enlarge */
+            box-shadow: 0 0 12px rgba(93, 92, 222, 0.4); /* Add glow effect */
+        }
+
+        /* Timer display styling */
+        #timer-display {
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+        
+        #timer-display.active {
+            background-color: rgba(93, 92, 222, 0.1);
+            border: 1px solid #5D5CDE;
+        }
+
+        /* Animation for character click */
+        @keyframes characterPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1.05); }
+        }
+
+        .character-pulse {
+            animation: characterPulse 0.3s ease;
+        }
+    </style>
+</head>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?d548e57fcc99d04c2c840696b7b8f8c8";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+    <!-- Audio element for ding sound -->
+    <audio id="ding-sound" preload="auto">
+        <source src="data:audio/mp3;base64,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" type="audio/mp3">
+    </audio>
+
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="mb-6 text-center relative">
+            <button id="export-btn" class="absolute right-0 top-0 bg-primary hover:bg-primary/90 text-white font-medium py-1 px-3 rounded flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                导出
+            </button>
+            <h1 class="text-2xl font-bold mb-2">电子版认识目录</h1>
+            <div class="flex justify-center items-center mb-4 text-lg">
+                <span>已认识：</span>
+                <span id="known-count" class="font-bold text-primary text-xl ml-1">0</span>
+                <span class="mx-1">/</span>
+                <span id="total-count" class="ml-1">0</span>
+                <span class="ml-2">个字</span>
+            </div>
+            <div class="flex justify-center flex-wrap gap-2 items-center mb-4">
+                <button id="start-btn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    开始
+                </button>
+                <div id="timer-display" class="text-xl font-mono bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded">00:00</div>
+                <button id="shuffle-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded flex items-center ml-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    随机排序
+                </button>
+            </div>
+            <div class="flex justify-center items-center mb-2">
+                <button id="check-all" class="bg-primary hover:bg-primary/90 text-white font-medium py-1 px-3 rounded mr-2">
+                    全选
+                </button>
+                <button id="uncheck-all" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 font-medium py-1 px-3 rounded">
+                    全不选
+                </button>
+            </div>
+        </div>
+
+        <!-- Volume Tabs -->
+        <div class="mb-6 overflow-x-auto">
+            <div class="flex border-b border-gray-200 dark:border-gray-700">
+                <button class="volume-tab px-4 py-2 font-medium border-b-2 border-primary text-primary" data-volume="1">
+                    第一册 (<span class="volume-count">0</span>字)
+                </button>
+                <button class="volume-tab px-4 py-2 font-medium border-b-2 border-transparent hover:text-primary" data-volume="2">
+                    第二册 (<span class="volume-count">0</span>字)
+                </button>
+                <button class="volume-tab px-4 py-2 font-medium border-b-2 border-transparent hover:text-primary" data-volume="3">
+                    第三册 (<span class="volume-count">0</span>字)
+                </button>
+                <button class="volume-tab px-4 py-2 font-medium border-b-2 border-transparent hover:text-primary" data-volume="4">
+                    第四册 (<span class="volume-count">0</span>字)
+                </button>
+                <button class="volume-tab px-4 py-2 font-medium border-b-2 border-transparent hover:text-primary" data-volume="5">
+                    第五册 (<span class="volume-count">0</span>字)
+                </button>
+                <button class="volume-tab px-4 py-2 font-medium border-b-2 border-transparent hover:text-primary" data-volume="6">
+                    第六册 (<span class="volume-count">0</span>字)
+                </button>
+            </div>
+        </div>
+
+        <!-- Character Grid Container -->
+        <div id="character-container" class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2 sm:gap-3">
+            <!-- Character cards will be added here -->
+        </div>
+    </div>
+
+    <!-- Import & Contact Buttons -->
+    <div class="text-center my-6 flex flex-col items-center">
+        <div class="flex space-x-4 mb-3">
+            <button id="import-btn" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-1 px-3 rounded flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v-1a3 3 0 013-3h10a3 3 0 013 3v1m-4-8l-4-4m0 0l-4 4m4-4v12"></path>
+                </svg>
+                导入数据
+            </button>
+        </div>
+        <button id="contact-btn" class="inline-block px-6 py-2 rounded-full font-bold text-lg relative overflow-hidden">
+            <span class="relative z-10 contact-text">点击联系开发者</span>
+        </button>
+    </div>
+    
+    <!-- Import Modal -->
+    <div id="import-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-xl w-full max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">导入数据</h3>
+                <button id="close-import-modal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm mb-2">粘贴之前导出的CSV数据：</p>
+                <textarea id="import-content" class="w-full h-40 text-xs p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="在此粘贴CSV数据..."></textarea>
+            </div>
+            <div class="flex justify-end">
+                <button id="process-import" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded">
+                    导入数据
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Developer Modal -->
+    <div id="contact-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full flex flex-col items-center">
+            <div class="flex justify-between w-full mb-4">
+                <h3 class="text-lg font-medium">扫码联系开发者</h3>
+                <button id="close-contact-modal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="qr-code-container">
+                <img src="https://usemind.cn/wechat.png" alt="WeChat QR Code" class="w-64 h-64 object-contain">
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-3xl w-full max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">导出数据</h3>
+                <button id="close-modal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="overflow-auto flex-grow mb-4">
+                <pre id="export-content" class="text-xs whitespace-pre-wrap bg-gray-100 dark:bg-gray-700 p-4 rounded h-full overflow-auto"></pre>
+            </div>
+            <div class="flex flex-col space-y-2">
+                <p class="text-sm">请选择以下方式导出数据：</p>
+                <div class="flex flex-wrap gap-2">
+                    <button id="copy-csv" class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                        </svg>
+                        复制CSV内容
+                    </button>
+                    <button id="download-csv" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded flex-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        下载CSV文件
+                    </button>
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p><span class="font-semibold">微信/移动浏览器用户:</span> 请使用"复制CSV内容"，然后粘贴到其他应用中保存。</p>
+                    <p><span class="font-semibold">PC用户:</span> 可以直接点击"下载CSV文件"按钮下载。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Original character data by volume
+        const originalCharacterData = {
+            1: "人头目眉鼻耳口牙舌心手足身一二三四五六七十马牛羊鱼虫鸟天日月云风雨雪雷电田木米果瓜禾苗森林石亭花草山叶竹水土圆尖大小高长弓刀勺面豆气分半点出入里外开关多少上下弯直来去吃喝吐立坐走飞看问哭笑车门井伞包布皮书画灯光衣裙袜裤鞋帽毛巾工厂灭火灰尘家爷奶妈爸哥弟姐妹我你男女前后左右东西南北中",
+            2: "宋郑李徐刘陈吴郭赵胡章婆伯叔姨阿视迷球国京兴空发脸孔眼睛朵齿嘴巴双脚腿铃正腰好您请茶给孩儿们和不见喊纱回今午读题图线圈号课骑钓枪汤肉芽冬柿条饭铺玉莓苹糕床他她是就辆张盏件块本个颗只支服红黄黑绿蓝围色生窗未袋偶爱剪箱角台背机器吸汽炮箭兵类极滑冷痰向现很羽过亮乌打刮滴把闪路进退底青蛙这桥子树河地麦消害许房做盆片竿短坡散边蛋要用太阳的真更溪碧鲜艳早晨旁在美丽燕有还",
+            3: "白枝了样院久没班级借知识算魔术讲完成拿着老师事故听懂趣得觉起始专朋友象踢庭能够游泳盼望跑步蹦跳唱歌活泼快乐那些像什么怎病都想学校排队穿旗升城广播星送礼敬响声祖说到瞧也菜额卷紧唇饱同岁拖饿擦汗帮助干净明聪夸奖自己年龄卡贺彩虹慢岭荷变化蝴蝶舞蹈梦乡吞湖颜再洗谁呢比赛对市节季春夏秋枯笔烈遮挡撑落降秘密取暖泥堆从滚玻璃常非鸭等于带斤江终猫爪买尺捉虾猴戏作业渴捡纸童呀哎瓦装船划放轻松挂钩晴朗间时候岸可以感谢喜欢两群尾兔养怕狗猎咬萝卜喂猪惊慌每次屋为因公主其它运动激选择微如熊加参刺猬辣椒填晚傍漂流哪棵迎接粗细桃核泪种结束摘梨错会拉差话力抓此苦新闻行粮食瓶罐血管丢失假期脑千万集合",
+            4: "整齐池塘蝌蚪蚯蚓蚂蚁坏配壳贝抱鹅简单厨满影积搭谎眨柳杨攻蚊位让躺椅奇怪蜜蜂蜻蜓缺标几页睡桌珍珠扔休息愿意越互相座钟拳确深浅挺跟踪拦住矮希帘香烟清楚舒急忙报阴较观众永远超姓名抄写教室体操场伸臂曲锻炼坚持句暗耀寒街道棉袄告诉近处虎王植物勇敢已经刚才强壮钻洞攀登卖户飘洒商店捏娃粘贴宝贵元旦答案泡熟悉昨夜吵架规则全骂鸦办法悬崖棋幼鹿伙伴跌倒救命狐狸鸣叫连臭悄巧妙胜利寻找母鸡妖鬼凶恶杀敌脱掉冲垮野兽斑纹重量推翻战士使劲讨厌追赶斜爬低部挣扎毒理叠邻居辈而且并列庆祝梳辫招待端碗捧舰艇杯盖炒栗煮饺团聚烧饼思念呼沙漠保护阵距离困难容易海滩无聊周站岗危险壶糟卫建设环境污染塑料搬貌鸥趴披匹坪梢哨拾掰闭尝丑导丁冻蹲帆",
+            5: "雀收藏铅拍姑娘玩具踩被窝捕捞鸽笼罩平衡稳当原谅醉枣项链交叉转移铁锹挖坑砸缸受伤首先射击称赞英雄鼠诵猜谜租司令任务药膏医治疗照顾胸闷弹味精往返砖墙斗争展另遇皱劳累价格酒吧武艺准备餐厅蘑菇压扁虽然形状产品采访甘甜介绍瞎除夕党员醒淘鞠躬托盘联系应该顽哗啦忽略健康奔渔网桶钱柜朝霞胖瘦引悔输赢湿透继续热闹议论撕破敲鼓特别灵敏摔碎拥挤停顿代替顺序宣传掌握即将遗留割断票投篮忆普通制造按怀疑组凉爽晾晒扫帚施肥浇灌唐古诗科技旅馆茂盛腊梅喷泉蜘蛛拔剑领楼层乘融描词语翅膀懒惰抬轿邮局烦恼秒表暴露雕刻针盒随便剩余驾驶艘速逃挑铜文惜席杏兄仿丰佛父各根共汉夹",
+            6: "剧痛批评摆弄严肃扶梯检查肚肠承认修改闯祸诚实练嗓肯定恳求温度估计零沉浮棍棒催眠纺织秤杆习惯丝钢柱情况指挥演奏鞭躲避内村庄震聋吓碰撞突袭邀淹死抢夺善良必需寄信冒充含糖农民封存坦克摇晃调换警察忧愁拒绝贡献付款颤抖孤独忘记拼音牢固神仙垃圾漏由贫穷富翁隔壁皇帝宫殿灿烂辉煌筷培育缝补衬衫套幸福芝麻羡慕预约解决货轮愤怒宽肩娇嫩澡堂厕所拎恐龙派糊涂厚薄印折扇银锁轰隆挠痒败仗功夫偷摸甩绳仓库板凳官隐蔽忍耐闲谈跨栏捣乱硬币欺骗扮蒸须骄傲吹喇叭扑粉番茄考试安静世界拨镜旧锅堵塞迟创举央瓣航模琴弦怨恨笨狼缩横竖淋浴狮吼禁止油漆爆炸筋骨龟蛇扮粉番茄考试安静世界拔镜旧锅堵赛迟枕景区临稻减数波浪宇宙反复增添苍蝇陪客冰雹柔软葡萄延郊晶輆砍靠矿兰埋蚜言雁秧饮映园栽睁值啄紫字总百"
+        };
+
+        // Process character data to remove duplicates
+        function removeDuplicates(data) {
+            const processed = {};
+            const seen = new Set();
+            
+            // First pass: identify unique characters for each volume
+            for (let volume = 1; volume <= 6; volume++) {
+                const chars = originalCharacterData[volume];
+                processed[volume] = '';
+                
+                for (let i = 0; i < chars.length; i++) {
+                    const char = chars[i];
+                    if (!seen.has(char)) {
+                        seen.add(char);
+                        processed[volume] += char;
+                    }
+                }
+            }
+            
+            return processed;
+        }
+        
+        // Shuffle characters in a string
+        function shuffleString(str) {
+            const array = str.split('');
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array.join('');
+        }
+        
+        // Character data with duplicates removed
+        const characterData = removeDuplicates(originalCharacterData);
+        
+        // Shuffle each volume's characters initially
+        for (let volume = 1; volume <= 6; volume++) {
+            characterData[volume] = shuffleString(characterData[volume]);
+        }
+
+        // Timer implementation
+        let timerInterval = null;
+        let startTime = 0;
+        let timerRunning = false;
+
+        function startTimer() {
+            if (!timerRunning) {
+                timerRunning = true;
+                startTime = Date.now() - (startTime > 0 ? Date.now() - startTime : 0);
+                document.getElementById('timer-display').classList.add('active');
+                timerInterval = setInterval(updateTimer, 1000);
+                document.getElementById('start-btn').innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    暂停
+                `;
+            } else {
+                timerRunning = false;
+                clearInterval(timerInterval);
+                document.getElementById('timer-display').classList.remove('active');
+                document.getElementById('start-btn').innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    继续
+                `;
+            }
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const seconds = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${minutes}:${seconds}`;
+        }
+
+        function resetTimer() {
+            if (timerRunning) {
+                clearInterval(timerInterval);
+                timerRunning = false;
+            }
+            startTime = 0;
+            document.getElementById('timer-display').textContent = '00:00';
+            document.getElementById('timer-display').classList.remove('active');
+            document.getElementById('start-btn').innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                开始
+            `;
+        }
+
+        // Load saved data
+        let checkedCharacters = {};
+        try {
+            const saved = localStorage.getItem('checkedCharacters');
+            if (saved) {
+                checkedCharacters = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.log('Could not load saved data');
+        }
+
+        // Count total characters
+        let totalCharacters = 0;
+        for (const volume in characterData) {
+            totalCharacters += characterData[volume].length;
+            // Update the volume count in the tab
+            const tabElements = document.querySelectorAll(`.volume-tab[data-volume="${volume}"] .volume-count`);
+            tabElements.forEach(el => {
+                el.textContent = characterData[volume].length;
+            });
+        }
+        document.getElementById('total-count').textContent = totalCharacters;
+
+        // Play sound function
+        function playDingSound() {
+            const sound = document.getElementById('ding-sound');
+            sound.currentTime = 0; // Reset sound to start
+            sound.play().catch(e => console.log('Error playing sound:', e));
+        }
+
+        // Function to render characters for a specific volume
+        function renderVolume(volumeNumber) {
+            const container = document.getElementById('character-container');
+            container.innerHTML = '';
+            
+            const characters = characterData[volumeNumber];
+            for (let i = 0; i < characters.length; i++) {
+                const char = characters[i];
+                const charId = `vol${volumeNumber}-char-${i}`;
+                const isChecked = checkedCharacters[charId] || false;
+                
+                const card = document.createElement('div');
+                card.className = `character-card border ${isChecked ? 'bg-primary/10 border-primary' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'} hover:border-primary hover:shadow-sm transition-all cursor-pointer`;
+                card.setAttribute('data-id', charId);
+                card.setAttribute('data-checked', isChecked ? 'true' : 'false');
+                
+                card.innerHTML = `
+                    <div class="character">${char}</div>
+                `;
+                
+                container.appendChild(card);
+            }
+            
+            // Update tab styling
+            document.querySelectorAll('.volume-tab').forEach(tab => {
+                const tabVolume = parseInt(tab.getAttribute('data-volume'));
+                if (tabVolume === volumeNumber) {
+                    tab.classList.add('border-primary', 'text-primary');
+                    tab.classList.remove('border-transparent');
+                } else {
+                    tab.classList.remove('border-primary', 'text-primary');
+                    tab.classList.add('border-transparent');
+                }
+            });
+            
+            updateCounter();
+        }
+
+        // Add event listeners for volume tabs
+        document.querySelectorAll('.volume-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const volumeNumber = parseInt(tab.getAttribute('data-volume'));
+                renderVolume(volumeNumber);
+            });
+        });
+
+        // Add event listener for card clicks
+        document.addEventListener('click', e => {
+            // Find if we clicked on a card or any of its children
+            const card = e.target.closest('.character-card');
+            if (card) {
+                // Start timer if not running
+                if (!timerRunning) {
+                    startTimer();
+                }
+                
+                // Play ding sound
+                playDingSound();
+                
+                const charId = card.getAttribute('data-id');
+                const isCurrentlyChecked = card.getAttribute('data-checked') === 'true';
+                const newCheckedState = !isCurrentlyChecked;
+                
+                // Add pulse animation
+                card.classList.add('character-pulse');
+                setTimeout(() => {
+                    card.classList.remove('character-pulse');
+                }, 300);
+                
+                // Update card styling
+                if (newCheckedState) {
+                    card.classList.add('bg-primary/10', 'border-primary');
+                    card.classList.remove('bg-white', 'dark:bg-gray-800', 'border-gray-200', 'dark:border-gray-700');
+                } else {
+                    card.classList.remove('bg-primary/10', 'border-primary');
+                    card.classList.add('bg-white', 'dark:bg-gray-800', 'border-gray-200', 'dark:border-gray-700');
+                }
+                
+                // Update card data attribute
+                card.setAttribute('data-checked', newCheckedState ? 'true' : 'false');
+                
+                // Update saved data
+                checkedCharacters[charId] = newCheckedState;
+                saveData();
+                updateCounter();
+            }
+        });
+
+        // Add event listeners for bulk actions
+        document.getElementById('check-all').addEventListener('click', () => {
+            const cards = document.querySelectorAll('.character-card');
+            
+            cards.forEach(card => {
+                const charId = card.getAttribute('data-id');
+                
+                // Update card styling
+                card.classList.add('bg-primary/10', 'border-primary');
+                card.classList.remove('bg-white', 'dark:bg-gray-800', 'border-gray-200', 'dark:border-gray-700');
+                
+                // Update card data attribute
+                card.setAttribute('data-checked', 'true');
+                
+                // Update data
+                checkedCharacters[charId] = true;
+            });
+            
+            saveData();
+            updateCounter();
+        });
+
+        document.getElementById('uncheck-all').addEventListener('click', () => {
+            const cards = document.querySelectorAll('.character-card');
+            
+            cards.forEach(card => {
+                const charId = card.getAttribute('data-id');
+                
+                // Update card styling
+                card.classList.remove('bg-primary/10', 'border-primary');
+                card.classList.add('bg-white', 'dark:bg-gray-800', 'border-gray-200', 'dark:border-gray-700');
+                
+                // Update card data attribute
+                card.setAttribute('data-checked', 'false');
+                
+                // Update data
+                checkedCharacters[charId] = false;
+            });
+            
+            saveData();
+            updateCounter();
+        });
+
+        // Start button click handler
+        document.getElementById('start-btn').addEventListener('click', () => {
+            startTimer();
+        });
+
+        // Shuffle button click handler
+        document.getElementById('shuffle-btn').addEventListener('click', () => {
+            const currentVolume = getCurrentVolume();
+            characterData[currentVolume] = shuffleString(characterData[currentVolume]);
+            renderVolume(currentVolume);
+            
+            // Show shuffle feedback
+            const button = document.getElementById('shuffle-btn');
+            const originalText = button.innerHTML;
+            button.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                已随机排序
+            `;
+            button.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            button.classList.add('bg-green-600', 'hover:bg-green-700');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                button.classList.add('bg-blue-500', 'hover:bg-blue-600');
+            }, 1500);
+        });
+
+        // Helper functions
+        function getCurrentVolume() {
+            const activeTab = document.querySelector('.volume-tab.border-primary');
+            return parseInt(activeTab.getAttribute('data-volume'));
+        }
+
+        function updateCounter() {
+            let count = 0;
+            for (const id in checkedCharacters) {
+                if (checkedCharacters[id]) {
+                    count++;
+                }
+            }
+            document.getElementById('known-count').textContent = count;
+        }
+
+        // Enhanced data saving with feedback and fallbacks
+        function saveData() {
+            const dataToSave = JSON.stringify(checkedCharacters);
+            // Try primary storage method first
+            try {
+                localStorage.setItem('checkedCharacters', dataToSave);
+                // Add a subtle visual indicator that data was saved
+                showSaveIndicator(true);
+                return true;
+            } catch (e) {
+                console.log('localStorage error:', e);
+                // Try alternative storage as fallback for private browsing mode
+                try {
+                    // Try sessionStorage as a temporary solution
+                    sessionStorage.setItem('checkedCharacters', dataToSave);
+                    showSaveIndicator(false);
+                    return true;
+                } catch (err) {
+                    console.log('All storage methods failed:', err);
+                    showSaveIndicator(false, true);
+                    return false;
+                }
+            }
+        }
+        
+        // Add a save indicator notification
+        function showSaveIndicator(isPermanent = true, isError = false) {
+            // Check if indicator already exists, remove it if so
+            const existingIndicator = document.getElementById('save-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+            
+            // Create new indicator
+            const indicator = document.createElement('div');
+            indicator.id = 'save-indicator';
+            
+            if (isError) {
+                indicator.className = 'fixed bottom-4 left-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
+                indicator.textContent = '数据保存失败';
+            } else {
+                indicator.className = 'fixed bottom-4 left-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm';
+                indicator.textContent = isPermanent ? '数据已保存' : '数据临时保存';
+            }
+            
+            document.body.appendChild(indicator);
+            
+            // Remove the indicator after a delay
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+                indicator.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => indicator.remove(), 500);
+            }, 1500);
+        }
+
+        // Initialize the app with the first volume
+        renderVolume(1);
+
+        // Export functionality
+        document.getElementById('export-btn').addEventListener('click', () => {
+            // Generate CSV content
+            let csvContent = "册,字,状态\n"; // CSV header
+
+            // Process each volume
+            for (let volume = 1; volume <= 6; volume++) {
+                const characters = characterData[volume];
+                for (let i = 0; i < characters.length; i++) {
+                    const char = characters[i];
+                    const charId = `vol${volume}-char-${i}`;
+                    const status = checkedCharacters[charId] ? "认识" : "不认识";
+                    
+                    // Add to CSV (properly escape characters if they contain commas)
+                    csvContent += `${volume},"${char}",${status}\n`;
+                }
+            }
+
+            // Show the modal with content
+            document.getElementById('export-content').textContent = csvContent;
+            document.getElementById('export-modal').classList.remove('hidden');
+        });
+
+        // Close modal
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('export-modal').classList.add('hidden');
+        });
+
+        // Copy CSV content
+        document.getElementById('copy-csv').addEventListener('click', () => {
+            const csvContent = document.getElementById('export-content').textContent;
+            
+            // Try clipboard API first (newer browsers)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(csvContent)
+                    .then(() => {
+                        showCopySuccess('copy-csv', '已复制!');
+                    })
+                    .catch(err => {
+                        console.error('Clipboard API error:', err);
+                        // Fallback to selection method for mobile devices
+                        copyTextFallback(csvContent);
+                    });
+            } else {
+                // Fallback for browsers without clipboard API
+                copyTextFallback(csvContent);
+            }
+        });
+        
+        // Download CSV file
+        document.getElementById('download-csv').addEventListener('click', () => {
+            const csvContent = document.getElementById('export-content').textContent;
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            // Create a hidden link and trigger click
+            try {
+                // Create filename with date
+                const date = new Date();
+                const dateStr = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+                const filename = `识字统计_${dateStr}.csv`;
+                
+                if (navigator.msSaveBlob) { // IE/Edge support
+                    navigator.msSaveBlob(blob, filename);
+                    showCopySuccess('download-csv', '已下载!');
+                } else {
+                    const link = document.createElement('a');
+                    // Create object URL
+                    const url = URL.createObjectURL(blob);
+                    
+                    link.href = url;
+                    link.download = filename;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    
+                    // Trigger download
+                    link.click();
+                    
+                    // Clean up
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                    }, 100);
+                    
+                    showCopySuccess('download-csv', '已下载!');
+                }
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('下载失败，请使用复制功能');
+            }
+        });
+        
+        // Text selection fallback method for copying
+        function copyTextFallback(text) {
+            // Create a temporary textarea
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed'; // Avoid scrolling to bottom
+            document.body.appendChild(textArea);
+            
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess('copy-csv', '已复制!');
+                } else {
+                    alert('复制失败，请手动选择文本并复制');
+                }
+            } catch (err) {
+                console.error('execCommand error:', err);
+                // Show instructions for manual copying
+                alert('自动复制失败，请手动选择文本框中的内容，然后长按选择"复制"');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        // Helper for showing success message
+        function showCopySuccess(buttonId, message) {
+            const button = document.getElementById(buttonId);
+            const originalText = button.innerHTML;
+            const originalBg = button.className;
+            
+            // Update button text (keeping the icon)
+            const icon = button.querySelector('svg');
+            const iconHtml = icon ? icon.outerHTML : '';
+            button.innerHTML = iconHtml + ' ' + message;
+            
+            // Add success class
+            button.classList.add('bg-green-600');
+            button.classList.remove('bg-primary', 'hover:bg-primary/90', 'bg-green-600', 'hover:bg-green-700');
+            
+            // Reset after delay
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.className = originalBg;
+            }, 2000);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('export-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('export-modal')) {
+                document.getElementById('export-modal').classList.add('hidden');
+            }
+        });
+        
+        // Contact developer functionality
+        document.getElementById('contact-btn').addEventListener('click', () => {
+            document.getElementById('contact-modal').classList.remove('hidden');
+        });
+        
+        document.getElementById('close-contact-modal').addEventListener('click', () => {
+            document.getElementById('contact-modal').classList.add('hidden');
+        });
+        
+        // Close contact modal when clicking outside
+        document.getElementById('contact-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('contact-modal')) {
+                document.getElementById('contact-modal').classList.add('hidden');
+            }
+        });
+        
+        // Import functionality
+        document.getElementById('import-btn').addEventListener('click', () => {
+            document.getElementById('import-modal').classList.remove('hidden');
+        });
+        
+        document.getElementById('close-import-modal').addEventListener('click', () => {
+            document.getElementById('import-modal').classList.add('hidden');
+        });
+        
+        // Process import data when clicking the import button
+        document.getElementById('process-import').addEventListener('click', () => {
+            const csvContent = document.getElementById('import-content').value.trim();
+            
+            if (!csvContent) {
+                alert('请先粘贴CSV数据');
+                return;
+            }
+            
+            try {
+                // Parse CSV content
+                const lines = csvContent.split('\n');
+                
+                // Validate header
+                const header = lines[0];
+                if (!header.includes('册') || !header.includes('字') || !header.includes('状态')) {
+                    throw new Error('CSV格式不正确，请确保包含"册,字,状态"列');
+                }
+                
+                // Track imported data
+                let importedCount = 0;
+                let newRecognizedCount = 0;
+                
+                // Process data lines
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue; // Skip empty lines
+                    
+                    // Split the line and handle quoted values
+                    let parts = [];
+                    let inQuotes = false;
+                    let currentPart = '';
+                    
+                    for (let j = 0; j < line.length; j++) {
+                        const char = line[j];
+                        
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            parts.push(currentPart);
+                            currentPart = '';
+                        } else {
+                            currentPart += char;
+                        }
+                    }
+                    parts.push(currentPart); // Add the last part
+                    
+                    // Ensure we have three parts
+                    if (parts.length < 3) continue;
+                    
+                    const volume = parseInt(parts[0]);
+                    const character = parts[1].replace(/^"|"$/g, ''); // Remove quotes if present
+                    const status = parts[2];
+                    
+                    // Validate data
+                    if (isNaN(volume) || volume < 1 || volume > 6 || !character || !status) {
+                        continue;
+                    }
+                    
+                    // Find the character in our data
+                    const volumeChars = characterData[volume];
+                    if (!volumeChars) continue;
+                    
+                    const charIndex = volumeChars.indexOf(character);
+                    if (charIndex === -1) continue;
+                    
+                    // Create the charId and update our data
+                    const charId = `vol${volume}-char-${charIndex}`;
+                    const isRecognized = status.includes('认识');
+                    
+                    // Only count as new if changing from not recognized to recognized
+                    if (isRecognized && !checkedCharacters[charId]) {
+                        newRecognizedCount++;
+                    }
+                    
+                    checkedCharacters[charId] = isRecognized;
+                    importedCount++;
+                }
+                
+                // Save the updated data
+                saveData();
+                
+                // Update the display
+                renderVolume(getCurrentVolume());
+                
+                // Show success message
+                alert(`导入成功！处理了 ${importedCount} 个字符，新增认识 ${newRecognizedCount} 个字。`);
+                
+                // Close modal
+                document.getElementById('import-modal').classList.add('hidden');
+                
+            } catch (err) {
+                console.error('Import error:', err);
+                alert('导入失败: ' + err.message);
+            }
+        });
+        
+        // Close import modal when clicking outside
+        document.getElementById('import-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('import-modal')) {
+                document.getElementById('import-modal').classList.add('hidden');
+            }
+        });
+        
+        // Add browser compatibility check on startup
+        (function checkBrowserCompatibility() {
+            // Check for localStorage support with actual write test
+            let storageAvailable = false;
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                storageAvailable = true;
+            } catch (e) {
+                console.log('localStorage not available:', e);
+            }
+            
+            // Check for WeChat browser
+            const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+            
+            // Check for mobile browser
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            // Show compatibility notice if needed
+            if (!storageAvailable) {
+                const notice = document.createElement('div');
+                notice.className = 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 mx-4 rounded';
+                notice.innerHTML = `
+                    <p class="font-bold">浏览器兼容性提示</p>
+                    <p>您的浏览器似乎不支持本地数据存储，这可能是因为：</p>
+                    <ul class="list-disc ml-5 mt-2">
+                        <li>您使用了隐私浏览模式</li>
+                        <li>浏览器禁用了存储功能</li>
+                        <li>存储空间已满</li>
+                    </ul>
+                    <p class="mt-2">建议：请导出您的数据，以免丢失。</p>
+                `;
+                document.querySelector('.container').prepend(notice);
+            }
+            
+            // Special handling for WeChat browser
+            if (isWeChat) {
+                console.log('WeChat browser detected, enabling additional compatibility.');
+                // Any WeChat-specific adjustments can go here
+            }
+        })();
+    </script>
+
+
+</body></html>
