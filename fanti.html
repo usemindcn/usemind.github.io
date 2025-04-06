@@ -1,0 +1,436 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>繁體字筆畫練習</title>
+  <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#5D5CDE',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      touch-action: manipulation;
+      overscroll-behavior: none;
+    }
+    .character-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+    }
+    .character-item {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 80px;
+      cursor: pointer;
+      font-size: 2rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .hanzi-writer-container {
+      width: 100%;
+      max-width: 300px;
+      height: 300px;
+      margin: 0 auto;
+    }
+    #target {
+      background-color: transparent;
+      height: 100%;
+      width: 100%;
+    }
+    .accuracy-meter {
+      height: 20px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #5D5CDE;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .dark .loading-spinner {
+      border-color: rgba(255, 255, 255, 0.1);
+      border-left-color: #5D5CDE;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen px-4 py-6">
+  <script>
+    // 检测暗黑模式
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+      if (event.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    });
+  </script>
+
+  <div class="container mx-auto max-w-3xl">
+    <h1 class="text-3xl font-bold text-center mb-6">香港繁體字筆畫練習</h1>
+    
+    <div class="flex flex-col md:flex-row gap-4 mb-6">
+      <div class="md:w-2/3">
+        <div id="practiceContainer" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 flex flex-col items-center">
+          <div id="loading" class="my-12 flex flex-col items-center">
+            <div class="loading-spinner"></div>
+            <p class="mt-3">正在加载...</p>
+          </div>
+          <div id="practiceArea" class="w-full hidden">
+            <div class="flex items-center justify-between mb-4">
+              <h2 id="currentCharacter" class="text-2xl font-bold"></h2>
+              <div class="flex gap-2">
+                <button id="animateButton" class="px-3 py-1 bg-primary text-white rounded-md hover:bg-opacity-90 transition">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                  </svg>
+                </button>
+                <button id="clearButton" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-opacity-90 transition">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="hanzi-writer-container" id="writer-container">
+              <div id="target"></div>
+            </div>
+            <div class="mt-4">
+              <div class="flex justify-between text-sm mb-1">
+                <span>正确率</span>
+                <span id="accuracyText">0%</span>
+              </div>
+              <div class="accuracy-meter bg-gray-200 dark:bg-gray-700">
+                <div id="accuracyBar" class="h-full bg-primary" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="mt-4 flex justify-between">
+              <button id="prevButton" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-opacity-90 transition">上一个</button>
+              <button id="nextButton" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-opacity-90 transition">下一个</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="md:w-1/3">
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+          <h3 class="text-lg font-semibold mb-3">选择练习汉字</h3>
+          <div id="characterList" class="character-grid"></div>
+          
+          <div class="mt-4">
+            <h3 class="text-lg font-semibold mb-2">单字添加</h3>
+            <div class="flex">
+              <input type="text" id="customCharInput" placeholder="请输入单个汉字" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-l-md bg-white dark:bg-gray-800 text-base">
+              <button id="addCustomChar" class="px-3 py-2 bg-primary text-white rounded-r-md hover:bg-opacity-90 transition">添加</button>
+            </div>
+          </div>
+          
+          <!-- 新增批量导入功能 -->
+          <div class="mt-4">
+            <h3 class="text-lg font-semibold mb-2">批量添加</h3>
+            <textarea id="batchImportInput" placeholder="請輸入多個繁體字" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-base mb-2" rows="3"></textarea>
+            <button id="batchImportButton" class="w-full px-3 py-2 bg-primary text-white rounded-md hover:bg-opacity-90 transition">批量導入</button>
+          </div>
+          
+          <!-- 添加一键清空按钮 -->
+          <div class="mt-4">
+            <button id="clearAllButton" class="w-full px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">一鍵清空</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="text-center text-sm text-gray-500 dark:text-gray-400">
+      <p>提示：點擊"播放"按鈕查看筆順，然後用滑鼠或手指跟隨筆畫練習。<p>
+      </p>本軟件由Mike老師開發，如需要修改請加老師微信：my---me</p>
+    </div>
+  </div>
+
+  <script>
+    // 默认汉字列表 - 改为繁体字
+    const defaultCharacters = ['人', '個', '學', '關'];
+    let characters = [...defaultCharacters];
+    let currentIndex = 0;
+    let writer = null;
+    let accuracy = 0;
+
+    // DOM 元素
+    const characterListEl = document.getElementById('characterList');
+    const currentCharacterEl = document.getElementById('currentCharacter');
+    const accuracyBarEl = document.getElementById('accuracyBar');
+    const accuracyTextEl = document.getElementById('accuracyText');
+    const animateButton = document.getElementById('animateButton');
+    const clearButton = document.getElementById('clearButton');
+    const prevButton = document.getElementById('prevButton');
+    const nextButton = document.getElementById('nextButton');
+    const customCharInput = document.getElementById('customCharInput');
+    const addCustomCharButton = document.getElementById('addCustomChar');
+    const loadingEl = document.getElementById('loading');
+    const practiceAreaEl = document.getElementById('practiceArea');
+    // 新增批量导入元素
+    const batchImportInput = document.getElementById('batchImportInput');
+    const batchImportButton = document.getElementById('batchImportButton');
+    // 新增一键清空按钮元素
+    const clearAllButton = document.getElementById('clearAllButton');
+
+    // 初始化
+    function init() {
+      renderCharacterList();
+      loadCharacter(currentIndex);
+      
+      // 事件监听
+      animateButton.addEventListener('click', animateCharacter);
+      clearButton.addEventListener('click', () => {
+        if (writer) writer.quiz();
+      });
+      prevButton.addEventListener('click', showPrevCharacter);
+      nextButton.addEventListener('click', showNextCharacter);
+      addCustomCharButton.addEventListener('click', addCustomCharacter);
+      
+      // 自定义汉字输入框回车键事件
+      customCharInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          addCustomCharacter();
+        }
+      });
+      
+      // 新增批量导入事件监听
+      batchImportButton.addEventListener('click', batchImportCharacters);
+      
+      // 新增一键清空事件监听
+      clearAllButton.addEventListener('click', clearAllCharacters);
+    }
+
+    // 渲染字符列表
+    function renderCharacterList() {
+      characterListEl.innerHTML = '';
+      characters.forEach((char, index) => {
+        const charElement = document.createElement('div');
+        charElement.classList.add('character-item', 'bg-gray-100', 'dark:bg-gray-700');
+        if (index === currentIndex) {
+          charElement.classList.add('bg-primary', 'text-white');
+        }
+        charElement.textContent = char;
+        charElement.addEventListener('click', () => {
+          currentIndex = index;
+          loadCharacter(currentIndex);
+          renderCharacterList();
+        });
+        characterListEl.appendChild(charElement);
+      });
+    }
+
+    // 加载汉字
+    function loadCharacter(index) {
+      if (index < 0 || index >= characters.length) return;
+      
+      const char = characters[index];
+      currentCharacterEl.textContent = `练习: ${char}`;
+      
+      // 显示加载中
+      if (writer) {
+        try {
+          writer.destroy();
+          writer = null;
+        } catch (error) {
+          console.error('Error destroying writer:', error);
+        }
+      }
+      loadingEl.classList.remove('hidden');
+      practiceAreaEl.classList.add('hidden');
+      
+      // 清空之前的内容
+      document.getElementById('target').innerHTML = '';
+      
+      // 初始化 Hanzi Writer
+      try {
+        writer = HanziWriter.create('target', char, {
+          width: 300,
+          height: 300,
+          padding: 5,
+          strokeColor: '#5D5CDE',
+          radicalColor: '#5D5CDE',
+          highlightColor: '#3F3F3F',
+          outlineColor: '#DDDDDD',
+          drawingColor: '#0066FF', // 蓝色
+          drawingWidth: 12, // 粗线条
+          showOutline: true,
+          delayBetweenStrokes: 300
+        });
+      } catch (error) {
+        console.error('Error creating writer:', error);
+        loadingEl.classList.add('hidden');
+        practiceAreaEl.classList.remove('hidden');
+      }
+
+      // 设置正确率为0
+      updateAccuracy(0);
+      
+      // 设置 quiz 模式（描红练习）
+      setTimeout(() => {
+        loadingEl.classList.add('hidden');
+        practiceAreaEl.classList.remove('hidden');
+        if (writer) {
+          try {
+            writer.quiz({
+              onComplete: (summaryData) => {
+                updateAccuracy(summaryData.score * 100);
+              },
+              onCorrectStroke: (strokeData) => {
+                // 每个笔画的正确率反馈
+                const strokeScore = Math.round(strokeData.score * 100);
+                accuracy = strokeScore;
+                updateAccuracy(accuracy);
+              }
+            });
+          } catch (error) {
+            console.error('Error starting quiz mode:', error);
+          }
+        }
+      }, 500);
+    }
+
+    // 更新正确率显示
+    function updateAccuracy(value) {
+      const roundedValue = Math.round(value);
+      accuracyBarEl.style.width = `${roundedValue}%`;
+      accuracyTextEl.textContent = `${roundedValue}%`;
+    }
+
+    // 演示笔顺动画
+    function animateCharacter() {
+      if (!writer) return;
+      
+      try {
+        writer.cancelQuiz();
+        writer.animateCharacter().then(() => {
+          setTimeout(() => {
+            try {
+              writer.quiz();
+            } catch (error) {
+              console.error('Error restarting quiz:', error);
+            }
+          }, 300);
+        }).catch(error => {
+          console.error('Error animating character:', error);
+        });
+      } catch (error) {
+        console.error('Error in animateCharacter:', error);
+      }
+    }
+
+    // 显示上一个字
+    function showPrevCharacter() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        loadCharacter(currentIndex);
+        renderCharacterList();
+      }
+    }
+
+    // 显示下一个字
+    function showNextCharacter() {
+      if (currentIndex < characters.length - 1) {
+        currentIndex++;
+        loadCharacter(currentIndex);
+        renderCharacterList();
+      }
+    }
+
+    // 添加自定义汉字
+    function addCustomCharacter() {
+      const input = customCharInput.value.trim();
+      if (input && /^[\u4e00-\u9fff]$/.test(input)) {  // 修改正则表达式以包含繁体字
+        if (!characters.includes(input)) {
+          // 将新汉字添加到数组开头而不是末尾
+          characters.unshift(input);
+          renderCharacterList();
+          customCharInput.value = '';
+          
+          // 自动切换到新添加的汉字（现在是索引0）
+          currentIndex = 0;
+          loadCharacter(currentIndex);
+          renderCharacterList();
+        } else {
+          alert('該漢字已存在');
+        }
+      } else {
+        alert('請輸入一個有效的漢字');
+      }
+    }
+    
+    // 新增批量导入汉字功能
+    function batchImportCharacters() {
+      const input = batchImportInput.value.trim();
+      if (!input) {
+        alert('請輸入要導入的漢字');
+        return;
+      }
+      
+      // 过滤出有效的漢字（包含繁体字）
+      const validChars = Array.from(input).filter(char => /^[\u4e00-\u9fff]$/.test(char));
+      
+      if (validChars.length === 0) {
+        alert('未找到有效的漢字');
+        return;
+      }
+      
+      // 添加不重复的漢字（添加到数组开头）
+      let addedCount = 0;
+      // 反转数组以保持输入顺序（因为unshift会反转顺序）
+      validChars.reverse().forEach(char => {
+        if (!characters.includes(char)) {
+          characters.unshift(char);
+          addedCount++;
+        }
+      });
+      
+      if (addedCount > 0) {
+        renderCharacterList();
+        batchImportInput.value = '';
+        
+        // 自动切换到第一个新添加的汉字（现在是索引0）
+        currentIndex = 0;
+        loadCharacter(currentIndex);
+        renderCharacterList();
+        
+        alert(`成功導入 ${addedCount} 個漢字`);
+      } else {
+        alert('所有漢字已存在，未添加新漢字');
+      }
+    }
+    
+    // 新增一键清空功能
+    function clearAllCharacters() {
+      if (confirm('確定要清空所有漢字嗎？默認漢字將被保留。')) {
+        characters = [...defaultCharacters];
+        currentIndex = 0;
+        renderCharacterList();
+        loadCharacter(currentIndex);
+      }
+    }
+
+    // 初始化应用
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+
+
+</body></html>
