@@ -99,10 +99,24 @@
               <h2 id="currentCharacter" class="text-2xl font-bold"></h2>
               <div class="flex gap-2">
                 <button id="animateButton" class="px-3 py-1 bg-primary text-white rounded-md hover:bg-opacity-90 transition">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
-                  </svg>
+                  播放
                 </button>
+                <!-- 添加速度控制按钮 -->
+                <div class="relative">
+                  <button id="speedButton" class="px-3 py-1 bg-primary text-white rounded-md hover:bg-opacity-90 transition flex items-center">
+                    <span>速度：</span><span id="currentSpeedText">中</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                  </button>
+                  <div id="speedOptions" class="absolute right-0 mt-1 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 hidden">
+                    <div class="py-1">
+                      <button data-speed="0.5" class="speed-option block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600">慢</button>
+                      <button data-speed="1.0" class="speed-option block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600">中</button>
+                      <button data-speed="2.0" class="speed-option block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600">快</button>
+                    </div>
+                  </div>
+                </div>
                 <button id="clearButton" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-opacity-90 transition">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -113,15 +127,7 @@
             <div class="hanzi-writer-container" id="writer-container">
               <div id="target"></div>
             </div>
-            <div class="mt-4">
-              <div class="flex justify-between text-sm mb-1">
-                <span>正确率</span>
-                <span id="accuracyText">0%</span>
-              </div>
-              <div class="accuracy-meter bg-gray-200 dark:bg-gray-700">
-                <div id="accuracyBar" class="h-full bg-primary" style="width: 0%"></div>
-              </div>
-            </div>
+            <!-- 移除正确率显示和进度条 -->
             <div class="mt-4 flex justify-between">
               <button id="prevButton" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-opacity-90 transition">上一个</button>
               <button id="nextButton" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-opacity-90 transition">下一个</button>
@@ -135,19 +141,16 @@
           <h3 class="text-lg font-semibold mb-3">选择练习汉字</h3>
           <div id="characterList" class="character-grid"></div>
           
-          <div class="mt-4">
-            <h3 class="text-lg font-semibold mb-2">单字添加</h3>
-            <div class="flex">
-              <input type="text" id="customCharInput" placeholder="请输入单个汉字" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-l-md bg-white dark:bg-gray-800 text-base">
-              <button id="addCustomChar" class="px-3 py-2 bg-primary text-white rounded-r-md hover:bg-opacity-90 transition">添加</button>
-            </div>
-          </div>
+          <!-- 移除单字添加功能区 -->
           
-          <!-- 新增批量导入功能 -->
+          <!-- 批量导入功能 -->
           <div class="mt-4">
-            <h3 class="text-lg font-semibold mb-2">批量添加</h3>
-            <textarea id="batchImportInput" placeholder="请输入多个汉字" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-base mb-2" rows="3"></textarea>
+            <h3 class="text-lg font-semibold mb-2">添加文字</h3>
+            <textarea id="batchImportInput" placeholder="请输入单个或多个汉字" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-base mb-2" rows="3"></textarea>
             <button id="batchImportButton" class="w-full px-3 py-2 bg-primary text-white rounded-md hover:bg-opacity-90 transition">批量导入</button>
+            
+            <!-- 添加一键清空按钮 -->
+            <button id="clearAllButton" class="w-full px-3 py-2 bg-red-600 text-white rounded-md hover:bg-opacity-90 transition mt-2">一键清空</button>
           </div>
         </div>
       </div>
@@ -160,29 +163,38 @@
   </div>
 
   <script>
-    // 默认汉字列表 - 改为4个字
-    const defaultCharacters = ['人', '口', '日', '月'];
+    // 默认汉字列表 - 改为"汉、字、练、习"
+    const defaultCharacters = ['汉', '字', '练', '习'];
     let characters = [...defaultCharacters];
     let currentIndex = 0;
     let writer = null;
     let accuracy = 0;
+    let isAnimating = false; // 添加动画状态标记
+    let animationPromise = null; // 添加动画Promise引用
+    let currentSpeed = 1.0; // 添加当前速度变量，默认中速
 
     // DOM 元素
     const characterListEl = document.getElementById('characterList');
     const currentCharacterEl = document.getElementById('currentCharacter');
-    const accuracyBarEl = document.getElementById('accuracyBar');
-    const accuracyTextEl = document.getElementById('accuracyText');
+    // 移除正确率相关元素
     const animateButton = document.getElementById('animateButton');
     const clearButton = document.getElementById('clearButton');
     const prevButton = document.getElementById('prevButton');
     const nextButton = document.getElementById('nextButton');
-    const customCharInput = document.getElementById('customCharInput');
-    const addCustomCharButton = document.getElementById('addCustomChar');
+    // 移除对不存在元素的引用
+    // const customCharInput = document.getElementById('customCharInput');
+    // const addCustomCharButton = document.getElementById('addCustomChar');
     const loadingEl = document.getElementById('loading');
     const practiceAreaEl = document.getElementById('practiceArea');
     // 新增批量导入元素
     const batchImportInput = document.getElementById('batchImportInput');
     const batchImportButton = document.getElementById('batchImportButton');
+    // 新增清空按钮元素
+    const clearAllButton = document.getElementById('clearAllButton');
+    // 新增速度控制元素
+    const speedButton = document.getElementById('speedButton');
+    const speedOptions = document.getElementById('speedOptions');
+    const currentSpeedText = document.getElementById('currentSpeedText');
 
     // 初始化
     function init() {
@@ -190,23 +202,162 @@
       loadCharacter(currentIndex);
       
       // 事件监听
-      animateButton.addEventListener('click', animateCharacter);
+      animateButton.addEventListener('click', toggleAnimation);
       clearButton.addEventListener('click', () => {
         if (writer) writer.quiz();
       });
       prevButton.addEventListener('click', showPrevCharacter);
       nextButton.addEventListener('click', showNextCharacter);
-      addCustomCharButton.addEventListener('click', addCustomCharacter);
+      
+      // 移除对不存在元素的引用
+      // addCustomCharButton.addEventListener('click', addCustomCharacter);
       
       // 自定义汉字输入框回车键事件
-      customCharInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          addCustomCharacter();
-        }
+      // customCharInput.addEventListener('keydown', (e) => {
+      //   if (e.key === 'Enter') {
+      //     addCustomCharacter();
+      //   }
+      // });
+      
+      // 批量导入事件监听
+      batchImportButton.addEventListener('click', batchImportCharacters);
+      
+      // 确保清空按钮事件监听正确添加
+      clearAllButton.addEventListener('click', clearAllCharacters);
+      
+      // 速度控制事件监听
+      speedButton.addEventListener('click', toggleSpeedOptions);
+      document.querySelectorAll('.speed-option').forEach(option => {
+        option.addEventListener('click', setSpeed);
       });
       
-      // 新增批量导入事件监听
-      batchImportButton.addEventListener('click', batchImportCharacters);
+      // 点击其他地方关闭速度选项
+      document.addEventListener('click', (e) => {
+        if (!speedButton.contains(e.target) && !speedOptions.contains(e.target)) {
+          speedOptions.classList.add('hidden');
+        }
+      });
+    }
+    
+    // 切换速度选项显示/隐藏
+    function toggleSpeedOptions(e) {
+      e.stopPropagation();
+      speedOptions.classList.toggle('hidden');
+    }
+    
+    // 设置速度
+    function setSpeed() {
+      const speed = parseFloat(this.getAttribute('data-speed'));
+      currentSpeed = speed;
+      
+      // 更新速度显示文本
+      if (speed === 0.5) {
+        currentSpeedText.textContent = '慢';
+      } else if (speed === 1.0) {
+        currentSpeedText.textContent = '中';
+      } else if (speed === 2.0) {
+        currentSpeedText.textContent = '快';
+      }
+      
+      speedOptions.classList.add('hidden');
+      
+      // 如果当前有汉字加载，重新加载以应用新速度
+      if (writer) {
+        loadCharacter(currentIndex);
+      }
+    }
+
+    // 切换播放/暂停状态
+    function toggleAnimation() {
+      if (!writer) return;
+      
+      if (isAnimating) {
+        // 当前正在播放，需要暂停
+        pauseAnimation();
+      } else {
+        // 当前已暂停，需要播放
+        playAnimation();
+      }
+    }
+
+    // 播放动画
+    function playAnimation() {
+      if (!writer) return;
+      
+      try {
+        // 更新按钮为暂停文字
+        animateButton.innerHTML = `播放`;
+        
+        isAnimating = true;
+        writer.cancelQuiz();
+        
+        // 保存动画Promise以便后续可以取消
+        animationPromise = writer.animateCharacter();
+        
+        animationPromise.then(() => {
+          // 动画完成后恢复播放按钮和状态
+          resetAnimationState();
+          setTimeout(() => {
+            try {
+              writer.quiz();
+            } catch (error) {
+              console.error('Error restarting quiz:', error);
+            }
+          }, 300);
+        }).catch(error => {
+          if (error.name !== 'CanceledPromiseError') {
+            console.error('Error animating character:', error);
+          }
+          resetAnimationState();
+        });
+      } catch (error) {
+        console.error('Error in playAnimation:', error);
+        resetAnimationState();
+      }
+    }
+
+    // 暂停动画
+    function pauseAnimation() {
+      if (!writer || !isAnimating) return;
+      
+      try {
+        writer.cancelAnimation();
+        resetAnimationState();
+      } catch (error) {
+        console.error('Error in pauseAnimation:', error);
+        resetAnimationState();
+      }
+    }
+
+    // 重置动画状态
+    function resetAnimationState() {
+      isAnimating = false;
+      animationPromise = null;
+      
+      // 恢复播放按钮文字
+      animateButton.innerHTML = `播放`;
+    }
+
+    // 演示笔顺动画 - 替换为新的toggleAnimation函数
+    function animateCharacter() {
+      if (!writer) return;
+      
+      try {
+        writer.cancelQuiz();
+        writer.animateCharacter().then(() => {
+          setTimeout(() => {
+            try {
+              writer.quiz();
+            } catch (error) {
+              console.error('Error restarting quiz:', error);
+            }
+          }, 300);
+        }).catch(error => {
+          console.error('Error animating character:', error);
+        });
+      } catch (error) {
+        console.error('Error in animateCharacter:', error);
+      }
     }
 
     // 渲染字符列表
@@ -256,23 +407,23 @@
           width: 300,
           height: 300,
           padding: 5,
-          strokeColor: '#5D5CDE',
-          radicalColor: '#5D5CDE',
+          strokeColor: '#FF0000', // 修改为红色
+          radicalColor: '#FF0000', // 修改为红色
           highlightColor: '#3F3F3F',
           outlineColor: '#DDDDDD',
-          drawingColor: '#0066FF', // 蓝色
-          drawingWidth: 12, // 粗线条
+          drawingColor: '#FF0000', // 已经是红色
+          drawingWidth: 30, // 粗线条
           showOutline: true,
-          delayBetweenStrokes: 300
+          delayBetweenStrokes: 300,
+          strokeAnimationSpeed: currentSpeed // 应用当前选择的速度
         });
       } catch (error) {
         console.error('Error creating writer:', error);
         loadingEl.classList.add('hidden');
         practiceAreaEl.classList.remove('hidden');
       }
-
-      // 设置正确率为0
-      updateAccuracy(0);
+      
+      // 移除正确率设置
       
       // 设置 quiz 模式（描红练习）
       setTimeout(() => {
@@ -281,15 +432,7 @@
         if (writer) {
           try {
             writer.quiz({
-              onComplete: (summaryData) => {
-                updateAccuracy(summaryData.score * 100);
-              },
-              onCorrectStroke: (strokeData) => {
-                // 每个笔画的正确率反馈
-                const strokeScore = Math.round(strokeData.score * 100);
-                accuracy = strokeScore;
-                updateAccuracy(accuracy);
-              }
+              // 移除正确率回调
             });
           } catch (error) {
             console.error('Error starting quiz mode:', error);
@@ -298,7 +441,7 @@
       }, 500);
     }
 
-    // 更新正确率显示
+    // 移除更新正确率显示函数
     function updateAccuracy(value) {
       const roundedValue = Math.round(value);
       accuracyBarEl.style.width = `${roundedValue}%`;
@@ -344,30 +487,10 @@
         renderCharacterList();
       }
     }
-
-    // 添加自定义汉字
-    function addCustomCharacter() {
-      const input = customCharInput.value.trim();
-      if (input && /^[\u4e00-\u9fa5]$/.test(input)) {
-        if (!characters.includes(input)) {
-          // 将新汉字添加到数组开头而不是末尾
-          characters.unshift(input);
-          renderCharacterList();
-          customCharInput.value = '';
-          
-          // 自动切换到新添加的汉字（现在是索引0）
-          currentIndex = 0;
-          loadCharacter(currentIndex);
-          renderCharacterList();
-        } else {
-          alert('该汉字已存在');
-        }
-      } else {
-        alert('请输入一个有效的汉字');
-      }
-    }
     
-    // 新增批量导入汉字功能
+    // 移除添加自定义汉字函数
+    
+    // 批量导入汉字功能
     function batchImportCharacters() {
       const input = batchImportInput.value.trim();
       if (!input) {
@@ -405,6 +528,16 @@
         alert(`成功导入 ${addedCount} 个汉字`);
       } else {
         alert('所有汉字已存在，未添加新汉字');
+      }
+    }
+
+    // 清空所有汉字
+    function clearAllCharacters() {
+      if (confirm('确定要清空所有汉字吗？')) {
+        characters = [...defaultCharacters]; // 重置为默认汉字
+        currentIndex = 0;
+        renderCharacterList();
+        loadCharacter(currentIndex);
       }
     }
 
