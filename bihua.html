@@ -150,7 +150,7 @@
             <button id="batchImportButton" class="w-full px-3 py-2 bg-primary text-white rounded-md hover:bg-opacity-90 transition">批量导入</button>
             
             <!-- 添加一键清空按钮 -->
-            <button id="clearAllButton" class="w-full px-3 py-2 bg-red-600 text-white rounded-md hover:bg-opacity-90 transition mt-2">一键清空</button>
+            <button id="clearAllButton" class="w-full px-3 py-2 bg-red-600 text-white rounded-md hover:bg-opacity-90 transition mt-2">重置汉字</button>
           </div>
         </div>
       </div>
@@ -172,6 +172,20 @@
     let isAnimating = false; // 添加动画状态标记
     let animationPromise = null; // 添加动画Promise引用
     let currentSpeed = 1.0; // 添加当前速度变量，默认中速
+    
+    // 添加常用汉字拼音数据
+    const pinyinData = {
+      '汉': 'hàn',
+      '字': 'zì',
+      '练': 'liàn',
+      '习': 'xí',
+      // 可以根据需要添加更多汉字的拼音
+    };
+    
+    // 获取汉字拼音的函数
+    function getPinyin(char) {
+      return pinyinData[char] || ''; // 如果没有找到拼音，返回空字符串
+    }
 
     // DOM 元素
     const characterListEl = document.getElementById('characterList');
@@ -384,7 +398,9 @@
       if (index < 0 || index >= characters.length) return;
       
       const char = characters[index];
-      currentCharacterEl.textContent = `练习: ${char}`;
+      // 显示拼音而不是"练习: X"
+      const pinyin = getPinyin(char);
+      currentCharacterEl.textContent = pinyin ? `拼音: ${pinyin}` : '';
       
       // 显示加载中
       if (writer) {
