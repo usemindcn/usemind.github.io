@@ -1,4 +1,7 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com https://aip.baidubce.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com https://aip.baidubce.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>照片转文字拼音助手</title>
@@ -126,7 +129,7 @@
     </div>
 
     <script>
-        // Set dark mode based on user preference
+        // 设置深色模式
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.classList.add('dark');
         }
@@ -138,7 +141,7 @@
             }
         });
 
-        // DOM Elements
+        // DOM 元素
         const photoUpload = document.getElementById('photo-upload');
         const previewContainer = document.getElementById('preview-container');
         const imagePreview = document.getElementById('image-preview');
@@ -150,38 +153,10 @@
         const tryAgainBtn = document.getElementById('try-again');
         const errorMessage = document.getElementById('error-message');
         
-        // 语音合成变量
-        let speech;
-
-        // 添加图片上传事件监听器
-        photoUpload.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            // 检查文件类型
-            if (!file.type.match('image.*')) {
-                showMessage('请选择图片文件（JPG、PNG等）', 'error');
-                return;
-            }
-            
-            // 读取并预览图片
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagePreview.src = e.target.result;
-                previewContainer.classList.remove('hidden');
-                errorMessage.classList.add('hidden');
-            };
-            reader.onerror = function() {
-                showMessage('读取图片失败，请重试', 'error');
-            };
-            reader.readAsDataURL(file);
-        });
-
         // 百度云OCR API配置
         const API_KEY = "UTY65dENbtF9jInO4eqkubSN";
         const SECRET_KEY = "ERguSWhfLQoQEVm1Tpqx4JxlwYwBRqMo";
-        const APP_ID = "118462375";
-        
+
         // 获取百度云OCR的access_token - 使用JSONP方式避免CORS问题
         async function getBaiduAccessToken() {
             return new Promise((resolve, reject) => {
@@ -190,13 +165,10 @@
                     const callbackName = 'baiduTokenCallback_' + Math.floor(Math.random() * 100000);
                     window[callbackName] = function(response) {
                         if (response && response.access_token) {
-                            console.log('获取token成功:', response);
                             resolve(response.access_token);
                         } else {
-                            console.error('获取token失败，返回数据无效:', response);
                             reject(new Error('获取授权失败，返回数据无效'));
                         }
-                        // 清理回调函数和script标签
                         delete window[callbackName];
                         document.body.removeChild(script);
                     };
@@ -205,8 +177,7 @@
                     const script = document.createElement('script');
                     script.src = `https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=${API_KEY}&client_secret=${SECRET_KEY}&callback=${callbackName}`;
                     script.onerror = function() {
-                        console.error('获取token请求失败');
-                        reject(new Error('获取授权失败，请检查网络连接'));
+                        reject(new Error('获取token请求失败'));
                         delete window[callbackName];
                         document.body.removeChild(script);
                     };
@@ -217,15 +188,12 @@
                     // 设置超时处理
                     setTimeout(() => {
                         if (window[callbackName]) {
-                            console.error('获取token请求超时');
                             reject(new Error('获取授权超时，请稍后再试'));
                             delete window[callbackName];
                             document.body.removeChild(script);
                         }
                     }, 10000); // 10秒超时
-                    
                 } catch (error) {
-                    console.error('获取百度云access_token失败:', error);
                     reject(new Error('获取授权失败，请稍后再试'));
                 }
             });
@@ -261,170 +229,61 @@
                 
                 // 提取识别的文字
                 if (response.data && response.data.words_result && response.data.words_result.length > 0) {
-                    console.log('识别成功，文字数量:', response.data.words_result.length);
                     return response.data.words_result.map(item => item.words).join('\n');
                 } else {
-                    console.error('OCR返回结果无文字:', response.data);
                     throw new Error('未能识别出文字，请尝试更清晰的图片');
                 }
             } catch (error) {
                 console.error('OCR识别失败详情:', error);
-                
-                // 更详细的错误处理
-                if (error.response) {
-                    console.error('错误响应数据:', error.response.data);
-                    console.error('错误状态码:', error.response.status);
-                }
-                
                 throw new Error('文字识别失败，请确保图片清晰且包含文字');
             }
         }
-        
-        // 添加图片处理函数，确保图片符合百度OCR要求
-        async function processImage(imageData) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = function() {
-                    try {
-                        // 百度OCR对图片大小有限制，最大不超过4MB
-                        const maxSize = 3 * 1024 * 1024; // 设置为3MB以确保安全
-                        let needsCompression = false;
-                        
-                        // 估算base64大小
-                        const base64Size = imageData.length * 0.75; // base64字符串长度约为实际大小的4/3
-                        console.log('估计图片大小:', Math.round(base64Size/1024), 'KB');
-                        
-                        if (base64Size > maxSize) {
-                            needsCompression = true;
-                            console.log('图片过大，需要压缩');
-                        }
-                        
-                        // 检查图片尺寸
-                        const maxDimension = 4096; // 百度OCR支持的最大尺寸
-                        if (img.width > maxDimension || img.height > maxDimension) {
-                            needsCompression = true;
-                            console.log('图片尺寸过大，需要调整');
-                        }
-                        
-                        if (needsCompression) {
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            
-                            // 计算压缩比例
-                            let width = img.width;
-                            let height = img.height;
-                            
-                            if (width > height && width > maxDimension) {
-                                height = Math.round(height * (maxDimension / width));
-                                width = maxDimension;
-                            } else if (height > maxDimension) {
-                                width = Math.round(width * (maxDimension / height));
-                                height = maxDimension;
-                            }
-                            
-                            // 确保尺寸合理
-                            width = Math.min(width, 2048);
-                            height = Math.min(height, 2048);
-                            
-                            canvas.width = width;
-                            canvas.height = height;
-                            ctx.drawImage(img, 0, 0, width, height);
-                            
-                            // 获取压缩后的图片，调整质量以确保大小合适
-                            let quality = 0.8;
-                            let result = canvas.toDataURL('image/jpeg', quality);
-                            
-                            // 如果还是太大，继续压缩
-                            while (result.length > maxSize && quality > 0.3) {
-                                quality -= 0.1;
-                                result = canvas.toDataURL('image/jpeg', quality);
-                                console.log(`压缩质量: ${quality.toFixed(1)}, 大小: ${Math.round(result.length/1024)}KB`);
-                            }
-                            
-                            console.log(`图片已压缩，最终质量: ${quality.toFixed(1)}`);
-                            resolve(result);
-                        } else {
-                            resolve(imageData);
-                        }
-                    } catch (err) {
-                        console.error('图片处理错误:', err);
-                        reject(new Error('图片处理失败，请尝试其他图片'));
-                    }
-                };
-                img.onerror = function() {
-                    reject(new Error('图片加载失败，请确保图片格式正确'));
-                };
-                img.src = imageData;
-            });
-        }
-        
-        // Process image
+
+        // 处理图片并启动识别过程
         processButton.addEventListener('click', async () => {
             if (!imagePreview.src) {
                 showMessage('请先选择一张图片', 'error');
                 return;
             }
 
-            // Show loading
             loadingIndicator.classList.remove('hidden');
             resultContainer.classList.add('hidden');
             errorMessage.classList.add('hidden');
 
             try {
-                console.log('开始处理图片...');
-                // 处理图片（压缩如果需要）
-                const processedImage = await processImage(imagePreview.src);
-                console.log('图片处理完成，准备识别...');
-                
-                // 调用百度OCR API识别图片文字
+                const processedImage = imagePreview.src;
                 const recognizedText = await recognizeTextFromImage(processedImage);
-                
-                if (!recognizedText || recognizedText.trim() === '') {
-                    throw new Error('未能识别出任何文字，请尝试更清晰的图片');
-                }
-                
-                console.log('识别成功，处理文字和拼音...');
                 processRecognizedText(recognizedText);
             } catch (error) {
-                console.error('处理过程出错:', error);
                 loadingIndicator.classList.add('hidden');
                 showMessage(`识别错误: ${error.message}`, 'error');
             }
         });
 
-        // Process the recognized text and add pinyin
+        // 处理识别到的文字并显示拼音
         function processRecognizedText(text) {
             loadingIndicator.classList.add('hidden');
             resultContainer.classList.remove('hidden');
             
-            // Clear previous results
             textResult.innerHTML = '';
             
-            // Add pinyin to each character
             for (let char of text) {
                 if (/\s/.test(char)) {
-                    // For spaces, just add a space
                     textResult.innerHTML += ' ';
                     continue;
                 }
                 
                 if (/[\u4e00-\u9fa5]/.test(char)) {
-                    // If it's a Chinese character
                     try {
-                        // Use pinyin-pro to get pinyin
                         const pinyin = pinyinPro.pinyin(char, { toneType: 'symbol', type: 'array' })[0];
-                        
-                        // Create a container for the character and its pinyin
                         const container = document.createElement('div');
                         container.className = 'character-container';
                         
-                        // Add pinyin
                         const pinyinSpan = document.createElement('span');
                         pinyinSpan.className = 'pinyin';
                         pinyinSpan.textContent = pinyin;
                         container.appendChild(pinyinSpan);
                         
-                        // Add the character
                         const charSpan = document.createElement('span');
                         charSpan.className = 'chinese-char';
                         charSpan.textContent = char;
@@ -432,58 +291,39 @@
                         
                         textResult.appendChild(container);
                     } catch (e) {
-                        // If pinyin conversion fails, just add the character
                         textResult.innerHTML += char;
                     }
                 } else {
-                    // If it's not a Chinese character, just add it
                     textResult.innerHTML += char;
                 }
             }
         }
 
-        // Read text aloud
+        // 朗读按钮事件
         readAloudBtn.addEventListener('click', () => {
-            // Stop any ongoing speech
-            if (speech && speechSynthesis.speaking) {
-                speechSynthesis.cancel();
-                return;
-            }
-
-            // Get all Chinese characters from the result
-            const characters = [];
-            const charElements = document.querySelectorAll('.chinese-char');
-            charElements.forEach(el => {
+            let characters = [];
+            document.querySelectorAll('.chinese-char').forEach(el => {
                 characters.push(el.textContent);
             });
-
             const textToRead = characters.join('');
-            if (!textToRead) return;
-
-            speech = new SpeechSynthesisUtterance(textToRead);
-            speech.lang = 'zh-CN';  // Set language to Chinese
-            speech.rate = 0.8;      // Slightly slower for children
-
-            // Read the text
-            speechSynthesis.speak(speech);
+            if (textToRead) {
+                let speech = new SpeechSynthesisUtterance(textToRead);
+                speech.lang = 'zh-CN';
+                speech.rate = 0.8;
+                speechSynthesis.speak(speech);
+            }
         });
 
-        // Try again button
+        // 重新开始按钮
         tryAgainBtn.addEventListener('click', () => {
-            // Reset all states
             photoUpload.value = null;
             imagePreview.src = '';
             previewContainer.classList.add('hidden');
             resultContainer.classList.add('hidden');
             errorMessage.classList.add('hidden');
-            
-            // Stop any ongoing speech
-            if (speech && speechSynthesis.speaking) {
-                speechSynthesis.cancel();
-            }
         });
 
-        // Show message (error or success)
+        // 显示消息
         function showMessage(message, type = 'error') {
             errorMessage.textContent = message;
             errorMessage.classList.remove('hidden');
@@ -496,10 +336,10 @@
                 errorMessage.classList.add('bg-green-100', 'text-green-700', 'dark:bg-green-900/30', 'dark:text-green-300');
             }
             
-            // Auto-hide after 3 seconds
             setTimeout(() => {
                 errorMessage.classList.add('hidden');
             }, 3000);
         }
     </script>
-</body></html>
+</body>
+</html>
