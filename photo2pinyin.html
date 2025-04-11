@@ -1,0 +1,390 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com https://aip.baidubce.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>照片转文字拼音助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.18.1/dist/index.js"></script>
+    <!-- 添加百度云OCR所需的库 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        secondary: '#FF6B6B',
+                        tertiary: '#4ECDC4',
+                        accent: '#FFD166',
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 2s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .character-container {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 4px;
+        }
+        
+        .pinyin {
+            font-size: 0.8em;
+            color: #FF6B6B;
+        }
+        
+        .chinese-char {
+            font-size: 1.5em;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .pinyin {
+                color: #FF9F9F;
+            }
+        }
+        
+        /* For better animation and child-friendly buttons */
+        .btn-hover:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+
+<body class="bg-white dark:bg-gray-900 transition-colors duration-200">
+    <div class="min-h-screen flex flex-col p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-primary dark:text-indigo-300 mb-2">照片转文字拼音助手</h1>
+            <p class="text-gray-600 dark:text-gray-300 text-lg">上传照片，认识汉字和拼音！</p>
+        </header>
+
+        <main class="flex-grow flex flex-col items-center justify-start max-w-4xl mx-auto w-full">
+            <!-- Upload Section -->
+            <div class="w-full p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl shadow-md mb-8">
+                <div class="flex flex-col items-center">
+                    <label for="photo-upload" class="cursor-pointer w-full">
+                        <div class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-primary dark:border-indigo-400 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-800/30 transition-colors">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%235D5CDE' class='w-12 h-12'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z'%3E%3C/path%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 13a3 3 0 11-6 0 3 3 0 016 0z'%3E%3C/path%3E%3C/svg%3E" alt="相机图标" class="w-16 h-16 mb-2">
+                            <p class="text-primary dark:text-indigo-300 text-lg font-medium">点击这里选择照片</p>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">支持 JPG、PNG 格式</p>
+                        </div>
+                    </label>
+                    <input type="file" id="photo-upload" accept="image/*" class="hidden">
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div id="preview-container" class="w-full hidden">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3">预览图片</h2>
+                <div class="relative mb-6 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-md">
+                    <img id="image-preview" class="max-w-full rounded-lg mx-auto" alt="预览图片">
+                    <button id="process-button" class="mt-4 mx-auto block bg-secondary hover:bg-red-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-colors btn-hover">
+                        识别文字
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="hidden flex-col items-center justify-center my-8">
+                <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">正在识别文字并添加拼音...</p>
+            </div>
+
+            <!-- Result Section -->
+            <div id="result-container" class="w-full hidden">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3">识别结果</h2>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                    <div id="text-result" class="text-center leading-loose mb-4"></div>
+                    <div class="flex justify-center gap-4 mt-6">
+                        <button id="read-aloud" class="bg-tertiary hover:bg-teal-500 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center btn-hover">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                            </svg>
+                            朗读文字
+                        </button>
+                        <button id="try-again" class="bg-accent hover:bg-yellow-500 text-gray-800 font-medium py-2 px-6 rounded-lg transition-colors flex items-center btn-hover">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            再试一次
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error message -->
+            <div id="error-message" class="hidden w-full mt-4 p-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg"></div>
+        </main>
+
+        <footer class="mt-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+            <p>照片转文字拼音助手 - 帮助小朋友学习汉字</p>
+        </footer>
+    </div>
+
+    <script>
+        // Set dark mode based on user preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // DOM Elements
+        const photoUpload = document.getElementById('photo-upload');
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const processButton = document.getElementById('process-button');
+        const loadingIndicator = document.getElementById('loading');
+        const resultContainer = document.getElementById('result-container');
+        const textResult = document.getElementById('text-result');
+        const readAloudBtn = document.getElementById('read-aloud');
+        const tryAgainBtn = document.getElementById('try-again');
+        const errorMessage = document.getElementById('error-message');
+
+        // 百度云OCR API配置
+        const API_KEY = "UTY65dENbtF9jInO4eqkubSN";
+        const SECRET_KEY = "ERguSWhfLQoQEVm1Tpqx4JxlwYwBRqMo";
+        const APP_ID = "118462375";
+        
+        // 获取百度云OCR的access_token
+        async function getBaiduAccessToken() {
+            try {
+                const response = await axios.post(
+                    `https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=${API_KEY}&client_secret=${SECRET_KEY}`
+                );
+                console.log('获取token成功:', response.data);
+                return response.data.access_token;
+            } catch (error) {
+                console.error('获取百度云access_token失败:', error);
+                throw new Error('获取授权失败，请稍后再试');
+            }
+        }
+
+        // Speech synthesis
+        let speech = null;
+
+        // Handle file upload
+        photoUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Check if it's an image
+            if (!file.type.match('image.*')) {
+                showMessage('请选择图片文件（JPG、PNG 等）', 'error');
+                return;
+            }
+
+            // Display preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+                resultContainer.classList.add('hidden');
+                errorMessage.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 使用百度云OCR API识别图片中的文字
+        async function recognizeTextFromImage(imageData) {
+            try {
+                // 获取access_token
+                const accessToken = await getBaiduAccessToken();
+                
+                // 准备图片数据 - 确保正确处理base64编码
+                let base64Image = imageData;
+                if (base64Image.includes(',')) {
+                    base64Image = base64Image.split(',')[1];
+                }
+                
+                console.log('准备发送OCR请求...');
+                
+                // 使用正确的API地址和参数格式
+                const response = await axios({
+                    method: 'post',
+                    url: `https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=${accessToken}`,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json'
+                    },
+                    data: `image=${encodeURIComponent(base64Image)}`
+                });
+                
+                // 添加更详细的日志
+                console.log('百度OCR响应状态:', response.status);
+                
+                // 提取识别的文字
+                if (response.data && response.data.words_result && response.data.words_result.length > 0) {
+                    console.log('识别成功，文字数量:', response.data.words_result.length);
+                    return response.data.words_result.map(item => item.words).join('\n');
+                } else {
+                    console.error('OCR返回结果无文字:', response.data);
+                    throw new Error('未能识别出文字，请尝试更清晰的图片');
+                }
+            } catch (error) {
+                console.error('OCR识别失败详情:', error);
+                
+                // 更详细的错误处理
+                if (error.response) {
+                    console.error('错误响应数据:', error.response.data);
+                    console.error('错误状态码:', error.response.status);
+                }
+                
+                throw new Error('文字识别失败，请确保图片清晰且包含文字');
+            }
+        }
+        
+        // Process image
+        processButton.addEventListener('click', async () => {
+            if (!imagePreview.src) {
+                showMessage('请先选择一张图片', 'error');
+                return;
+            }
+
+            // Show loading
+            loadingIndicator.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+
+            try {
+                console.log('开始处理图片...');
+                // 处理图片（压缩如果需要）
+                const processedImage = await processImage(imagePreview.src);
+                console.log('图片处理完成，准备识别...');
+                
+                // 调用百度OCR API识别图片文字
+                const recognizedText = await recognizeTextFromImage(processedImage);
+                
+                if (!recognizedText || recognizedText.trim() === '') {
+                    throw new Error('未能识别出任何文字，请尝试更清晰的图片');
+                }
+                
+                console.log('识别成功，处理文字和拼音...');
+                processRecognizedText(recognizedText);
+            } catch (error) {
+                console.error('处理过程出错:', error);
+                loadingIndicator.classList.add('hidden');
+                showMessage(`识别错误: ${error.message}`, 'error');
+            }
+        });
+
+        // Process the recognized text and add pinyin
+        function processRecognizedText(text) {
+            loadingIndicator.classList.add('hidden');
+            resultContainer.classList.remove('hidden');
+            
+            // Clear previous results
+            textResult.innerHTML = '';
+            
+            // Add pinyin to each character
+            for (let char of text) {
+                if (/\s/.test(char)) {
+                    // For spaces, just add a space
+                    textResult.innerHTML += ' ';
+                    continue;
+                }
+                
+                if (/[\u4e00-\u9fa5]/.test(char)) {
+                    // If it's a Chinese character
+                    try {
+                        // Use pinyin-pro to get pinyin
+                        const pinyin = pinyinPro.pinyin(char, { toneType: 'symbol', type: 'array' })[0];
+                        
+                        // Create a container for the character and its pinyin
+                        const container = document.createElement('div');
+                        container.className = 'character-container';
+                        
+                        // Add pinyin
+                        const pinyinSpan = document.createElement('span');
+                        pinyinSpan.className = 'pinyin';
+                        pinyinSpan.textContent = pinyin;
+                        container.appendChild(pinyinSpan);
+                        
+                        // Add the character
+                        const charSpan = document.createElement('span');
+                        charSpan.className = 'chinese-char';
+                        charSpan.textContent = char;
+                        container.appendChild(charSpan);
+                        
+                        textResult.appendChild(container);
+                    } catch (e) {
+                        // If pinyin conversion fails, just add the character
+                        textResult.innerHTML += char;
+                    }
+                } else {
+                    // If it's not a Chinese character, just add it
+                    textResult.innerHTML += char;
+                }
+            }
+        }
+
+        // Read text aloud
+        readAloudBtn.addEventListener('click', () => {
+            // Stop any ongoing speech
+            if (speech && speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                return;
+            }
+
+            // Get all Chinese characters from the result
+            const characters = [];
+            const charElements = document.querySelectorAll('.chinese-char');
+            charElements.forEach(el => {
+                characters.push(el.textContent);
+            });
+
+            const textToRead = characters.join('');
+            if (!textToRead) return;
+
+            speech = new SpeechSynthesisUtterance(textToRead);
+            speech.lang = 'zh-CN';  // Set language to Chinese
+            speech.rate = 0.8;      // Slightly slower for children
+
+            // Read the text
+            speechSynthesis.speak(speech);
+        });
+
+        // Try again button
+        tryAgainBtn.addEventListener('click', () => {
+            // Reset all states
+            photoUpload.value = null;
+            imagePreview.src = '';
+            previewContainer.classList.add('hidden');
+            resultContainer.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            
+            // Stop any ongoing speech
+            if (speech && speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+        });
+
+        // Show message (error or success)
+        function showMessage(message, type = 'error') {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            
+            if (type === 'error') {
+                errorMessage.classList.remove('bg-green-100', 'text-green-700', 'dark:bg-green-900/30', 'dark:text-green-300');
+                errorMessage.classList.add('bg-red-100', 'text-red-700', 'dark:bg-red-900/30', 'dark:text-red-300');
+            } else {
+                errorMessage.classList.remove('bg-red-100', 'text-red-700', 'dark:bg-red-900/30', 'dark:text-red-300');
+                errorMessage.classList.add('bg-green-100', 'text-green-700', 'dark:bg-green-900/30', 'dark:text-green-300');
+            }
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                errorMessage.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body></html>
