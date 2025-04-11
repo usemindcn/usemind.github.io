@@ -149,6 +149,33 @@
         const readAloudBtn = document.getElementById('read-aloud');
         const tryAgainBtn = document.getElementById('try-again');
         const errorMessage = document.getElementById('error-message');
+        
+        // 语音合成变量
+        let speech;
+
+        // 添加图片上传事件监听器
+        photoUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            if (!file.type.match('image.*')) {
+                showMessage('请选择图片文件（JPG、PNG等）', 'error');
+                return;
+            }
+            
+            // 读取并预览图片
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+            };
+            reader.onerror = function() {
+                showMessage('读取图片失败，请重试', 'error');
+            };
+            reader.readAsDataURL(file);
+        });
 
         // 百度云OCR API配置
         const API_KEY = "UTY65dENbtF9jInO4eqkubSN";
