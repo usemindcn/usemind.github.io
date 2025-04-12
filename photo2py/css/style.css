@@ -1,0 +1,267 @@
+.character-container {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 4px;
+    transition: all 0.3s ease;
+}
+
+.pinyin {
+    font-size: 0.8em;
+    color: #FF6B6B;
+    font-weight: bold;
+}
+
+.chinese-char {
+    font-size: 1.5em;
+    transition: all 0.3s ease;
+}
+
+@media (prefers-color-scheme: dark) {
+    .pinyin {
+        color: #FF9F9F;
+    }
+}
+
+/* 儿童友好的按钮动画效果 */
+.btn-hover:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+    box-shadow: 0 0 15px rgba(93, 92, 222, 0.5);
+}
+
+/* 添加一些儿童友好的动画效果 */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* 为结果添加更多儿童友好的样式 */
+.character-container:hover .chinese-char {
+    transform: scale(1.2);
+    transition: transform 0.2s ease;
+    color: #5D5CDE;
+}
+
+/* 添加彩色边框效果 */
+.rainbow-border {
+    border: 3px solid transparent;
+    border-image: linear-gradient(to right, #FF6B6B, #FFD166, #4ECDC4, #5D5CDE);
+    border-image-slice: 1;
+    animation: border-pulse 3s infinite;
+}
+
+@keyframes border-pulse {
+    0% { border-image: linear-gradient(to right, #FF6B6B, #FFD166, #4ECDC4, #5D5CDE); border-image-slice: 1; }
+    25% { border-image: linear-gradient(to right, #5D5CDE, #FF6B6B, #FFD166, #4ECDC4); border-image-slice: 1; }
+    50% { border-image: linear-gradient(to right, #4ECDC4, #5D5CDE, #FF6B6B, #FFD166); border-image-slice: 1; }
+    75% { border-image: linear-gradient(to right, #FFD166, #4ECDC4, #5D5CDE, #FF6B6B); border-image-slice: 1; }
+    100% { border-image: linear-gradient(to right, #FF6B6B, #FFD166, #4ECDC4, #5D5CDE); border-image-slice: 1; }
+}
+
+/* 为按钮添加更多儿童友好的效果 */
+.btn-bounce:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+}
+
+/* 添加卡通风格的背景元素 */
+.cartoon-bg {
+    position: relative;
+    overflow: hidden;
+}
+
+.cartoon-bg::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 100px;
+    height: 100px;
+    background-color: rgba(255, 209, 102, 0.2);
+    border-radius: 50%;
+    z-index: -1;
+}
+
+.cartoon-bg::after {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    left: -30px;
+    width: 80px;
+    height: 80px;
+    background-color: rgba(93, 92, 222, 0.2);
+    border-radius: 50%;
+    z-index: -1;
+}
+
+/* 添加可爱的动物图标 */
+.animal-icon {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.animal-icon:hover {
+    transform: scale(1.2) rotate(10deg);
+    opacity: 1;
+}
+
+/* 添加成功动画 */
+@keyframes success-pop {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.success-animation {
+    animation: success-pop 0.5s ease-out forwards;
+}
+
+/* 添加可爱的加载动画 */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.loading-bounce div {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: #5D5CDE;
+    margin: 0 5px;
+}
+
+.loading-bounce div:nth-child(1) {
+    animation: bounce 0.6s 0.1s infinite;
+}
+
+.loading-bounce div:nth-child(2) {
+    animation: bounce 0.6s 0.2s infinite;
+    background-color: #4ECDC4;
+}
+
+.loading-bounce div:nth-child(3) {
+    animation: bounce 0.6s 0.3s infinite;
+    background-color: #FFD166;
+}
+
+.loading-bounce div:nth-child(4) {
+    animation: bounce 0.6s 0.4s infinite;
+    background-color: #FF6B6B;
+}
+
+/* 添加卡通云朵背景 */
+.cloud {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0.5;
+}
+
+.cloud-1 {
+    width: 100px;
+    height: 60px;
+    top: 10%;
+    left: 10%;
+    animation: float 8s ease-in-out infinite;
+}
+
+.cloud-2 {
+    width: 80px;
+    height: 50px;
+    top: 15%;
+    right: 15%;
+    animation: float 10s ease-in-out infinite;
+}
+
+.cloud-3 {
+    width: 120px;
+    height: 70px;
+    bottom: 10%;
+    right: 20%;
+    animation: float 12s ease-in-out infinite;
+}
+
+/* 添加彩虹渐变文字效果 */
+.rainbow-text {
+    background-image: linear-gradient(to right, #FF6B6B, #FFD166, #4ECDC4, #5D5CDE);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow-shift 3s linear infinite;
+}
+
+@keyframes rainbow-shift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+/* 添加气泡效果 */
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    z-index: -1;
+    opacity: 0.7;
+    animation: float-bubble 5s ease-in-out infinite;
+}
+
+@keyframes float-bubble {
+    0% { transform: translateY(0) translateX(0); }
+    25% { transform: translateY(-10px) translateX(5px); }
+    50% { transform: translateY(0) translateX(10px); }
+    75% { transform: translateY(10px) translateX(5px); }
+    100% { transform: translateY(0) translateX(0); }
+}
+
+/* 添加卡通风格的按钮 */
+.cartoon-button {
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 12px 25px;
+    background-color: #FFD166;
+    color: #333;
+    border: none;
+    box-shadow: 0 5px 0 #E5A93D;
+    transition: all 0.1s;
+    position: relative;
+    overflow: hidden;
+}
+
+.cartoon-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 0 #E5A93D;
+}
+
+.cartoon-button:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #E5A93D;
+}
+
+.cartoon-button::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.cartoon-button:hover::after {
+    opacity: 1;
+}
