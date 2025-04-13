@@ -43,5 +43,9 @@ def upload():
             return text
     return "OCR 识别失败"
 
+@app.route('/')
+def hello():
+    return "Hello World!"
+
 if __name__ == '__main__':
-    app.run(debug=True)    
+    app.run(host='0.0.0.0', port=10000)  # 明确指定端口
