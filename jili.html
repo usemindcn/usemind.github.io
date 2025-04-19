@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作业激励工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+        <!-- 头部 -->
+        <header class="p-4 bg-white dark:bg-gray-800 shadow">
+            <h1 class="text-2xl font-bold text-center text-primary">写作业激励工具</h1>
+        </header>
+        
+        <!-- 主要内容 -->
+        <main class="flex-1 container mx-auto p-4 flex flex-col items-center">
+            <!-- 设置表单 -->
+            <div id="setupForm" class="w-full max-w-md bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-xl font-semibold mb-4">设置学习时间</h2>
+                <form id="workdayForm" class="space-y-4">
+                    <div>
+                        <label for="dailySalary" class="block mb-1">金币 ($)</label>
+                        <input type="number" id="dailySalary" min="0" step="any" class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-base" required placeholder="例如：500">
+                    </div>
+                    <div>
+                        <label for="startTime" class="block mb-1">学习时间</label>
+                        <input type="time" id="startTime" class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-base" required>
+                    </div>
+                    <div>
+                        <label for="endTime" class="block mb-1">结束时间</label>
+                        <input type="time" id="endTime" class="w-full px-4 py-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-base" required>
+                    </div>
+                    <button type="submit" class="w-full py-2 px-4 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors">
+                        保存设置
+                    </button>
+                </form>
+            </div>
+            
+            <!-- 金币仪表板 -->
+            <div id="earningsDashboard" class="w-full max-w-md bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hidden">
+                <div class="text-center mb-6">
+                    <h2 class="text-xl font-semibold">今日累计金币</h2>
+                    <div class="relative mt-4 h-40 flex items-center justify-center">
+                        <div id="moneyCounter" class="text-5xl font-bold text-green-600 dark:text-green-400">$0.00</div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span id="startTimeDisplay">09:00</span>
+                        <span id="currentTimeDisplay">--:--</span>
+                        <span id="endTimeDisplay">18:00</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div id="progressBar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button id="resetButton" class="py-2 px-4 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors">
+                        重置
+                    </button>
+                    <button id="pauseResumeButton" class="py-2 px-4 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors">
+                        暂停
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 钱币雨动画容器 -->
+    <div id="moneyRain" class="fixed top-0 left-0 w-full h-full pointer-events-none z-10 hidden"></div>
+    
+    <script>
+        // 检查暗黑模式
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // 应用数据
+        let appData = {
+            dailySalary: 0,
+            startTime: '',
+            endTime: '',
+            isRunning: false,
+            isPaused: false,
+            currentEarnings: 0,
+            earningsPerSecond: 0,
+            timer: null,
+            rainInterval: null
+        };
+        
+        // DOM 元素
+        const setupForm = document.getElementById('setupForm');
+        const earningsDashboard = document.getElementById('earningsDashboard');
+        const workdayForm = document.getElementById('workdayForm');
+        const moneyCounter = document.getElementById('moneyCounter');
+        const progressBar = document.getElementById('progressBar');
+        const startTimeDisplay = document.getElementById('startTimeDisplay');
+        const currentTimeDisplay = document.getElementById('currentTimeDisplay');
+        const endTimeDisplay = document.getElementById('endTimeDisplay');
+        const resetButton = document.getElementById('resetButton');
+        const pauseResumeButton = document.getElementById('pauseResumeButton');
+        const moneyRain = document.getElementById('moneyRain');
+        
+        // 初始化钱币符号
+        const moneySymbols = ['💰', '💵', '💴', '💶', '💷', '¥', '$', '元', '💲'];
+        
+        // 格式化货币
+        function formatCurrency(amount) {
+            return '$' + amount.toFixed(2);
+        }
+        
+        // 计算毫秒时间
+        function getTimeInMs(timeString) {
+            const [hours, minutes] = timeString.split(':').map(Number);
+            const now = new Date();
+            now.setHours(hours, minutes, 0, 0);
+            return now.getTime();
+        }
+        
+        // 计算学习时长（秒）
+        function calculateWorkDuration() {
+            const startMs = getTimeInMs(appData.startTime);
+            const endMs = getTimeInMs(appData.endTime);
+            // 处理跨天情况
+            let durationMs = endMs - startMs;
+            if (durationMs < 0) {
+                durationMs += 24 * 60 * 60 * 1000; // 加一天
+            }
+            return durationMs / 1000; // 转换为秒
+        }
+        
+        // 检查当前是否在工作时间
+        function isWorkTime() {
+            const now = new Date();
+            const currentTimeStr = now.getHours().toString().padStart(2, '0') + ':' + 
+                                  now.getMinutes().toString().padStart(2, '0');
+            
+            // 处理跨天情况
+            if (appData.endTime < appData.startTime) {
+                // 工作跨越午夜
+                return currentTimeStr >= appData.startTime || currentTimeStr < appData.endTime;
+            } else {
+                // 正常工作日
+                return currentTimeStr >= appData.startTime && currentTimeStr < appData.endTime;
+            }
+        }
+        
+        // 计算进度百分比
+        function calculateProgress() {
+            const now = new Date();
+            const currentTime = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            
+            const [startHours, startMinutes] = appData.startTime.split(':').map(Number);
+            const [endHours, endMinutes] = appData.endTime.split(':').map(Number);
+            
+            const startTimeSeconds = startHours * 3600 + startMinutes * 60;
+            let endTimeSeconds = endHours * 3600 + endMinutes * 60;
+            
+            // 处理跨天情况
+            if (endTimeSeconds < startTimeSeconds) {
+                endTimeSeconds += 24 * 3600; // 加一天秒数
+            }
+            
+            let currentTimeSeconds = currentTime;
+            if (currentTimeSeconds < startTimeSeconds && endTimeSeconds > 24 * 3600) {
+                currentTimeSeconds += 24 * 3600; // 午夜后加一天
+            }
+            
+            // 计算进度
+            if (currentTimeSeconds < startTimeSeconds) {
+                return 0;
+            } else if (currentTimeSeconds > endTimeSeconds) {
+                return 100;
+            } else {
+                return ((currentTimeSeconds - startTimeSeconds) / (endTimeSeconds - startTimeSeconds)) * 100;
+            }
+        }
+        
+        // 创建下落的钱币元素
+        function createMoneyElement() {
+            const money = document.createElement('div');
+            money.className = 'absolute money';
+            money.style.left = Math.random() * 100 + 'vw';
+            money.style.top = '-20px';
+            money.style.transform = `rotate(${Math.random() * 360}deg)`;
+            money.style.opacity = Math.random() * 0.5 + 0.5;
+            money.style.fontSize = (Math.random() * 20 + 20) + 'px';
+            money.style.zIndex = '20';
+            
+            // 随机选择钱币符号
+            money.textContent = moneySymbols[Math.floor(Math.random() * moneySymbols.length)];
+            
+            // 设置动画
+            money.style.animation = `fall ${Math.random() * 3 + 3}s linear`;
+            
+            return money;
+        }
+        
+        // 开始钱币雨动画
+        function startMoneyRain() {
+            moneyRain.classList.remove('hidden');
+            
+            if (appData.rainInterval) {
+                clearInterval(appData.rainInterval);
+            }
+            
+            // 定时创建下落的钱币
+            appData.rainInterval = setInterval(() => {
+                if (!appData.isRunning || appData.isPaused) {
+                    return;
+                }
+                
+                const money = createMoneyElement();
+                moneyRain.appendChild(money);
+                
+                // 动画结束后移除元素
+                setTimeout(() => {
+                    money.remove();
+                }, 6000);
+            }, 200);
+        }
+        
+        // 停止钱币雨
+        function stopMoneyRain() {
+            if (appData.rainInterval) {
+                clearInterval(appData.rainInterval);
+                appData.rainInterval = null;
+            }
+            moneyRain.innerHTML = '';
+            moneyRain.classList.add('hidden');
+        }
+        
+        // 开始收入计数器
+        function startEarningsCounter() {
+            if (appData.timer) {
+                clearInterval(appData.timer);
+            }
+            
+            const workDuration = calculateWorkDuration();
+            appData.earningsPerSecond = appData.dailySalary / workDuration;
+            appData.isRunning = true;
+            appData.isPaused = false;
+            
+            startMoneyRain();
+            
+            appData.timer = setInterval(() => {
+                if (appData.isPaused) return;
+                
+                // 更新收入
+                appData.currentEarnings += appData.earningsPerSecond;
+                moneyCounter.textContent = formatCurrency(appData.currentEarnings);
+                
+                // 更新时间和进度
+                const now = new Date();
+                currentTimeDisplay.textContent = now.getHours().toString().padStart(2, '0') + ':' + 
+                                                now.getMinutes().toString().padStart(2, '0');
+                
+                const progressPercentage = calculateProgress();
+                progressBar.style.width = progressPercentage + '%';
+                
+                // 检查工作时间是否结束
+                if (!isWorkTime() && progressPercentage >= 100) {
+                    clearInterval(appData.timer);
+                    appData.isRunning = false;
+                    stopMoneyRain();
+                }
+            }, 1000);
+        }
+        
+        // 处理表单提交
+        workdayForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // 获取表单值
+            appData.dailySalary = parseFloat(document.getElementById('dailySalary').value);
+            appData.startTime = document.getElementById('startTime').value;
+            appData.endTime = document.getElementById('endTime').value;
+            
+            // 更新显示
+            startTimeDisplay.textContent = appData.startTime;
+            endTimeDisplay.textContent = appData.endTime;
+            moneyCounter.textContent = formatCurrency(0);
+            
+            // 显示仪表板，隐藏表单
+            setupForm.classList.add('hidden');
+            earningsDashboard.classList.remove('hidden');
+            
+            // 如果现在是工作时间，开始计数
+            if (isWorkTime()) {
+                startEarningsCounter();
+            } else {
+                // 更新UI，显示等待工作时间
+                const progressPercentage = calculateProgress();
+                progressBar.style.width = progressPercentage + '%';
+                
+                // 每分钟检查一次是否到了工作时间
+                const checkStart = setInterval(() => {
+                    if (isWorkTime() && !appData.isRunning) {
+                        startEarningsCounter();
+                        clearInterval(checkStart);
+                    }
+                }, 60000); // 每分钟检查一次
+            }
+        });
+        
+        // 重置按钮
+        resetButton.addEventListener('click', () => {
+            if (appData.timer) {
+                clearInterval(appData.timer);
+            }
+            
+            appData.isRunning = false;
+            appData.isPaused = false;
+            appData.currentEarnings = 0;
+            
+            stopMoneyRain();
+            
+            // 重新显示设置表单
+            earningsDashboard.classList.add('hidden');
+            setupForm.classList.remove('hidden');
+            
+            pauseResumeButton.textContent = '暂停';
+            pauseResumeButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+            pauseResumeButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+        });
+        
+        // 暂停/恢复按钮
+        pauseResumeButton.addEventListener('click', () => {
+            appData.isPaused = !appData.isPaused;
+            
+            if (appData.isPaused) {
+                pauseResumeButton.textContent = '恢复';
+                pauseResumeButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                pauseResumeButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                moneyRain.classList.add('hidden');
+            } else {
+                pauseResumeButton.textContent = '暂停';
+                pauseResumeButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                pauseResumeButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                if (appData.isRunning) {
+                    moneyRain.classList.remove('hidden');
+                    startMoneyRain();
+                }
+            }
+        });
+    </script>
+    
+    <style>
+        /* 下落钱币的动画 */
+        @keyframes fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+            }
+        }
+        
+        /* 暗黑模式样式 */
+        .dark .money {
+            color: gold;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        
+        /* 亮色模式样式 */
+        .money {
+            color: gold;
+            text-shadow: 0 0 5px rgba(218, 165, 32, 0.5);
+        }
+    </style>
+</body>
+</html>
