@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mike老师工具箱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&amp;display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#72B0DD',
+                        redFlower: 'rgb(255, 232, 161)',
+                        pomodoroTimer: 'rgb(167, 216, 236)',
+                        winCoins: 'rgb(189, 223, 167)',
+                        wheelSpin: 'rgb(255, 210, 140)',
+                    },
+                    fontFamily: {
+                        'noto': ['"Noto Sans SC"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            height: 100%;
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: scale(1.05);
+        }
+        
+        .card-img {
+            width: 128px;
+            height: 128px;
+            object-fit: contain;
+            margin-bottom: 1rem;
+        }
+        
+        .card-title {
+            font-weight: 700;
+            font-size: 20px;
+            line-height: 29px;
+            text-align: center;
+            color: #000;
+            text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+        }
+        
+        .title-shadow {
+            text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+        }
+        
+        /* Support for dark mode */
+        @media (prefers-color-scheme: dark) {
+            .dark-mode-text {
+                color: #f0f0f0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-md mx-auto bg-white dark:bg-gray-900 min-h-screen flex flex-col">
+        <!-- Banner -->
+        <div class="w-full">
+            <img src="https://pfst.cf2.poecdn.net/base/image/276ce6105c403ed86b4bc42851a4b949100f5f55048b5e2f36a27c94c1307fa1?w=1024&amp;h=612" alt="Mike老师" class="w-full h-auto object-cover">
+        </div>
+        
+        <!-- Title -->
+        <div class="my-6 text-center">
+            <h1 class="text-3xl font-bold text-primary title-shadow">Mike老师工具箱</h1>
+        </div>
+        
+        <!-- Cards -->
+        <div class="card-container flex-grow">
+            <!-- Card 1: Little Red Flower -->
+            <a href="https://usemind.cn/flower" class="block">
+                <div class="card bg-redFlower">
+                    <img src="https://pfst.cf2.poecdn.net/base/image/58f729b55c56e61ad9f630bb15a5b964641092b13c8d266f50a3bd2f7331677f?w=388&amp;h=388" alt="小红花" class="card-img">
+                    <div class="card-title">小红花</div>
+                </div>
+            </a>
+            
+            <!-- Card 2: Pomodoro Timer -->
+            <a href="https://usemind.cn/fanqie" class="block">
+                <div class="card bg-pomodoroTimer">
+                    <img src="https://pfst.cf2.poecdn.net/base/image/512e23190031170ba59ff569db4a3bfd28ae3c35cf5b220b25f6971f30e1a38a?w=353&amp;h=378" alt="番茄钟" class="card-img">
+                    <div class="card-title">番茄钟</div>
+                </div>
+            </a>
+            
+            <!-- Card 3: Win Coins -->
+            <a href="https://usemind.cn/jili" class="block">
+                <div class="card bg-winCoins">
+                    <img src="https://pfst.cf2.poecdn.net/base/image/d2bf75dc3226789a5b09aaa0ac0d6aa2af4d8f3e1e2d5b972591e938b3c49eff?w=368&amp;h=327" alt="赢金币" class="card-img">
+                    <div class="card-title">赢金币</div>
+                </div>
+            </a>
+            
+            <!-- Card 4: Big Wheel -->
+            <a href="https://usemind.cn/zhuangpan" class="block">
+                <div class="card bg-wheelSpin">
+                    <img src="https://pfst.cf2.poecdn.net/base/image/dd980644b38c605a1b108ccf5b639e4a9da393250fbe207c1293b3f8df9bdd58?w=376&amp;h=324" alt="大转盘" class="card-img">
+                    <div class="card-title">大转盘</div>
+                </div>
+            </a>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-xs text-center my-4 px-4 text-wheelSpin font-bold">
+            本软件由Mike老师开发，如有疑问请联系微信：my---me
+        </div>
+    </div>
+
+    <script>
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+
+
+</body></html>
