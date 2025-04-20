@@ -6,35 +6,28 @@
     <style>
         /* General styles */
         body {
-            background-color: rgb(255, 239, 151); /* 修改为指定的浅黄色 */
+            background-color: rgb(251,231,170); /* Specified background color */
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
             min-height: 100vh;
             transition: background-color 0.3s ease;
-            padding: 20px 10px;
+            padding: 20px 0;
         }
 
-        .page-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            max-width: 800px;
-            width: 100%;
-        }
-
-        .image-container {
+        .poster-container {
             width: 100%;
             max-width: 500px;
             margin-bottom: 30px;
+            text-align: center;
         }
-
-        .cuisine-image {
+        
+        .poster-image {
             width: 100%;
+            max-width: 100%;
             height: auto;
-            border-radius: 12px;
+            border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
@@ -82,7 +75,7 @@
         /* Dark mode support */
         @media (prefers-color-scheme: dark) {
             body {
-                background-color: rgb(204, 191, 121); /* 暗色模式下的对应颜色，稍微暗一些 */
+                background-color: #372e1e; /* Darker version of the cream background */
             }
 
             .start-button {
@@ -98,16 +91,40 @@
     </style>
 </head>
 <body>
-    <div class="page-container">
-        <div class="image-container">
-            <img src="https://i.postimg.cc/k7VsJnKL/zgms.jpg" alt="中国美食 - Chinese Cuisine" class="cuisine-image">
-        </div>
-        
-        <div class="button-container">
-            <button class="game-button start-button">游戏一</button>
-            <button class="game-button tips-button">游戏二</button>
-        </div>
+    <!-- Poster image at the top -->
+    <div class="poster-container">
+        <img src="https://i.postimg.cc/k7VsJnKL/zgms.jpg" alt="中国美食" class="poster-image">
     </div>
+    
+    <!-- Buttons -->
+    <div class="button-container">
+        <button class="game-button start-button" id="game1">游戏一</button>
+        <button class="game-button tips-button" id="game2">游戏二</button>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // 按钮跳转功能
+        document.getElementById('game1').addEventListener('click', function() {
+            window.location.href = 'https://www.usemind.cn/shipu1';
+        });
+        
+        document.getElementById('game2').addEventListener('click', function() {
+            window.location.href = 'https://www.usemind.cn/shipu2';
+        });
+    </script>
 
     <script>
         // Dark mode detection
