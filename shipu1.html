@@ -1,0 +1,396 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国美食课堂小游戏</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .draggable {
+            cursor: move;
+            user-select: none;
+        }
+        .draggable.dragging {
+            opacity: 0.8;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(93, 92, 222, 0.7);
+            border: 2px solid #5D5CDE;
+            z-index: 100;
+            position: relative;
+        }
+        .droppable {
+            min-height: 50px;
+        }
+        .droppable.drag-over {
+            background-color: rgba(93, 92, 222, 0.3);
+            border: 2px dashed #5D5CDE;
+            box-shadow: 0 0 8px rgba(93, 92, 222, 0.5);
+            transform: scale(1.05);
+        }
+        .dark .droppable.drag-over {
+            background-color: rgba(93, 92, 222, 0.4);
+            border: 2px dashed #8584E6;
+            box-shadow: 0 0 8px rgba(133, 132, 230, 0.5);
+        }
+        .cooking-term {
+            transition: transform 0.2s ease;
+        }
+        .cooking-term:active {
+            transform: scale(0.95);
+        }
+        .shake {
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <!-- 返回按钮 -->
+        <div class="absolute top-4 left-4">
+            <button id="back-btn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg shadow-md flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>返回
+            </button>
+        </div>
+        
+        <!-- Header -->
+        <h1 class="text-3xl font-bold text-center mb-8">中国美食游戏一</h1>
+        
+        <!-- 其余内容保持不变 -->
+        <div class="mb-8">
+            <h2 class="text-xl font-bold mb-4">根据提示，选择对应的烹饪方法</h2>
+            <p class="text-gray-700 dark:text-gray-300 italic mb-4">(在实际使用时，可根据教师PPT提示选择)</p>
+        </div>
+
+        <!-- Game Board -->
+        <div class="bg-yellow-100 dark:bg-yellow-900 rounded-lg p-4 mb-8">
+            <h3 class="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4">作答区（从下列文字中拖搭到这）</h3>
+            
+            <!-- Answer slots -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div class="droppable bg-white dark:bg-gray-800 rounded p-3 flex justify-center items-center text-center" data-correct="炒">
+                    <span class="text-gray-400">1.</span>
+                    <div class="answer-slot ml-2 min-w-[40px]"></div>
+                </div>
+                <div class="droppable bg-white dark:bg-gray-800 rounded p-3 flex justify-center items-center text-center" data-correct="炸">
+                    <span class="text-gray-400">2.</span>
+                    <div class="answer-slot ml-2 min-w-[40px]"></div>
+                </div>
+                <div class="droppable bg-white dark:bg-gray-800 rounded p-3 flex justify-center items-center text-center" data-correct="烤">
+                    <span class="text-gray-400">3.</span>
+                    <div class="answer-slot ml-2 min-w-[40px]"></div>
+                </div>
+                <div class="droppable bg-white dark:bg-gray-800 rounded p-3 flex justify-center items-center text-center" data-correct="烧">
+                    <span class="text-gray-400">4.</span>
+                    <div class="answer-slot ml-2 min-w-[40px]"></div>
+                </div>
+                <div class="droppable bg-white dark:bg-gray-800 rounded p-3 flex justify-center items-center text-center" data-correct="爆">
+                    <span class="text-gray-400">5.</span>
+                    <div class="answer-slot ml-2 min-w-[40px]"></div>
+                </div>
+                <div class="droppable bg-white dark:bg-gray-800 rounded p-3 flex justify-center items-center text-center" data-correct="炖">
+                    <span class="text-gray-400">6.</span>
+                    <div class="answer-slot ml-2 min-w-[40px]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Draggable Elements -->
+        <div class="bg-blue-200 dark:bg-blue-900 rounded-lg p-4 mb-8">
+            <div class="flex flex-wrap justify-center gap-4 text-xl">
+                <div class="draggable cooking-term bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow flex items-center" draggable="true" data-term="烧">
+                    <i class="fas fa-fire text-red-500 mr-2"></i>烧
+                </div>
+                <div class="draggable cooking-term bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow flex items-center" draggable="true" data-term="烤">
+                    <i class="fas fa-temperature-high text-amber-500 mr-2"></i>烤
+                </div>
+                <div class="draggable cooking-term bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow flex items-center" draggable="true" data-term="爆">
+                    <i class="fas fa-burst text-orange-500 mr-2"></i>爆
+                </div>
+                <div class="draggable cooking-term bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow flex items-center" draggable="true" data-term="炖">
+                    <i class="fas fa-mug-hot text-blue-500 mr-2"></i>炖
+                </div>
+                <div class="draggable cooking-term bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow flex items-center" draggable="true" data-term="炸">
+                    <i class="fas fa-bacon text-yellow-600 mr-2"></i>炸
+                </div>
+                <div class="draggable cooking-term bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow flex items-center" draggable="true" data-term="炒">
+                    <i class="fas fa-utensils text-green-500 mr-2"></i>炒
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8">
+            <button id="check-btn" class="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg shadow-md">
+                检查答案
+            </button>
+            <button id="reset-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg shadow-md">
+                重置
+            </button>
+        </div>
+
+        <!-- Results Display -->
+        <div id="results" class="text-center mb-4 hidden">
+            <p class="text-xl font-bold"></p>
+        </div>
+
+        <script>
+            // Dark mode detection
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                if (event.matches) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            });
+
+            // 返回按钮功能
+            document.getElementById('back-btn').addEventListener('click', () => {
+                window.location.href = 'https://www.usemind.cn/shipu';
+            });
+
+            // Game functionality
+            document.addEventListener('DOMContentLoaded', () => {
+                const draggables = document.querySelectorAll('.draggable');
+                const droppables = document.querySelectorAll('.droppable');
+                const checkBtn = document.getElementById('check-btn');
+                const resetBtn = document.getElementById('reset-btn');
+                // No longer using show answers button
+                const resultsDiv = document.getElementById('results');
+                const resultsText = resultsDiv.querySelector('p');
+                
+                let draggingElement = null;
+                let answerChecked = false;
+
+                // Drag and drop functionality
+                draggables.forEach(draggable => {
+                    draggable.addEventListener('dragstart', () => {
+                        draggable.classList.add('dragging');
+                        draggingElement = draggable;
+                    });
+
+                    draggable.addEventListener('dragend', () => {
+                        draggable.classList.remove('dragging');
+                        draggingElement = null;
+                    });
+
+                    // Touch support
+                    draggable.addEventListener('touchstart', (e) => {
+                        const touch = e.touches[0];
+                        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                        if (element === draggable) {
+                            draggable.classList.add('dragging');
+                            draggingElement = draggable;
+                        }
+                    }, { passive: true });
+
+                    draggable.addEventListener('touchmove', (e) => {
+                        if (!draggingElement) return;
+                        e.preventDefault();
+                        
+                        const touch = e.touches[0];
+                        const x = touch.clientX;
+                        const y = touch.clientY;
+                        
+                        // Move the dragged element with the touch
+                        draggingElement.style.position = 'fixed';
+                        draggingElement.style.left = x - draggingElement.offsetWidth / 2 + 'px';
+                        draggingElement.style.top = y - draggingElement.offsetHeight / 2 + 'px';
+                        
+                        // Check if we're over a droppable
+                        const elementBelow = document.elementFromPoint(x, y);
+                        const droppable = elementBelow?.closest('.droppable');
+                        
+                        droppables.forEach(d => d.classList.remove('drag-over'));
+                        if (droppable) {
+                            droppable.classList.add('drag-over');
+                        }
+                    });
+
+                    draggable.addEventListener('touchend', (e) => {
+                        if (!draggingElement) return;
+                        
+                        const touch = e.changedTouches[0];
+                        const x = touch.clientX;
+                        const y = touch.clientY;
+                        
+                        // Reset the element style
+                        draggingElement.style.position = '';
+                        draggingElement.style.left = '';
+                        draggingElement.style.top = '';
+                        
+                        const elementBelow = document.elementFromPoint(x, y);
+                        const droppable = elementBelow?.closest('.droppable');
+                        
+                        if (droppable) {
+                            handleDrop(droppable);
+                        }
+                        
+                        draggingElement.classList.remove('dragging');
+                        droppables.forEach(d => d.classList.remove('drag-over'));
+                        draggingElement = null;
+                    });
+                });
+
+                droppables.forEach(droppable => {
+                    droppable.addEventListener('dragover', e => {
+                        e.preventDefault();
+                        droppable.classList.add('drag-over');
+                    });
+
+                    droppable.addEventListener('dragleave', () => {
+                        droppable.classList.remove('drag-over');
+                    });
+
+                    droppable.addEventListener('drop', e => {
+                        e.preventDefault();
+                        droppable.classList.remove('drag-over');
+                        
+                        if (draggingElement) {
+                            handleDrop(droppable);
+                        }
+                    });
+                });
+
+                function handleDrop(droppable) {
+                    // If already checked, don't allow changes
+                    if (answerChecked) return;
+                    
+                    // If a term is already in this slot, return it to the options
+                    const existingTerm = droppable.querySelector('.draggable');
+                    if (existingTerm) {
+                        existingTerm.style.display = '';
+                        const draggablesContainer = document.querySelector('.flex.flex-wrap.justify-center');
+                        draggablesContainer.appendChild(existingTerm);
+                    }
+                    
+                    // Clone the dragged element and add to the drop area
+                    const clone = draggingElement.cloneNode(true);
+                    clone.classList.add('placed');
+                    
+                    // Add the original drag events to the clone
+                    addDragEvents(clone);
+                    
+                    // Put clone in the answer slot
+                    const answerSlot = droppable.querySelector('.answer-slot');
+                    answerSlot.innerHTML = '';
+                    answerSlot.appendChild(clone);
+                    
+                    // Hide the original element
+                    draggingElement.style.display = 'none';
+                }
+
+                function addDragEvents(element) {
+                    element.addEventListener('dragstart', () => {
+                        element.classList.add('dragging');
+                        draggingElement = element;
+                    });
+
+                    element.addEventListener('dragend', () => {
+                        element.classList.remove('dragging');
+                        draggingElement = null;
+                    });
+                    
+                    // Similar touch events would be added here for completeness
+                }
+
+                // Check button functionality
+                checkBtn.addEventListener('click', () => {
+                    let allCorrect = true;
+                    let filledAnswers = 0;
+                    
+                    droppables.forEach(droppable => {
+                        const answerSlot = droppable.querySelector('.answer-slot');
+                        const placedElement = answerSlot.querySelector('.draggable');
+                        
+                        if (placedElement) {
+                            filledAnswers++;
+                            const userAnswer = placedElement.dataset.term;
+                            const correctAnswer = droppable.dataset.correct;
+                            
+                            if (userAnswer === correctAnswer) {
+                                placedElement.classList.remove('bg-white', 'dark:bg-gray-800');
+                                placedElement.classList.add('bg-green-200', 'dark:bg-green-800');
+                            } else {
+                                placedElement.classList.remove('bg-white', 'dark:bg-gray-800');
+                                placedElement.classList.add('bg-red-200', 'dark:bg-red-800');
+                                allCorrect = false;
+                                
+                                // Shake the incorrect answer
+                                placedElement.classList.add('shake');
+                                setTimeout(() => {
+                                    placedElement.classList.remove('shake');
+                                }, 500);
+                            }
+                        } else {
+                            allCorrect = false;
+                        }
+                    });
+                    
+                    // Show results
+                    resultsDiv.classList.remove('hidden');
+                    
+                    if (filledAnswers === 0) {
+                        resultsText.textContent = '请至少回答一个问题！';
+                        resultsText.className = 'text-xl font-bold text-yellow-600 dark:text-yellow-400';
+                    } else if (filledAnswers < droppables.length) {
+                        resultsText.textContent = '请回答所有问题！';
+                        resultsText.className = 'text-xl font-bold text-yellow-600 dark:text-yellow-400';
+                    } else if (allCorrect) {
+                        resultsText.textContent = '恭喜！全部回答正确！';
+                        resultsText.className = 'text-xl font-bold text-green-600 dark:text-green-400';
+                        answerChecked = true;
+                    } else {
+                        resultsText.textContent = '有些答案不正确，请再试一次！';
+                        resultsText.className = 'text-xl font-bold text-red-600 dark:text-red-400';
+                    }
+                });
+
+                // Reset button functionality
+                resetBtn.addEventListener('click', () => {
+                    // Clear all answer slots
+                    droppables.forEach(droppable => {
+                        const answerSlot = droppable.querySelector('.answer-slot');
+                        answerSlot.innerHTML = '';
+                    });
+                    
+                    // Make all draggable elements visible again
+                    draggables.forEach(draggable => {
+                        draggable.style.display = '';
+                        draggable.classList.remove('bg-green-200', 'bg-red-200', 'dark:bg-green-800', 'dark:bg-red-800');
+                        draggable.classList.add('bg-white', 'dark:bg-gray-800');
+                    });
+                    
+                    // Hide results
+                    resultsDiv.classList.add('hidden');
+                    
+                    // Reset the checked state
+                    answerChecked = false;
+                });
+
+                // No show answers functionality
+            });
+        </script>
+    </div>
+
+
+</body></html>

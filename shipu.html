@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="zh"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国美食</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* General styles */
+        body {
+            background-color: rgb(255, 239, 151); /* 修改为指定的浅黄色 */
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            transition: background-color 0.3s ease;
+            padding: 20px 10px;
+        }
+
+        .page-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .image-container {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 30px;
+        }
+
+        .cuisine-image {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .game-button {
+            padding: 15px 20px;
+            border-radius: 40px;
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 4px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .game-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .start-button {
+            background-color: #e69040; /* Orange button */
+            color: #7d3916; /* Dark brown text */
+            border-color: #7d3916;
+        }
+
+        .tips-button {
+            background-color: #a3b365; /* Green button */
+            color: #2e3a0f; /* Dark green text */
+            border-color: #2e3a0f;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: rgb(204, 191, 121); /* 暗色模式下的对应颜色，稍微暗一些 */
+            }
+
+            .start-button {
+                background-color: #c67a37; /* Slightly darker orange */
+                color: #ffece0; /* Lighter text for contrast */
+            }
+
+            .tips-button {
+                background-color: #859048; /* Slightly darker green */
+                color: #f0f5e0; /* Lighter text for contrast */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="image-container">
+            <img src="https://i.postimg.cc/k7VsJnKL/zgms.jpg" alt="中国美食 - Chinese Cuisine" class="cuisine-image">
+        </div>
+        
+        <div class="button-container">
+            <button class="game-button start-button">开始游戏</button>
+            <button class="game-button tips-button">查看教学提示</button>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Button click handlers
+        document.querySelectorAll('.game-button').forEach(button => {
+            button.addEventListener('click', function() {
+                console.log(this.textContent + " clicked");
+                // Add functionality here
+            });
+        });
+    </script>
+
+
+</body></html>
