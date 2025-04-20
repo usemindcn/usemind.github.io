@@ -1,0 +1,1005 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中文烹饪配对游戏</title>
+    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        /* 阻止文本复制 */
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        .draggable {
+            cursor: grab;
+            transition: all 0.2s;
+            animation: pulse 2s infinite;
+            position: relative;
+            /* 改进触摸响应 */
+            touch-action: none;
+        }
+        .draggable:active {
+            cursor: grabbing;
+        }
+        /* Punto azul eliminado */
+        .drop-target {
+            transition: all 0.3s;
+        }
+        .drop-target.highlight {
+            box-shadow: 0 0 0 3px #5D5CDE;
+            transform: scale(1.05);
+            background-color: rgba(93, 92, 222, 0.1) !important;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(93, 92, 222, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 5px rgba(93, 92, 222, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(93, 92, 222, 0);
+            }
+        }
+        .dragged-clone {
+            pointer-events: none;
+            position: absolute;
+            z-index: 100;
+            opacity: 0.8;
+            transform: translate(-50%, -50%);
+        }
+        .dish-card {
+            transition: all 0.3s ease;
+        }
+        .dish-card:hover {
+            transform: translateY(-5px);
+        }
+        .hidden-answer {
+            filter: blur(5px);
+            user-select: none;
+        }
+        
+        /* 阻止卡片区域的页面滑动 */
+        #dish-container, 
+        .cooking-methods-container, 
+        #vegetable-container, 
+        #meat-container, 
+        #staple-container {
+            touch-action: pan-x pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* 标签页样式 */
+        .tab {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-active {
+            color: #5D5CDE;
+            border-bottom: 2px solid #5D5CDE;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4">
+    <!-- 添加返回按钮 -->
+    <div class="absolute top-4 left-4">
+        <button id="back-btn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg shadow-md flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"></path>
+            </svg>
+            返回
+        </button>
+    </div>
+    
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold text-center mb-6">中国美食游戏二</h1>
+        
+        <div class="flex justify-end items-center mb-4">
+            <button id="toggleAnswers" class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg hidden">
+                <span id="answerBtnText">显示答案</span>
+            </button>
+            <button id="checkAnswers" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold">
+                提交答案
+            </button>
+        </div>
+
+        <div id="answers" class="bg-yellow-100 dark:bg-yellow-800 p-4 rounded-lg mb-6 hidden border-2 border-yellow-400">
+            <h2 class="font-bold mb-2">正确答案：</h2>
+            <ul class="ml-4 list-disc">
+                <li>1. 烤鸡翅 - 烤 + 鸡翅</li>
+                <li>2. 炒蘑菇 - 炒 + 蘑菇</li>
+                <li>3. 红烧豆腐 - 红烧 + 豆腐</li>
+                <li>4. 香葱煎鱼 - 煎 + 鱼 + 香葱</li>
+                <li>5. 煎波菜蛋饼 - 煎 + 波菜 + 蛋 + 饼</li>
+            </ul>
+        </div>
+        
+        <!-- 作答区 -->
+        <div class="bg-blue-100 dark:bg-blue-900 p-4 rounded-lg mb-4">
+            <h2 class="text-center font-bold text-xl mb-2">作答区（从下列文字中拖搭到这）</h2>
+            <div id="dish-container" class="flex overflow-x-auto gap-4 pb-2">
+                <!-- 五道菜的答题区将由JS动态生成 -->
+            </div>
+        </div>
+        
+        <!-- 选择区域 - 使用标签切换UI -->
+        <div class="bg-blue-50 dark:bg-blue-800 p-4 rounded-lg">
+            <!-- 标签导航 -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+                <div id="tab-cooking" class="tab tab-active px-4 py-2 font-medium">烹饪方法</div>
+                <div id="tab-veg" class="tab px-4 py-2 font-medium">素菜</div>
+                <div id="tab-meat" class="tab px-4 py-2 font-medium">荤菜</div>
+                <div id="tab-staple" class="tab px-4 py-2 font-medium">主食</div>
+            </div>
+            
+            <!-- 标签内容区域 -->
+            <div class="tab-content-container">
+                <!-- 烹饪方法标签页 -->
+                <div id="content-cooking" class="tab-content active">
+                    <div class="cooking-methods-container grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                        <!-- 烹饪方法将由JS动态生成 -->
+                    </div>
+                </div>
+                
+                <!-- 素菜标签页 -->
+                <div id="content-veg" class="tab-content">
+                    <div id="vegetable-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <!-- 素菜将由JS动态生成 -->
+                    </div>
+                </div>
+                
+                <!-- 荤菜标签页 -->
+                <div id="content-meat" class="tab-content">
+                    <div id="meat-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <!-- 荤菜将由JS动态生成 -->
+                    </div>
+                </div>
+                
+                <!-- 主食标签页 -->
+                <div id="content-staple" class="tab-content">
+                    <div id="staple-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <!-- 主食将由JS动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 检查暗色模式
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+        
+        // 返回按钮功能
+        document.getElementById('back-btn').addEventListener('click', function() {
+            window.location.href = 'https://www.usemind.cn/shipu';
+        });
+        
+        // 阻止文本复制
+        document.addEventListener('copy', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        // 定义菜品、烹饪方法和食材
+        const dishes = [
+            { id: 1, name: "烤鸡翅", correctMethods: ["烤"], correctIngredients: ["鸡翅"] },
+            { id: 2, name: "炒蘑菇", correctMethods: ["炒"], correctIngredients: ["蘑菇"] },
+            { id: 3, name: "红烧豆腐", correctMethods: ["红烧"], correctIngredients: ["豆腐"] },
+            { id: 4, name: "香葱煎鱼", correctMethods: ["煎"], correctIngredients: ["鱼", "香葱"] },
+            { id: 5, name: "煎波菜蛋饼", correctMethods: ["煎"], correctIngredients: ["波菜", "蛋", "饼"] }
+        ];
+        
+        const cookingMethods = [
+            { name: "红烧", icon: "🔥" },
+            { name: "烤", icon: "🍖" },
+            { name: "爆", icon: "💥" },
+            { name: "炖", icon: "🥘" },
+            { name: "炸", icon: "🍳" },
+            { name: "炒", icon: "🥢" },
+            { name: "煎", icon: "🍳" },
+            { name: "煮", icon: "🥣" },
+            { name: "蒸", icon: "♨️" },
+            { name: "拌", icon: "🥗" }
+        ];
+        
+        const vegetables = [
+            { name: "波菜", icon: "🥬" },
+            { name: "豆腐", icon: "🧀" },
+            { name: "茄子", icon: "🍆" },
+            { name: "香葱", icon: "🧅" },
+            { name: "蘑菇", icon: "🍄" },
+            { name: "黄瓜", icon: "🥒" },
+            { name: "西红柿", icon: "🍅" },
+            { name: "萝卜", icon: "🥕" }
+        ];
+        
+        const meats = [
+            { name: "鸭", icon: "🦆" },
+            { name: "鱼", icon: "🐟" },
+            { name: "羊肉", icon: "🐑" },
+            { name: "鸡翅", icon: "🍗" },
+            { name: "蛋", icon: "🥚" },
+            { name: "牛肉", icon: "🐄" }
+        ];
+        
+        const staples = [
+            { name: "饺子", icon: "🥟" },
+            { name: "粥", icon: "🍚" },
+            { name: "饭", icon: "🍚" },
+            { name: "饼", icon: "🥞" }
+        ];
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化标签页
+            initTabs();
+            
+            // 生成菜品卡片
+            generateDishCards();
+            
+            // 生成烹饪方法卡片
+            generateCookingMethods();
+            
+            // 生成食材卡片
+            generateIngredients('vegetable-container', vegetables);
+            generateIngredients('meat-container', meats);
+            generateIngredients('staple-container', staples);
+            
+            // 初始化拖放功能
+            initDragAndDrop();
+            
+            // 切换答案显示/隐藏
+            document.getElementById('toggleAnswers').addEventListener('click', function() {
+                const answersDiv = document.getElementById('answers');
+                const btnText = document.getElementById('answerBtnText');
+                
+                if (answersDiv.classList.contains('hidden')) {
+                    answersDiv.classList.remove('hidden');
+                    btnText.textContent = '隐藏答案';
+                } else {
+                    answersDiv.classList.add('hidden');
+                    btnText.textContent = '显示答案';
+                }
+            });
+            
+            // 检查答案
+            document.getElementById('checkAnswers').addEventListener('click', checkAnswers);
+        });
+        
+        // 初始化标签页功能
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有标签的激活状态
+                    tabs.forEach(t => t.classList.remove('tab-active'));
+                    
+                    // 添加当前标签的激活状态
+                    this.classList.add('tab-active');
+                    
+                    // 隐藏所有内容
+                    const allContents = document.querySelectorAll('.tab-content');
+                    allContents.forEach(content => content.classList.remove('active'));
+                    
+                    // 显示对应内容
+                    const tabId = this.id;
+                    const contentId = tabId.replace('tab-', 'content-');
+                    document.getElementById(contentId).classList.add('active');
+                });
+            });
+        }
+        
+        // 生成菜品卡片
+        function generateDishCards() {
+            const dishContainer = document.getElementById('dish-container');
+            
+            dishes.forEach(dish => {
+                const dishCard = document.createElement('div');
+                dishCard.className = 'dish-card bg-white dark:bg-gray-800 rounded-lg p-3 shadow-md flex-shrink-0 w-[240px]';
+                dishCard.dataset.dishId = dish.id;
+                
+                dishCard.innerHTML = `
+                    <h3 class="font-bold text-lg mb-2">菜谱${dish.id}</h3>
+                    <div class="flex flex-col gap-2">
+                        <!-- 烹饪方法放置区 -->
+                        <div class="drop-target method-drop flex flex-wrap gap-1 min-h-10 p-1 bg-blue-50 dark:bg-blue-950 rounded-lg border-2 border-dashed border-primary" data-dish-id="${dish.id}" data-drop-type="method">
+                            <span class="text-gray-400 dark:text-gray-500 text-center w-full text-sm">拖入烹饪方法</span>
+                        </div>
+                        
+                        <!-- 食材放置区 -->
+                        <div class="drop-target ingredient-drop flex flex-wrap gap-1 min-h-10 p-1 bg-blue-50 dark:bg-blue-950 rounded-lg border-2 border-dashed border-primary" data-dish-id="${dish.id}" data-drop-type="ingredient">
+                            <span class="text-gray-400 dark:text-gray-500 text-center w-full text-sm">拖入食材</span>
+                        </div>
+                    </div>
+                    <div class="result mt-2 hidden">
+                        <span class="correct hidden text-green-600 dark:text-green-400 font-bold text-sm">✓ 正确!</span>
+                        <span class="incorrect hidden text-red-600 dark:text-red-400 font-bold text-sm">✗ 错误，请重试!</span>
+                    </div>
+                `;
+                
+                dishContainer.appendChild(dishCard);
+            });
+        }
+        
+        // 生成烹饪方法卡片
+        function generateCookingMethods() {
+            const cookingMethodsContainer = document.querySelector('.cooking-methods-container');
+            
+            cookingMethods.forEach(method => {
+                const methodCard = document.createElement('div');
+                methodCard.className = 'draggable bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-700';
+                methodCard.dataset.type = 'method';
+                methodCard.dataset.name = method.name;
+                
+                methodCard.innerHTML = `
+                    <span class="text-2xl">${method.icon}</span>
+                    <span class="font-medium">${method.name}</span>
+                `;
+                
+                cookingMethodsContainer.appendChild(methodCard);
+            });
+        }
+        
+        // 生成食材卡片
+        function generateIngredients(containerId, ingredients) {
+            const container = document.getElementById(containerId);
+            
+            ingredients.forEach(ingredient => {
+                const ingredientCard = document.createElement('div');
+                ingredientCard.className = 'draggable bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-700';
+                ingredientCard.dataset.type = 'ingredient';
+                ingredientCard.dataset.name = ingredient.name;
+                
+                ingredientCard.innerHTML = `
+                    <span class="text-2xl">${ingredient.icon}</span>
+                    <span class="font-medium">${ingredient.name}</span>
+                `;
+                
+                container.appendChild(ingredientCard);
+            });
+        }
+        
+        // 初始化拖放功能
+        function initDragAndDrop() {
+            const draggables = document.querySelectorAll('.draggable');
+            const dropTargets = document.querySelectorAll('.drop-target');
+            let draggedClone = null;
+            let touchTimeout = null;
+            let currentDragElement = null;
+            let isDragging = false;
+            
+            // 为所有可拖拽元素添加事件监听
+            draggables.forEach(draggable => {
+                draggable.setAttribute('draggable', 'true');
+                
+                // 优化长按响应 - 添加触摸事件
+                draggable.addEventListener('touchstart', function(e) {
+                    const element = this;
+                    
+                    // 清除之前的任何超时
+                    if (touchTimeout) clearTimeout(touchTimeout);
+                    
+                    // 设置更短的响应时间 - 降低到100ms (原生拖拽通常是300-500ms)
+                    touchTimeout = setTimeout(function() {
+                        currentDragElement = element;
+                        // 创建克隆并添加到body
+                        draggedClone = element.cloneNode(true);
+                        draggedClone.classList.add('dragged-clone');
+                        document.body.appendChild(draggedClone);
+                        
+                        // 设置克隆位置
+                        const touch = e.touches[0];
+                        draggedClone.style.left = `${touch.clientX}px`;
+                        draggedClone.style.top = `${touch.clientY}px`;
+                        
+                        // 视觉效果
+                        element.classList.add('opacity-50', 'scale-95');
+                        isDragging = true;
+                        
+                        // 阻止页面滚动
+                        e.preventDefault();
+                    }, 100); // 缩短长按触发时间
+                });
+                
+                // 处理触摸移动
+                draggable.addEventListener('touchmove', function(e) {
+                    // 如果正在拖拽中
+                    if (isDragging && draggedClone) {
+                        const touch = e.touches[0];
+                        draggedClone.style.left = `${touch.clientX}px`;
+                        draggedClone.style.top = `${touch.clientY}px`;
+                        
+                        // 检查是否在放置区域上方
+                        const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
+                        let dropTarget = null;
+                        
+                        for (let i = 0; i < elementsAtPoint.length; i++) {
+                            if (elementsAtPoint[i].classList.contains('drop-target')) {
+                                dropTarget = elementsAtPoint[i];
+                                break;
+                            }
+                        }
+                        
+                        // 清除所有高亮
+                        dropTargets.forEach(target => target.classList.remove('highlight'));
+                        
+                        // 如有放置目标则高亮
+                        if (dropTarget) {
+                            dropTarget.classList.add('highlight');
+                        }
+                        
+                        // 阻止页面滚动
+                        e.preventDefault();
+                    } else if (touchTimeout) {
+                        // 如果用户正在滑动（非拖拽意图），取消长按
+                        clearTimeout(touchTimeout);
+                        touchTimeout = null;
+                    }
+                });
+                
+                // 处理触摸结束
+                draggable.addEventListener('touchend', function(e) {
+                    // 清除长按计时器
+                    if (touchTimeout) {
+                        clearTimeout(touchTimeout);
+                        touchTimeout = null;
+                    }
+                    
+                    // 如果正在拖拽
+                    if (isDragging && draggedClone) {
+                        const touch = e.changedTouches[0];
+                        const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
+                        let dropTarget = null;
+                        
+                        // 找到触摸点下的第一个放置目标
+                        for (let i = 0; i < elementsAtPoint.length; i++) {
+                            if (elementsAtPoint[i].classList.contains('drop-target')) {
+                                dropTarget = elementsAtPoint[i];
+                                break;
+                            }
+                        }
+                        
+                        // 如果找到目标，模拟放置
+                        if (dropTarget) {
+                            const targetType = dropTarget.dataset.dropType;
+                            const type = currentDragElement.dataset.type;
+                            const name = currentDragElement.dataset.name;
+                            
+                            // 检查放置类型是否匹配
+                            if ((targetType === 'method' && type === 'method') || 
+                                (targetType === 'ingredient' && type === 'ingredient')) {
+                                
+                                // 检查是否已经存在相同元素
+                                const existingItems = Array.from(dropTarget.querySelectorAll('.dropped-item'));
+                                const alreadyExists = existingItems.some(item => 
+                                    item.dataset.name === name
+                                );
+                                
+                                if (!alreadyExists) {
+                                    // 移除提示文本
+                                    const placeholder = dropTarget.querySelector('span.text-gray-400');
+                                    if (placeholder) {
+                                        dropTarget.removeChild(placeholder);
+                                    }
+                                    
+                                    // 创建放置的元素
+                                    const droppedItem = document.createElement('div');
+                                    droppedItem.className = 'dropped-item draggable bg-primary bg-opacity-10 dark:bg-opacity-20 rounded-lg px-2 py-1 flex items-center gap-1';
+                                    droppedItem.dataset.type = type;
+                                    droppedItem.dataset.name = name;
+                                    droppedItem.setAttribute('draggable', 'true');
+                                    
+                                    // 从原元素中提取图标
+                                    const icon = currentDragElement.querySelector('.text-2xl').textContent;
+                                    
+                                    droppedItem.innerHTML = `
+                                        <span>${icon}</span>
+                                        <span>${name}</span>
+                                        <button class="remove-btn ml-1 text-red-500 hover:text-red-700 font-bold text-lg">&times;</button>
+                                    `;
+                                    
+                                    dropTarget.appendChild(droppedItem);
+                                    
+                                    // 添加拖拽功能到新元素
+                                    initDragListeners(droppedItem, true);
+                                    
+                                    // 添加移除按钮功能
+                                    droppedItem.querySelector('.remove-btn').addEventListener('click', function(e) {
+                                        e.stopPropagation(); // 防止事件冒泡
+                                        this.parentElement.remove();
+                                        
+                                        // 如果没有元素了，添加回提示
+                                        if (dropTarget.querySelectorAll('.dropped-item').length === 0) {
+                                            const placeholder = document.createElement('span');
+                                            placeholder.className = 'text-gray-400 dark:text-gray-500 text-center w-full text-sm';
+                                            placeholder.textContent = targetType === 'method' ? '拖入烹饪方法' : '拖入食材';
+                                            dropTarget.appendChild(placeholder);
+                                        }
+                                        
+                                        // 隐藏结果提示
+                                        const dishCard = dropTarget.closest('.dish-card');
+                                        if (dishCard) {
+                                            const result = dishCard.querySelector('.result');
+                                            result.classList.add('hidden');
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                        
+                        // 清除所有高亮
+                        dropTargets.forEach(target => target.classList.remove('highlight'));
+                        
+                        // 清理
+                        if (draggedClone) {
+                            document.body.removeChild(draggedClone);
+                            draggedClone = null;
+                        }
+                        
+                        if (currentDragElement) {
+                            currentDragElement.classList.remove('opacity-50', 'scale-95');
+                            currentDragElement = null;
+                        }
+                        
+                        isDragging = false;
+                        e.preventDefault();
+                    }
+                });
+                
+                // 为PC端保留原生拖拽事件
+                draggable.addEventListener('dragstart', function(e) {
+                    currentDragElement = this;
+                    // 创建拖拽元素的克隆
+                    draggedClone = this.cloneNode(true);
+                    draggedClone.classList.add('dragged-clone');
+                    document.body.appendChild(draggedClone);
+                    
+                    // 设置拖拽数据
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        type: this.dataset.type,
+                        name: this.dataset.name,
+                        html: this.outerHTML,
+                        fromDropTarget: this.classList.contains('dropped-item')
+                    }));
+                    
+                    // 设置拖拽效果
+                    this.classList.add('opacity-50');
+                    setTimeout(() => {
+                        this.classList.add('scale-95');
+                    }, 0);
+                });
+                
+                draggable.addEventListener('dragend', function() {
+                    this.classList.remove('opacity-50', 'scale-95');
+                    if (draggedClone) {
+                        document.body.removeChild(draggedClone);
+                        draggedClone = null;
+                    }
+                    currentDragElement = null;
+                });
+            });
+            
+            // 辅助函数：为新添加的元素初始化拖拽监听器
+            function initDragListeners(element, isFromDropTarget = false) {
+                element.addEventListener('dragstart', function(e) {
+                    currentDragElement = this;
+                    // 创建拖拽元素的克隆
+                    draggedClone = this.cloneNode(true);
+                    draggedClone.classList.add('dragged-clone');
+                    document.body.appendChild(draggedClone);
+                    
+                    // 设置拖拽数据
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        type: this.dataset.type,
+                        name: this.dataset.name,
+                        html: this.outerHTML,
+                        fromDropTarget: isFromDropTarget
+                    }));
+                    
+                    // 设置拖拽效果
+                    this.classList.add('opacity-50');
+                    setTimeout(() => {
+                        this.classList.add('scale-95');
+                    }, 0);
+                });
+                
+                element.addEventListener('dragend', function() {
+                    this.classList.remove('opacity-50', 'scale-95');
+                    if (draggedClone) {
+                        document.body.removeChild(draggedClone);
+                        draggedClone = null;
+                    }
+                    currentDragElement = null;
+                });
+                
+                // 移动设备触摸事件
+                element.addEventListener('touchstart', function(e) {
+                    const element = this;
+                    
+                    // 清除之前的任何超时
+                    if (touchTimeout) clearTimeout(touchTimeout);
+                    
+                    // 设置更短的响应时间
+                    touchTimeout = setTimeout(function() {
+                        currentDragElement = element;
+                        // 创建克隆并添加到body
+                        draggedClone = element.cloneNode(true);
+                        draggedClone.classList.add('dragged-clone');
+                        document.body.appendChild(draggedClone);
+                        
+                        // 设置克隆位置
+                        const touch = e.touches[0];
+                        draggedClone.style.left = `${touch.clientX}px`;
+                        draggedClone.style.top = `${touch.clientY}px`;
+                        
+                        // 视觉效果
+                        element.classList.add('opacity-50', 'scale-95');
+                        isDragging = true;
+                        
+                        // 阻止页面滚动
+                        e.preventDefault();
+                    }, 100); // 缩短长按触发时间
+                });
+                
+                element.addEventListener('touchmove', function(e) {
+                    // 同上的touchmove处理逻辑
+                    if (isDragging && draggedClone) {
+                        const touch = e.touches[0];
+                        draggedClone.style.left = `${touch.clientX}px`;
+                        draggedClone.style.top = `${touch.clientY}px`;
+                        
+                        // 检查是否在放置区域上方
+                        const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
+                        let dropTarget = null;
+                        
+                        for (let i = 0; i < elementsAtPoint.length; i++) {
+                            if (elementsAtPoint[i].classList.contains('drop-target')) {
+                                dropTarget = elementsAtPoint[i];
+                                break;
+                            }
+                        }
+                        
+                        // 清除所有高亮
+                        dropTargets.forEach(target => target.classList.remove('highlight'));
+                        
+                        // 如有放置目标则高亮
+                        if (dropTarget) {
+                            dropTarget.classList.add('highlight');
+                        }
+                        
+                        // 阻止页面滚动
+                        e.preventDefault();
+                    } else if (touchTimeout) {
+                        // 如果用户正在滑动（非拖拽意图），取消长按
+                        clearTimeout(touchTimeout);
+                        touchTimeout = null;
+                    }
+                });
+                
+                element.addEventListener('touchend', function(e) {
+                    // 清除长按计时器
+                    if (touchTimeout) {
+                        clearTimeout(touchTimeout);
+                        touchTimeout = null;
+                    }
+                    
+                    if (isDragging && draggedClone) {
+                        const touch = e.changedTouches[0];
+                        const elementsAtPoint = document.elementsFromPoint(touch.clientX, touch.clientY);
+                        let dropTarget = null;
+                        
+                        for (let i = 0; i < elementsAtPoint.length; i++) {
+                            if (elementsAtPoint[i].classList.contains('drop-target')) {
+                                dropTarget = elementsAtPoint[i];
+                                break;
+                            }
+                        }
+                        
+                        if (dropTarget) {
+                            const targetType = dropTarget.dataset.dropType;
+                            const type = currentDragElement.dataset.type;
+                            const name = currentDragElement.dataset.name;
+                            
+                            // 检查放置类型是否匹配
+                            if ((targetType === 'method' && type === 'method') || 
+                                (targetType === 'ingredient' && type === 'ingredient')) {
+                                
+                                // 检查是否已经存在相同元素
+                                const existingItems = Array.from(dropTarget.querySelectorAll('.dropped-item'));
+                                const alreadyExists = existingItems.some(item => 
+                                    item.dataset.name === name
+                                );
+                                
+                                if (!alreadyExists) {
+                                    // 移除提示文本
+                                    const placeholder = dropTarget.querySelector('span.text-gray-400');
+                                    if (placeholder) {
+                                        dropTarget.removeChild(placeholder);
+                                    }
+                                    
+                                    // 创建放置的元素
+                                    const droppedItem = document.createElement('div');
+                                    droppedItem.className = 'dropped-item draggable bg-primary bg-opacity-10 dark:bg-opacity-20 rounded-lg px-2 py-1 flex items-center gap-1';
+                                    droppedItem.dataset.type = type;
+                                    droppedItem.dataset.name = name;
+                                    droppedItem.setAttribute('draggable', 'true');
+                                    
+                                    // 从原元素中提取图标
+                                    const icon = currentDragElement.querySelector('.text-2xl').textContent;
+                                    
+                                    droppedItem.innerHTML = `
+                                        <span>${icon}</span>
+                                        <span>${name}</span>
+                                        <button class="remove-btn ml-1 text-red-500 hover:text-red-700 font-bold text-lg">&times;</button>
+                                    `;
+                                    
+                                    dropTarget.appendChild(droppedItem);
+                                    
+                                    // 添加拖拽功能到新元素
+                                    initDragListeners(droppedItem, true);
+                                    
+                                    // 添加移除按钮功能
+                                    droppedItem.querySelector('.remove-btn').addEventListener('click', function(e) {
+                                        e.stopPropagation(); // 防止事件冒泡
+                                        this.parentElement.remove();
+                                        
+                                        // 如果没有元素了，添加回提示
+                                        if (dropTarget.querySelectorAll('.dropped-item').length === 0) {
+                                            const placeholder = document.createElement('span');
+                                            placeholder.className = 'text-gray-400 dark:text-gray-500 text-center w-full text-sm';
+                                            placeholder.textContent = targetType === 'method' ? '拖入烹饪方法' : '拖入食材';
+                                            dropTarget.appendChild(placeholder);
+                                        }
+                                        
+                                        // 隐藏结果提示
+                                        const dishCard = dropTarget.closest('.dish-card');
+                                        if (dishCard) {
+                                            const result = dishCard.querySelector('.result');
+                                            result.classList.add('hidden');
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                        
+                        // 清除所有高亮
+                        dropTargets.forEach(target => target.classList.remove('highlight'));
+                        
+                        if (draggedClone) {
+                            document.body.removeChild(draggedClone);
+                            draggedClone = null;
+                        }
+                        
+                        if (currentDragElement) {
+                            currentDragElement.classList.remove('opacity-50', 'scale-95');
+                            currentDragElement = null;
+                        }
+                        
+                        isDragging = false;
+                        e.preventDefault();
+                    }
+                });
+            }
+            
+            // 为所有放置目标添加事件监听
+            dropTargets.forEach(target => {
+                target.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.classList.add('highlight');
+                });
+                
+                target.addEventListener('dragleave', function() {
+                    this.classList.remove('highlight');
+                });
+                
+                target.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('highlight');
+                    
+                    try {
+                        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                        const targetType = this.dataset.dropType;
+                        
+                        // 检查是否符合放置类型
+                        if ((targetType === 'method' && data.type === 'method') || 
+                            (targetType === 'ingredient' && data.type === 'ingredient')) {
+                            
+                            // 检查是否已经存在相同的元素
+                            const existingItems = Array.from(this.querySelectorAll('.dropped-item'));
+                            const alreadyExists = existingItems.some(item => 
+                                item.dataset.name === data.name
+                            );
+                            
+                            // 如果是从其他放置区拖拽过来的元素
+                            if (data.fromDropTarget) {
+                                // 如果目标区域已有相同元素，则不处理
+                                if (alreadyExists) return;
+                                
+                                // 在文档中找到与拖拽数据匹配的元素并删除它
+                                const sourceElements = document.querySelectorAll('.dropped-item');
+                                sourceElements.forEach(element => {
+                                    if (element.dataset.name === data.name && 
+                                        element.dataset.type === data.type && 
+                                        element.classList.contains('opacity-50')) {
+                                        
+                                        // 获取源容器
+                                        const sourceContainer = element.parentElement;
+                                        element.remove();
+                                        
+                                        // 如果源容器没有元素了，添加回提示
+                                        if (sourceContainer.querySelectorAll('.dropped-item').length === 0) {
+                                            const sourcePlaceholder = document.createElement('span');
+                                            sourcePlaceholder.className = 'text-gray-400 dark:text-gray-500 text-center w-full text-sm';
+                                            sourcePlaceholder.textContent = sourceContainer.dataset.dropType === 'method' ? 
+                                                '拖入烹饪方法' : '拖入食材';
+                                            sourceContainer.appendChild(sourcePlaceholder);
+                                        }
+                                    }
+                                });
+                            }
+                            
+                            if (!alreadyExists) {
+                                // 移除提示文本
+                                const placeholder = this.querySelector('span.text-gray-400');
+                                if (placeholder) {
+                                    this.removeChild(placeholder);
+                                }
+                                
+                                // 创建放置的元素
+                                const droppedItem = document.createElement('div');
+                                droppedItem.className = 'dropped-item draggable bg-primary bg-opacity-10 dark:bg-opacity-20 rounded-lg px-2 py-1 flex items-center gap-1';
+                                droppedItem.dataset.type = data.type;
+                                droppedItem.dataset.name = data.name;
+                                droppedItem.setAttribute('draggable', 'true');
+                                
+                                // 提取图标和名称
+                                const html = new DOMParser().parseFromString(data.html, 'text/html');
+                                const icon = html.querySelector('.text-2xl').textContent;
+                                
+                                droppedItem.innerHTML = `
+                                    <span>${icon}</span>
+                                    <span>${data.name}</span>
+                                    <button class="remove-btn ml-1 text-red-500 hover:text-red-700 font-bold text-lg">&times;</button>
+                                `;
+                                
+                                this.appendChild(droppedItem);
+                                
+                                // 添加拖拽功能到新元素
+                                initDragListeners(droppedItem, true);
+                                
+                                // 添加移除按钮功能
+                                droppedItem.querySelector('.remove-btn').addEventListener('click', function(e) {
+                                    e.stopPropagation(); // 防止事件冒泡
+                                    this.parentElement.remove();
+                                    
+                                    // 如果没有元素了，添加回提示
+                                    if (target.querySelectorAll('.dropped-item').length === 0) {
+                                        const placeholder = document.createElement('span');
+                                        placeholder.className = 'text-gray-400 dark:text-gray-500 text-center w-full text-sm';
+                                        placeholder.textContent = targetType === 'method' ? '拖入烹饪方法' : '拖入食材';
+                                        target.appendChild(placeholder);
+                                    }
+                                    
+                                    // 隐藏结果提示
+                                    const dishCard = target.closest('.dish-card');
+                                    if (dishCard) {
+                                        const result = dishCard.querySelector('.result');
+                                        result.classList.add('hidden');
+                                    }
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error parsing drag data:', error);
+                    }
+                });
+            });
+            
+            // 移动克隆体跟随鼠标
+            document.addEventListener('dragover', function(e) {
+                if (draggedClone) {
+                    draggedClone.style.left = `${e.clientX}px`;
+                    draggedClone.style.top = `${e.clientY}px`;
+                }
+            });
+        }
+        
+        // 检查答案
+        function checkAnswers() {
+            const dishCards = document.querySelectorAll('.dish-card');
+            
+            dishCards.forEach(card => {
+                const dishId = parseInt(card.dataset.dishId);
+                const dish = dishes.find(d => d.id === dishId);
+                
+                if (!dish) return;
+                
+                // 获取用户选择的烹饪方法
+                const methodDropzone = card.querySelector('.method-drop');
+                const methodItems = Array.from(methodDropzone.querySelectorAll('.dropped-item'));
+                const selectedMethods = methodItems.map(item => item.dataset.name);
+                
+                // 获取用户选择的食材
+                const ingredientDropzone = card.querySelector('.ingredient-drop');
+                const ingredientItems = Array.from(ingredientDropzone.querySelectorAll('.dropped-item'));
+                const selectedIngredients = ingredientItems.map(item => item.dataset.name);
+                
+                // 检查答案是否正确
+                const methodsCorrect = checkArraysMatch(selectedMethods, dish.correctMethods);
+                const ingredientsCorrect = checkArraysMatch(selectedIngredients, dish.correctIngredients);
+                
+                // 显示结果
+                const result = card.querySelector('.result');
+                const correctSpan = result.querySelector('.correct');
+                const incorrectSpan = result.querySelector('.incorrect');
+                
+                result.classList.remove('hidden');
+                
+                if (methodsCorrect && ingredientsCorrect) {
+                    correctSpan.classList.remove('hidden');
+                    incorrectSpan.classList.add('hidden');
+                    card.classList.add('bg-green-50', 'dark:bg-green-900/30');
+                    card.classList.remove('bg-white', 'dark:bg-gray-800');
+                } else {
+                    correctSpan.classList.add('hidden');
+                    incorrectSpan.classList.remove('hidden');
+                    card.classList.add('bg-red-50', 'dark:bg-red-900/30');
+                    card.classList.remove('bg-white', 'dark:bg-gray-800');
+                }
+            });
+        }
+        
+        // 检查两个数组是否匹配（不考虑顺序）
+        function checkArraysMatch(array1, array2) {
+            if (array1.length !== array2.length) return false;
+            
+            return array1.every(item => array2.includes(item)) && 
+                   array2.every(item => array1.includes(item));
+        }
+    </script>
+
+
+</body></html>
