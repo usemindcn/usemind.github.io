@@ -1,27 +1,430 @@
-<!DOCTYPE HTML>
-<html lang="zh-CN">    
-<script>
-var _hmt = _hmt || [];
-(function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?b1096404c4c6410dfa4872e1231a675b";
-  var s = document.getElementsByTagName("script")[0]; 
-  s.parentNode.insertBefore(hm, s);
-})();
-</script>
-    <head>
-        <meta charset="gb2312">
-        <title>
-           正在打开……
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="UseMind - 智能教育工具平台，为教师和学生提供创新的学习工具">
+    <meta name="keywords" content="教育工具,学习平台,在线教育,智能教学,UseMind">
+    <title>UseMind - 智慧教育工具平台</title>
 
-        </title>
+    <!-- Baidu Analytics -->
+    <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?b1096404c4c6410dfa4872e1231a675b";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+    </script>
 
-        <meta http-equiv="refresh" content="0;url=https://aibang.run?refId=LNDFNmjsb9" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
-        <meta http-equiv="Cache-Control" content="no-transform" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#06B6D4',
+                        accent: '#F59E0B',
+                    },
+                    fontFamily: {
+                        'sans': ['"Noto Sans SC"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
 
-    </head>    
-    <body>
-正在载入……
-    </body>
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        UseMind
+                    </span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#home" class="text-gray-700 hover:text-indigo-600 transition">首页</a>
+                    <a href="#products" class="text-gray-700 hover:text-indigo-600 transition">产品</a>
+                    <a href="#features" class="text-gray-700 hover:text-indigo-600 transition">特色</a>
+                    <a href="#about" class="text-gray-700 hover:text-indigo-600 transition">关于</a>
+                    <a href="tool.html" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition">
+                        进入工具箱
+                    </a>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-700 hover:text-indigo-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="#home" class="block px-3 py-2 text-gray-700 hover:bg-indigo-50 rounded-md">首页</a>
+                <a href="#products" class="block px-3 py-2 text-gray-700 hover:bg-indigo-50 rounded-md">产品</a>
+                <a href="#features" class="block px-3 py-2 text-gray-700 hover:bg-indigo-50 rounded-md">特色</a>
+                <a href="#about" class="block px-3 py-2 text-gray-700 hover:bg-indigo-50 rounded-md">关于</a>
+                <a href="tool.html" class="block px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md text-center">进入工具箱</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="pt-16 hero-gradient text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h1 class="text-5xl md:text-6xl font-black mb-6 leading-tight">
+                        智慧教育<br/>从这里开始
+                    </h1>
+                    <p class="text-xl md:text-2xl mb-8 text-indigo-100">
+                        UseMind 为教师和学生提供创新的智能教育工具，让学习更高效、更有趣
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="tool.html" class="bg-white text-indigo-600 px-8 py-4 rounded-full font-bold text-lg hover:shadow-2xl transition text-center">
+                            立即体验
+                        </a>
+                        <a href="#products" class="border-2 border-white text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white hover:text-indigo-600 transition text-center">
+                            了解更多
+                        </a>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="floating">
+                        <svg class="w-full h-auto" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="250" cy="250" r="200" fill="rgba(255,255,255,0.1)" />
+                            <circle cx="250" cy="250" r="150" fill="rgba(255,255,255,0.15)" />
+                            <circle cx="250" cy="250" r="100" fill="rgba(255,255,255,0.2)" />
+                            <text x="250" y="270" font-size="120" text-anchor="middle" fill="white">🎓</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="w-full h-16 bg-white" style="clip-path: polygon(0 100%, 100% 0, 100% 100%);"></div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="section-title">核心特色</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center p-6">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="text-xl font-bold mb-3">简单易用</h3>
+                    <p class="text-gray-600">界面简洁直观，无需培训即可快速上手使用各项功能</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="feature-icon">🚀</div>
+                    <h3 class="text-xl font-bold mb-3">高效便捷</h3>
+                    <p class="text-gray-600">优化的工具流程，帮助教师节省时间，提升教学效率</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="feature-icon">💡</div>
+                    <h3 class="text-xl font-bold mb-3">创新设计</h3>
+                    <p class="text-gray-600">融合现代教育理念，提供独特的教学辅助工具</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="text-xl font-bold mb-3">多端适配</h3>
+                    <p class="text-gray-600">支持手机、平板、电脑，随时随地开展教学活动</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="feature-icon">🎨</div>
+                    <h3 class="text-xl font-bold mb-3">趣味互动</h3>
+                    <p class="text-gray-600">游戏化设计激发学生学习兴趣，提升课堂参与度</p>
+                </div>
+                <div class="text-center p-6">
+                    <div class="feature-icon">🔒</div>
+                    <h3 class="text-xl font-bold mb-3">安全可靠</h3>
+                    <p class="text-gray-600">数据本地存储，保护隐私，无需担心信息泄露</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="products" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="section-title">教育工具</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- 小红花 -->
+                <a href="flower.html" class="block">
+                    <div class="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl p-6 card-hover shadow-md">
+                        <div class="text-6xl mb-4 text-center">🌺</div>
+                        <h3 class="text-xl font-bold mb-2 text-center text-gray-800">小红花</h3>
+                        <p class="text-gray-600 text-sm text-center">课堂激励工具，奖励表现优秀的学生</p>
+                    </div>
+                </a>
+
+                <!-- 番茄钟 -->
+                <a href="fanqie.html" class="block">
+                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 card-hover shadow-md">
+                        <div class="text-6xl mb-4 text-center">🍅</div>
+                        <h3 class="text-xl font-bold mb-2 text-center text-gray-800">番茄钟</h3>
+                        <p class="text-gray-600 text-sm text-center">时间管理工具，提升学习专注力</p>
+                    </div>
+                </a>
+
+                <!-- 赢金币 -->
+                <a href="jili.html" class="block">
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 card-hover shadow-md">
+                        <div class="text-6xl mb-4 text-center">🪙</div>
+                        <h3 class="text-xl font-bold mb-2 text-center text-gray-800">赢金币</h3>
+                        <p class="text-gray-600 text-sm text-center">互动答题游戏，让学习充满乐趣</p>
+                    </div>
+                </a>
+
+                <!-- 大转盘 -->
+                <a href="zhuangpan.html" class="block">
+                    <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 card-hover shadow-md">
+                        <div class="text-6xl mb-4 text-center">🎡</div>
+                        <h3 class="text-xl font-bold mb-2 text-center text-gray-800">大转盘</h3>
+                        <p class="text-gray-600 text-sm text-center">随机抽取工具，公平选择学生回答</p>
+                    </div>
+                </a>
+
+                <!-- 汉字学习 -->
+                <a href="hanzi-test.html" class="block">
+                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 card-hover shadow-md">
+                        <div class="text-6xl mb-4 text-center">📝</div>
+                        <h3 class="text-xl font-bold mb-2 text-center text-gray-800">汉字学习</h3>
+                        <p class="text-gray-600 text-sm text-center">互动汉字练习，轻松掌握汉字知识</p>
+                    </div>
+                </a>
+
+                <!-- 打字练习 -->
+                <a href="typing.html" class="block">
+                    <div class="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-6 card-hover shadow-md">
+                        <div class="text-6xl mb-4 text-center">⌨️</div>
+                        <h3 class="text-xl font-bold mb-2 text-center text-gray-800">打字练习</h3>
+                        <p class="text-gray-600 text-sm text-center">提升打字速度，掌握键盘技能</p>
+                    </div>
+                </a>
+
+                <!-- 思维导图 -->
+                <a href="mind.html" class="block">
+                    <div class="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-6 card-hover shadow-md">
+                        <div class="text-6xl mb-4 text-center">🧠</div>
+                        <h3 class="text-xl font-bold mb-2 text-center text-gray-800">思维导图</h3>
+                        <p class="text-gray-600 text-sm text-center">可视化思维工具，整理知识结构</p>
+                    </div>
+                </a>
+
+                <!-- 更多工具 -->
+                <a href="tool.html" class="block">
+                    <div class="bg-gradient-to-br from-gray-50 to-slate-100 rounded-2xl p-6 card-hover shadow-md border-2 border-dashed border-gray-300">
+                        <div class="text-6xl mb-4 text-center">➕</div>
+                        <h3 class="text-xl font-bold mb-2 text-center text-gray-800">更多工具</h3>
+                        <p class="text-gray-600 text-sm text-center">探索更多实用的教育工具</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-4xl font-black mb-6 text-gray-800">关于 UseMind</h2>
+                    <p class="text-lg text-gray-600 mb-4">
+                        UseMind 是一个专注于教育领域的智能工具平台，致力于为教师和学生提供创新、实用的教学辅助工具。
+                    </p>
+                    <p class="text-lg text-gray-600 mb-4">
+                        我们相信，好的教育工具能够激发学习兴趣，提升教学效率，让教育变得更加有趣和高效。
+                    </p>
+                    <p class="text-lg text-gray-600 mb-6">
+                        通过不断创新和优化，我们希望成为每一位教育工作者的得力助手。
+                    </p>
+                    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
+                        <h3 class="font-bold text-lg mb-2 text-gray-800">联系我们</h3>
+                        <p class="text-gray-600">微信：my---me</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-8 text-white text-center">
+                        <div class="text-4xl font-black mb-2">10+</div>
+                        <div class="text-sm opacity-90">教育工具</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl p-8 text-white text-center">
+                        <div class="text-4xl font-black mb-2">100%</div>
+                        <div class="text-sm opacity-90">免费使用</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-8 text-white text-center">
+                        <div class="text-4xl font-black mb-2">24/7</div>
+                        <div class="text-sm opacity-90">随时访问</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-8 text-white text-center">
+                        <div class="text-4xl font-black mb-2">∞</div>
+                        <div class="text-sm opacity-90">持续更新</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 hero-gradient text-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl md:text-5xl font-black mb-6">准备好开始了吗？</h2>
+            <p class="text-xl md:text-2xl mb-8 text-indigo-100">
+                立即体验 UseMind 的智能教育工具，让教学变得更加轻松高效
+            </p>
+            <a href="tool.html" class="inline-block bg-white text-indigo-600 px-10 py-4 rounded-full font-bold text-lg hover:shadow-2xl transition transform hover:scale-105">
+                开始使用 →
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                        UseMind
+                    </h3>
+                    <p class="text-gray-400 text-sm">
+                        智慧教育工具平台
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">产品</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="flower.html" class="hover:text-white transition">小红花</a></li>
+                        <li><a href="fanqie.html" class="hover:text-white transition">番茄钟</a></li>
+                        <li><a href="jili.html" class="hover:text-white transition">赢金币</a></li>
+                        <li><a href="zhuangpan.html" class="hover:text-white transition">大转盘</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">资源</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="tool.html" class="hover:text-white transition">工具箱</a></li>
+                        <li><a href="hanzi-test.html" class="hover:text-white transition">汉字学习</a></li>
+                        <li><a href="typing.html" class="hover:text-white transition">打字练习</a></li>
+                        <li><a href="mind.html" class="hover:text-white transition">思维导图</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">关于</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#about" class="hover:text-white transition">关于我们</a></li>
+                        <li>微信：my---me</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2024 UseMind. All rights reserved. | 本软件由Mike老师开发</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const headerOffset = 64;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+
+                    // Close mobile menu if open
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 10) {
+                nav.classList.add('shadow-lg');
+            } else {
+                nav.classList.remove('shadow-lg');
+            }
+        });
+    </script>
+</body>
 </html>
