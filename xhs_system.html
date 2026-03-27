@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mike的小红书游戏化作战系统</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#131a2f;
+      --panel-2:#1a2340;
+      --text:#eef3ff;
+      --muted:#a9b5d6;
+      --line:#2b3760;
+      --accent:#6ea8fe;
+      --accent-2:#8ef0c4;
+      --gold:#ffd166;
+      --danger:#ff7b7b;
+      --ok:#7ee787;
+      --shadow: 0 14px 30px rgba(0,0,0,.28);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(110,168,254,.18), transparent 30%),
+        radial-gradient(circle at 90% 0%, rgba(142,240,196,.12), transparent 30%),
+        linear-gradient(180deg, #09101f 0%, #0d1428 100%);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+    }
+    .title{
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      line-height:1.7;
+      font-size:14px;
+      margin:0;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(110,168,254,.12);
+      border:1px solid rgba(110,168,254,.25);
+      color:#dbe9ff;
+      font-size:13px;
+      margin-bottom:12px;
+    }
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:12px;
+      margin-top:16px;
+    }
+    .stat{
+      padding:16px;
+      border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border:1px solid var(--line);
+    }
+    .stat .label{ color:var(--muted); font-size:13px; margin-bottom:8px;}
+    .stat .value{ font-size:28px; font-weight:800; }
+    .tiny{ font-size:12px; color:var(--muted);}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:18px;
+      margin-bottom:18px;
+    }
+    .grid-3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:18px;
+      margin-bottom:18px;
+    }
+    h2{
+      margin:0 0 14px;
+      font-size:18px;
+    }
+    .progress-row{ margin-bottom:14px; }
+    .progress-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:8px;
+      font-size:14px;
+    }
+    .bar{
+      width:100%;
+      height:14px;
+      background:#0b1328;
+      border:1px solid var(--line);
+      border-radius:999px;
+      overflow:hidden;
+    }
+    .bar > span{
+      display:block;
+      height:100%;
+      border-radius:999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      width:0%;
+      transition: width .35s ease;
+    }
+    .quest-list, .day-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      max-height: 520px;
+      overflow:auto;
+      padding-right:4px;
+    }
+    .quest, .day{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background: rgba(255,255,255,.02);
+      padding:14px;
+    }
+    .quest-top, .day-top{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .quest-title, .day-title{
+      font-weight:700;
+      font-size:15px;
+      line-height:1.5;
+    }
+    .quest-meta, .day-meta{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.6;
+      margin-top:4px;
+    }
+    .pill{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:12px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background: rgba(255,255,255,.02);
+      margin-right:6px;
+      margin-top:8px;
+    }
+    .reward{
+      color: var(--gold);
+      font-weight:700;
+      white-space:nowrap;
+      font-size:13px;
+    }
+    .check{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:10px;
+    }
+    .check input[type="checkbox"]{
+      width:20px; height:20px;
+      accent-color: #8ef0c4;
+      cursor:pointer;
+    }
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+    button{
+      border:none;
+      border-radius:12px;
+      padding:11px 14px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+      transition: transform .12s ease, opacity .12s ease;
+    }
+    button:hover{ transform: translateY(-1px); }
+    .primary{ background: linear-gradient(90deg, var(--accent), #89bbff); color:#08101e; }
+    .secondary{ background: #1a2340; color:var(--text); border:1px solid var(--line); }
+    .danger{ background: rgba(255,123,123,.14); color:#ffd9d9; border:1px solid rgba(255,123,123,.22); }
+    .note{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.7;
+      background: rgba(255,255,255,.02);
+      border:1px dashed var(--line);
+      border-radius:14px;
+      padding:12px 14px;
+    }
+    .milestones{
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:10px;
+    }
+    .milestone{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background: rgba(255,255,255,.02);
+      min-height:95px;
+    }
+    .milestone.locked{ opacity: .58; }
+    .milestone.done{
+      border-color: rgba(126,231,135,.35);
+      background: rgba(126,231,135,.08);
+    }
+    .milestone h3{
+      margin:0 0 6px;
+      font-size:14px;
+    }
+    .milestone p{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.6;
+    }
+    .daily-inputs{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:12px;
+    }
+    input[type="number"], input[type="text"]{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#0c1327;
+      color:var(--text);
+      padding:10px 12px;
+      font-size:14px;
+    }
+    .footer{
+      color:var(--muted);
+      text-align:center;
+      font-size:12px;
+      padding:18px 0 8px;
+    }
+    .toast{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      background:#182344;
+      border:1px solid var(--line);
+      color:var(--text);
+      padding:14px 16px;
+      border-radius:14px;
+      box-shadow: var(--shadow);
+      opacity:0;
+      transform: translateY(10px);
+      pointer-events:none;
+      transition: all .22s ease;
+      z-index:999;
+    }
+    .toast.show{ opacity:1; transform: translateY(0); }
+    .kpi{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+      margin-bottom:10px;
+      align-items:center;
+    }
+    .kpi strong{ font-size:16px; }
+    @media (max-width: 1050px){
+      .hero, .grid, .grid-3{ grid-template-columns:1fr; }
+      .stats{ grid-template-columns: repeat(2, 1fr); }
+      .milestones{ grid-template-columns: 1fr 1fr; }
+      .daily-inputs{ grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px){
+      .wrap{ padding:14px; }
+      .stats{ grid-template-columns: 1fr; }
+      .milestones{ grid-template-columns: 1fr; }
+      .title{ font-size:23px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="card">
+        <div class="badge">🎮 Mike 专属 · 小红书 30 天游戏化作战系统</div>
+        <h1 class="title">把“枯燥执行”，改造成一场可升级、可领奖励的闯关游戏</h1>
+        <p class="subtitle">
+          你的真实目标不是“逼自己勤奋”，而是把写脚本、做封面、拍视频、剪视频、发内容、做复盘这些碎活，
+          变成一个看得见进度、拿得到奖励、越做越上头的系统。这个页面会把你前 30 天的核心动作拆成任务、积分、虚拟现金、里程碑和目标进度。
+        </p>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">总积分</div>
+            <div class="value" id="scoreValue">0</div>
+            <div class="tiny">完成任务自动累计</div>
+          </div>
+          <div class="stat">
+            <div class="label">虚拟现金</div>
+            <div class="value" id="cashValue">¥0</div>
+            <div class="tiny">目标上限：¥1,000,000</div>
+          </div>
+          <div class="stat">
+            <div class="label">已发布内容</div>
+            <div class="value" id="postValue">0 / 30</div>
+            <div class="tiny">月目标：30 篇</div>
+          </div>
+          <div class="stat">
+            <div class="label">当前等级</div>
+            <div class="value" id="levelValue">Lv.1</div>
+            <div class="tiny" id="levelName">新手开局：启动引擎</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🏆 本月总目标</h2>
+        <div class="progress-row">
+          <div class="progress-head">
+            <span>内容发布进度</span>
+            <span id="postProgressText">0 / 30</span>
+          </div>
+          <div class="bar"><span id="postBar"></span></div>
+        </div>
+        <div class="progress-row">
+          <div class="progress-head">
+            <span>小眼睛目标</span>
+            <span id="viewProgressText">0 / 1,000,000</span>
+          </div>
+          <div class="bar"><span id="viewBar"></span></div>
+        </div>
+        <div class="progress-row">
+          <div class="progress-head">
+            <span>收入目标</span>
+            <span id="incomeProgressText">0 / 1,000</span>
+          </div>
+          <div class="bar"><span id="incomeBar"></span></div>
+        </div>
+
+        <div class="daily-inputs">
+          <div>
+            <label class="tiny">累计小眼睛</label>
+            <input type="number" id="viewsInput" min="0" placeholder="输入累计播放量">
+          </div>
+          <div>
+            <label class="tiny">累计收入（元）</label>
+            <input type="number" id="incomeInput" min="0" placeholder="输入累计收入">
+          </div>
+          <div>
+            <label class="tiny">已发布篇数</label>
+            <input type="number" id="postsInput" min="0" max="30" placeholder="输入已发布篇数">
+          </div>
+        </div>
+
+        <div class="btns">
+          <button class="primary" id="saveKpiBtn">保存当前进度</button>
+          <button class="secondary" id="autoSyncBtn">按已勾选任务自动估算篇数</button>
+        </div>
+
+        <div class="note" style="margin-top:14px;">
+          游戏规则：<br>
+          1）任务完成可得积分与虚拟现金；<br>
+          2）月度目标越接近，等级越高；<br>
+          3）这 100 万虚拟现金，不代表马上变现，而是把“长期结果”提前可视化，让你的大脑愿意继续冲；<br>
+          4）重点不是完美，而是每天推进一格。
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>🧭 核心任务池（重复做，反复拿分）</h2>
+        <div class="quest-list" id="questList"></div>
+        <div class="btns">
+          <button class="secondary" id="checkAllTodayBtn">勾选今天最重要的动作</button>
+          <button class="danger" id="resetTasksBtn">重置所有勾选</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📅 30 天闯关路线</h2>
+        <div class="day-list" id="dayList"></div>
+      </div>
+    </section>
+
+    <section class="grid-3">
+      <div class="card">
+        <h2>💎 里程碑奖励</h2>
+        <div class="milestones" id="milestones"></div>
+      </div>
+
+      <div class="card">
+        <h2>📈 复盘面板</h2>
+        <div class="kpi">
+          <div>
+            <div class="tiny">今日建议重点</div>
+            <strong id="todayFocus">先完成 1 条内容的最小闭环</strong>
+          </div>
+          <div>🔥</div>
+        </div>
+        <div class="kpi">
+          <div>
+            <div class="tiny">下一等级还差</div>
+            <strong id="nextGap">120 分</strong>
+          </div>
+          <div>⬆️</div>
+        </div>
+        <div class="kpi">
+          <div>
+            <div class="tiny">建议策略</div>
+            <strong id="strategyHint">先稳住发布频率，再去冲播放</strong>
+          </div>
+          <div>🧠</div>
+        </div>
+        <div class="note">
+          这套系统的逻辑，不是逼你把每件事都做到 100 分，而是把你从“抗拒开始”拉到“愿意开始”。<br><br>
+          你真正要打败的，不是小红书算法，而是：<br>
+          <strong>一想到太琐碎，就懒得动。</strong><br><br>
+          所以这个页面的意义是：把大任务切成小动作，让大脑一勾选就获得反馈。
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>⚙️ 操作区</h2>
+        <div class="btns">
+          <button class="primary" id="exportBtn">导出当前进度 JSON</button>
+          <button class="secondary" id="importBtn">导入进度 JSON</button>
+          <button class="secondary" id="sampleBtn">填充示例数据</button>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="tiny">进度 JSON（导入/导出用）</label>
+          <input type="text" id="jsonBox" placeholder="这里会显示导出的 JSON，或粘贴 JSON 进行导入">
+        </div>
+        <div class="note" style="margin-top:14px;">
+          你可以把这个页面长期当作“小红书打怪界面”。它会自动把数据保存在浏览器本地。<br><br>
+          建议每天打开一次，至少完成一个动作：<br>
+          <strong>写脚本 / 做封面 / 拍视频 / 剪视频 / 发笔记 / 复盘</strong><br>
+          一旦开始，阻力就会明显下降。
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      Mike 专属游戏化作战系统 · 本地单文件 HTML · 数据自动保存在浏览器 localStorage
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const questTemplates = [
+      { id: "q1", title: "完成 1 条选题确认", meta: "从选题池里确定今天要打哪一条", score: 30, cash: 3000, tags: ["选题", "启动"], repeatable: true },
+      { id: "q2", title: "写完 1 条脚本/提纲", meta: "至少完成一个能拍的版本", score: 60, cash: 8000, tags: ["脚本", "核心"], repeatable: true },
+      { id: "q3", title: "做完 1 张封面图", meta: "封面清晰、可读、可点", score: 45, cash: 6000, tags: ["封面", "视觉"], repeatable: true },
+      { id: "q4", title: "拍完 1 条视频素材", meta: "可以粗糙，但必须能用", score: 80, cash: 12000, tags: ["拍摄", "行动"], repeatable: true },
+      { id: "q5", title: "剪完 1 条视频", meta: "完成最小可发布版本", score: 100, cash: 15000, tags: ["剪辑", "产出"], repeatable: true },
+      { id: "q6", title: "写完 1 条发布文案", meta: "标题、正文、引导动作完整", score: 50, cash: 7000, tags: ["文案", "转化"], repeatable: true },
+      { id: "q7", title: "成功发布 1 篇内容", meta: "图文或视频都算", score: 150, cash: 20000, tags: ["发布", "里程碑"], repeatable: true, affectsPosts: 1 },
+      { id: "q8", title: "完成 1 次发布后数据复盘", meta: "记录播放、互动、问题与下一步", score: 70, cash: 9000, tags: ["复盘", "进化"], repeatable: true },
+      { id: "q9", title: "优化 1 条旧内容再发布/重剪", meta: "让旧资产继续打工", score: 90, cash: 13000, tags: ["优化", "二次利用"], repeatable: true },
+      { id: "q10", title: "积累 1 条可复用模板/SOP", meta: "把一次性劳动变成长期资产", score: 120, cash: 18000, tags: ["资产", "系统"], repeatable: true }
+    ];
+
+    const days = [
+      ["Day 1-3：重启底盘", "盘点旧账号、确定本月主线、整理 30 个选题方向、先追求启动感。"],
+      ["Day 4-6：打通第一条闭环", "完成脚本→封面→拍摄→剪辑→文案→发布，全链路各跑一次。"],
+      ["Day 7：第一次周复盘", "看哪一步最卡，先修系统，不先骂自己。"],
+      ["Day 8-10：进入稳定发布期", "每天至少推动 1 个核心动作，争取发布第 4-6 条内容。"],
+      ["Day 11-14：测试两类内容方向", "认知类与方法类并行，看谁更容易带来收藏和私信。"],
+      ["Day 15：中场升级日", "整理高表现内容特征，复用标题、封面、脚本结构。"],
+      ["Day 16-20：提高产能", "用模板化和批量化思维，把脚本、封面、剪辑做成流水线。"],
+      ["Day 21：第二次大复盘", "看发布数、播放量、互动率、私信、收入。修正下半场打法。"],
+      ["Day 22-26：冲刺播放与转化", "围绕高反馈选题做强化，争取出现一条破圈内容。"],
+      ["Day 27-29：补齐篇数与收入", "把未完成目标拆到每天，不再模糊。"],
+      ["Day 30：结算日", "统计发布、小眼睛、收入、最佳内容、最佳流程和下月优化点。"]
+    ];
+
+    const milestoneTemplates = [
+      { id: "m1", needScore: 300, title: "开局启动奖", text: "说明你不再只是想，而是已经开始动了。", bonusCash: 30000 },
+      { id: "m2", needScore: 1000, title: "第一波产出奖", text: "你已经从阻力期进入输出期。", bonusCash: 80000 },
+      { id: "m3", needScore: 2200, title: "稳定发布奖", text: "节奏开始建立，账号逐渐有生命体征。", bonusCash: 180000 },
+      { id: "m4", needScore: 4000, title: "内容系统奖", text: "你不再靠意志力，而是在靠系统。", bonusCash: 260000 },
+      { id: "m5", needScore: 6000, title: "月度冲刺王", text: "这个月你不是随便做做，而是真的在推进结果。", bonusCash: 450000 }
+    ];
+
+    const levelRules = [
+      { level: 1, name: "新手开局：启动引擎", min: 0 },
+      { level: 2, name: "开始上手：进入状态", min: 300 },
+      { level: 3, name: "持续输出：稳定推进", min: 900 },
+      { level: 4, name: "内容工兵：形成节奏", min: 1800 },
+      { level: 5, name: "系统玩家：批量作战", min: 3200 },
+      { level: 6, name: "月度冲刺者：结果优先", min: 5000 },
+      { level: 7, name: "小红书战术大师", min: 7000 }
+    ];
+
+    const STORAGE_KEY = "mike_xhs_gamified_system_v1";
+
+    const defaultState = {
+      quests: {},
+      milestonesClaimed: {},
+      score: 0,
+      cash: 0,
+      posts: 0,
+      views: 0,
+      income: 0
+    };
+
+    function loadState(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return structuredClone(defaultState);
+      try{
+        const parsed = JSON.parse(raw);
+        return Object.assign(structuredClone(defaultState), parsed);
+      }catch(e){
+        return structuredClone(defaultState);
+      }
+    }
+
+    let state = loadState();
+
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function formatNum(n){
+      return Number(n || 0).toLocaleString("zh-CN");
+    }
+
+    function showToast(msg){
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 1800);
+    }
+
+    function getQuestKey(id, index){
+      return `${id}_${index}`;
+    }
+
+    function rebuildStats(){
+      document.getElementById("scoreValue").textContent = formatNum(state.score);
+      document.getElementById("cashValue").textContent = "¥" + formatNum(state.cash);
+      document.getElementById("postValue").textContent = `${state.posts} / 30`;
+
+      const level = getCurrentLevel();
+      document.getElementById("levelValue").textContent = `Lv.${level.level}`;
+      document.getElementById("levelName").textContent = level.name;
+
+      setBar("postBar", Math.min(100, (state.posts / 30) * 100));
+      setBar("viewBar", Math.min(100, (state.views / 1000000) * 100));
+      setBar("incomeBar", Math.min(100, (state.income / 1000) * 100));
+
+      document.getElementById("postProgressText").textContent = `${formatNum(state.posts)} / 30`;
+      document.getElementById("viewProgressText").textContent = `${formatNum(state.views)} / 1,000,000`;
+      document.getElementById("incomeProgressText").textContent = `${formatNum(state.income)} / 1,000`;
+
+      document.getElementById("viewsInput").value = state.views || "";
+      document.getElementById("incomeInput").value = state.income || "";
+      document.getElementById("postsInput").value = state.posts || "";
+
+      const next = getNextLevelGap();
+      document.getElementById("nextGap").textContent = next <= 0 ? "已满级附近，继续冲结果" : `${formatNum(next)} 分`;
+
+      document.getElementById("todayFocus").textContent = suggestTodayFocus();
+      document.getElementById("strategyHint").textContent = suggestStrategy();
+    }
+
+    function setBar(id, value){
+      document.getElementById(id).style.width = `${value}%`;
+    }
+
+    function getCurrentLevel(){
+      let current = levelRules[0];
+      for(const rule of levelRules){
+        if(state.score >= rule.min) current = rule;
+      }
+      return current;
+    }
+
+    function getNextLevelGap(){
+      for(const rule of levelRules){
+        if(state.score < rule.min) return rule.min - state.score;
+      }
+      return 0;
+    }
+
+    function suggestTodayFocus(){
+      const published = countQuestDone("q7");
+      const scripted = countQuestDone("q2");
+      const edited = countQuestDone("q5");
+      const reviewed = countQuestDone("q8");
+
+      if(published < 10) return "先把“发布动作”做厚，少想宏大规划";
+      if(reviewed < Math.max(1, Math.floor(published * 0.6))) return "今天补一次复盘，让内容能升级";
+      if(scripted > edited + 3) return "脚本已经堆起来了，今天重点清理剪辑积压";
+      return "继续完成 1 条内容的最小闭环：脚本→封面→拍摄→剪辑→发布";
+    }
+
+    function suggestStrategy(){
+      if(state.posts < 10) return "前 10 条内容的关键不是爆，而是先建立稳定节奏";
+      if(state.views < 200000) return "播放量还在爬坡期，多复用高反馈标题和封面结构";
+      if(state.income < 300) return "先补转化动作，别让内容只有流量没有成交";
+      if(state.posts >= 20 && state.views >= 500000) return "你已经过了试探期，下半场该放大高表现内容";
+      return "稳住产出，复盘高反馈内容，再冲播放和收入";
+    }
+
+    function countQuestDone(questId){
+      return Object.keys(state.quests).filter(k => k.startsWith(questId + "_") && state.quests[k]).length;
+    }
+
+    function renderQuests(){
+      const list = document.getElementById("questList");
+      list.innerHTML = "";
+      for(let i = 1; i <= 30; i++){
+        for(const q of questTemplates){
+          const key = getQuestKey(q.id, i);
+          const wrap = document.createElement("div");
+          wrap.className = "quest";
+          wrap.innerHTML = `
+            <div class="quest-top">
+              <div>
+                <div class="quest-title">第 ${i} 次 · ${q.title}</div>
+                <div class="quest-meta">${q.meta}</div>
+                <div>
+                  ${q.tags.map(t => `<span class="pill">${t}</span>`).join("")}
+                </div>
+              </div>
+              <div class="reward">+${q.score} 分 / +¥${formatNum(q.cash)}</div>
+            </div>
+            <label class="check">
+              <input type="checkbox" data-key="${key}" ${state.quests[key] ? "checked" : ""}>
+              <span>${state.quests[key] ? "已完成，奖励已到账" : "勾选即领取奖励"}</span>
+            </label>
+          `;
+          list.appendChild(wrap);
+        }
+      }
+
+      list.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.addEventListener("change", (e) => {
+          const key = e.target.dataset.key;
+          const [qid] = key.split("_");
+          const quest = questTemplates.find(x => x.id === qid);
+          if(e.target.checked){
+            if(!state.quests[key]){
+              state.quests[key] = true;
+              state.score += quest.score;
+              state.cash += quest.cash;
+              if(quest.affectsPosts) state.posts = Math.min(30, state.posts + quest.affectsPosts);
+              claimMilestonesIfNeeded();
+              showToast(`完成：${quest.title}，+${quest.score} 分，+¥${formatNum(quest.cash)}`);
+            }
+          } else {
+            if(state.quests[key]){
+              state.quests[key] = false;
+              state.score = Math.max(0, state.score - quest.score);
+              state.cash = Math.max(0, state.cash - quest.cash);
+              if(quest.affectsPosts) state.posts = Math.max(0, state.posts - quest.affectsPosts);
+              recomputeMilestoneBonuses();
+              showToast(`已取消：${quest.title}`);
+            }
+          }
+          saveState();
+          rebuildStats();
+          renderMilestones();
+          renderQuests();
+        });
+      });
+    }
+
+    function renderDays(){
+      const list = document.getElementById("dayList");
+      list.innerHTML = "";
+      days.forEach((d, idx) => {
+        const block = document.createElement("div");
+        block.className = "day";
+        block.innerHTML = `
+          <div class="day-top">
+            <div>
+              <div class="day-title">${d[0]}</div>
+              <div class="day-meta">${d[1]}</div>
+            </div>
+            <div class="reward">阶段任务</div>
+          </div>
+        `;
+        list.appendChild(block);
+      });
+    }
+
+    function renderMilestones(){
+      const box = document.getElementById("milestones");
+      box.innerHTML = "";
+      milestoneTemplates.forEach(m => {
+        const done = !!state.milestonesClaimed[m.id];
+        const unlocked = state.score >= m.needScore;
+        const div = document.createElement("div");
+        div.className = "milestone " + (done ? "done" : unlocked ? "" : "locked");
+        div.innerHTML = `
+          <h3>${m.title}</h3>
+          <p>门槛：${formatNum(m.needScore)} 分</p>
+          <p>${m.text}</p>
+          <p style="margin-top:8px;color:${done ? '#b7ffbf' : '#ffd166'};">
+            ${done ? "已领取奖励" : unlocked ? `可领取 +¥${formatNum(m.bonusCash)}` : `奖励 +¥${formatNum(m.bonusCash)}`}
+          </p>
+        `;
+        if(unlocked && !done){
+          div.style.cursor = "pointer";
+          div.title = "点击领取奖励";
+          div.onclick = () => {
+            state.milestonesClaimed[m.id] = true;
+            state.cash += m.bonusCash;
+            saveState();
+            renderMilestones();
+            rebuildStats();
+            showToast(`里程碑达成：${m.title}，奖励 +¥${formatNum(m.bonusCash)}`);
+          };
+        }
+        box.appendChild(div);
+      });
+    }
+
+    function claimMilestonesIfNeeded(){
+      // no auto-claim; keep manual for reward感
+    }
+
+    function recomputeMilestoneBonuses(){
+      let baseCash = 0;
+      for(const [k,v] of Object.entries(state.quests)){
+        if(!v) continue;
+        const [qid] = k.split("_");
+        const q = questTemplates.find(x => x.id === qid);
+        if(q) baseCash += q.cash;
+      }
+      let milestoneCash = 0;
+      for(const m of milestoneTemplates){
+        if(state.milestonesClaimed[m.id] && state.score >= m.needScore){
+          milestoneCash += m.bonusCash;
+        }else if(state.milestonesClaimed[m.id] && state.score < m.needScore){
+          state.milestonesClaimed[m.id] = false;
+        }
+      }
+      state.cash = baseCash + milestoneCash;
+    }
+
+    document.getElementById("saveKpiBtn").addEventListener("click", () => {
+      state.views = Math.max(0, Number(document.getElementById("viewsInput").value || 0));
+      state.income = Math.max(0, Number(document.getElementById("incomeInput").value || 0));
+      state.posts = Math.max(0, Math.min(30, Number(document.getElementById("postsInput").value || 0)));
+      saveState();
+      rebuildStats();
+      showToast("当前进度已保存");
+    });
+
+    document.getElementById("autoSyncBtn").addEventListener("click", () => {
+      state.posts = Math.min(30, countQuestDone("q7"));
+      saveState();
+      rebuildStats();
+      showToast("已按“发布任务”自动同步篇数");
+    });
+
+    document.getElementById("resetTasksBtn").addEventListener("click", () => {
+      if(!confirm("确定重置所有勾选与奖励吗？")) return;
+      state = structuredClone(defaultState);
+      saveState();
+      rebuildStats();
+      renderMilestones();
+      renderQuests();
+      showToast("已重置");
+    });
+
+    document.getElementById("checkAllTodayBtn").addEventListener("click", () => {
+      showToast("建议今天优先：脚本 → 封面 → 发布 或 复盘");
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      document.getElementById("jsonBox").value = JSON.stringify(state);
+      showToast("已导出到输入框");
+    });
+
+    document.getElementById("importBtn").addEventListener("click", () => {
+      const txt = document.getElementById("jsonBox").value.trim();
+      if(!txt) return showToast("先粘贴 JSON");
+      try{
+        const parsed = JSON.parse(txt);
+        state = Object.assign(structuredClone(defaultState), parsed);
+        saveState();
+        rebuildStats();
+        renderMilestones();
+        renderQuests();
+        showToast("导入成功");
+      }catch(e){
+        showToast("JSON 格式不正确");
+      }
+    });
+
+    document.getElementById("sampleBtn").addEventListener("click", () => {
+      state = structuredClone(defaultState);
+      ["q1_1","q2_1","q3_1","q4_1","q5_1","q6_1","q7_1","q8_1","q10_1","q1_2","q2_2","q7_2"].forEach(k => state.quests[k] = true);
+      state.score = 0;
+      state.cash = 0;
+      for(const [key,val] of Object.entries(state.quests)){
+        if(!val) continue;
+        const [qid] = key.split("_");
+        const q = questTemplates.find(x => x.id === qid);
+        state.score += q.score;
+        state.cash += q.cash;
+      }
+      state.posts = 2;
+      state.views = 26800;
+      state.income = 99;
+      saveState();
+      rebuildStats();
+      renderMilestones();
+      renderQuests();
+      showToast("已填充示例数据");
+    });
+
+    renderDays();
+    renderQuests();
+    renderMilestones();
+    rebuildStats();
+  </script>
+</body>
+</html>
