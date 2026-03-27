@@ -3,22 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>小朋友成长恐龙</title>
+  <title>小朋友成长美人鱼</title>
   <style>
     :root {
-      --bg1: #fff8e8;
-      --bg2: #f4fff2;
-      --card: rgba(255,255,255,0.82);
-      --text: #2d3a2e;
-      --sub: #6d7a6f;
+      --bg1: #fff7fb;
+      --bg2: #eefcff;
+      --card: rgba(255,255,255,0.84);
+      --text: #334155;
+      --sub: #6b7280;
       --green: #43b66c;
       --red: #ff6b6b;
-      --yellow: #ffcb57;
+      --purple: #8b5cf6;
+      --pink: #ec4899;
+      --blue: #38bdf8;
       --shadow: 0 10px 28px rgba(0,0,0,0.08);
       --radius: 22px;
     }
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     body {
       margin: 0;
@@ -90,11 +95,11 @@
       line-height: 1.5;
     }
 
-    .dino-stage {
+    .ocean-stage {
       width: 100%;
-      min-height: 250px;
+      min-height: 260px;
       border-radius: 24px;
-      background: linear-gradient(180deg, #dff7ff 0%, #eefde7 100%);
+      background: linear-gradient(180deg, #dff6ff 0%, #dbeafe 45%, #e0f2fe 100%);
       position: relative;
       overflow: hidden;
       display: flex;
@@ -103,24 +108,62 @@
       padding: 14px;
     }
 
-    .stage-ground {
+    .wave1, .wave2, .bubble1, .bubble2, .bubble3 {
       position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 64px;
-      background: linear-gradient(180deg, #9ae38b, #73c867);
-      border-radius: 40px 40px 0 0;
     }
 
-    .cloud, .cloud2 {
-      position: absolute;
-      background: rgba(255,255,255,0.78);
-      border-radius: 999px;
-      filter: blur(0.2px);
+    .wave1 {
+      left: -20px;
+      right: -20px;
+      bottom: 0;
+      height: 72px;
+      background: linear-gradient(180deg, #93c5fd, #60a5fa);
+      border-radius: 40px 40px 0 0;
+      opacity: 0.95;
     }
-    .cloud { width: 84px; height: 30px; top: 22px; left: 20px; }
-    .cloud2 { width: 62px; height: 22px; top: 52px; right: 28px; }
+
+    .wave2 {
+      left: 0;
+      right: 0;
+      bottom: 20px;
+      height: 42px;
+      background: rgba(255,255,255,0.28);
+      border-radius: 999px;
+    }
+
+    .bubble1, .bubble2, .bubble3 {
+      border-radius: 50%;
+      background: rgba(255,255,255,0.55);
+    }
+
+    .bubble1 {
+      width: 16px;
+      height: 16px;
+      left: 40px;
+      top: 45px;
+      animation: bubbleFloat 4s ease-in-out infinite;
+    }
+
+    .bubble2 {
+      width: 10px;
+      height: 10px;
+      right: 54px;
+      top: 85px;
+      animation: bubbleFloat 3.6s ease-in-out infinite;
+    }
+
+    .bubble3 {
+      width: 22px;
+      height: 22px;
+      right: 90px;
+      top: 36px;
+      animation: bubbleFloat 4.5s ease-in-out infinite;
+    }
+
+    @keyframes bubbleFloat {
+      0%, 100% { transform: translateY(0); opacity: 0.5; }
+      50% { transform: translateY(-10px); opacity: 1; }
+    }
 
     .character-wrap {
       position: relative;
@@ -144,12 +187,14 @@
       margin-top: 8px;
       font-size: 21px;
       font-weight: 800;
+      color: #374151;
     }
 
     .stage-desc {
       margin-top: 6px;
       font-size: 14px;
       color: var(--sub);
+      line-height: 1.5;
     }
 
     .egg-selector {
@@ -162,18 +207,21 @@
     .egg-card {
       border: 2px solid transparent;
       border-radius: 18px;
-      background: rgba(255,255,255,0.88);
+      background: rgba(255,255,255,0.9);
       padding: 12px 6px;
       text-align: center;
       font-size: 13px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.06);
       cursor: pointer;
-      transition: transform 0.16s ease, border-color 0.16s ease;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
     }
 
-    .egg-card:active { transform: scale(0.96); }
+    .egg-card:active {
+      transform: scale(0.96);
+    }
+
     .egg-card.selected {
-      border-color: #ffb84d;
+      border-color: #f59e0b;
       background: #fff7d9;
     }
 
@@ -189,9 +237,11 @@
       gap: 12px;
     }
 
-    .actions h3, .history h3 {
+    .actions h3,
+    .history h3 {
       font-size: 16px;
       margin: 0 0 6px 0;
+      color: #374151;
     }
 
     .action-grid {
@@ -211,12 +261,29 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
     }
 
-    .btn:active { transform: scale(0.97); }
-    .plus2 { background: linear-gradient(180deg, #55d38a, #33b769); }
-    .plus1 { background: linear-gradient(180deg, #7ddf6c, #55c95d); }
-    .minus1 { background: linear-gradient(180deg, #ff8d8d, #ff6767); }
-    .minus2 { background: linear-gradient(180deg, #ff7373, #ef4c4c); }
-    .ghost { background: linear-gradient(180deg, #8da4ff, #6887ff); }
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .plus2 {
+      background: linear-gradient(180deg, #4ade80, #22c55e);
+    }
+
+    .plus1 {
+      background: linear-gradient(180deg, #60a5fa, #3b82f6);
+    }
+
+    .minus1 {
+      background: linear-gradient(180deg, #fb7185, #f43f5e);
+    }
+
+    .minus2 {
+      background: linear-gradient(180deg, #f87171, #ef4444);
+    }
+
+    .ghost {
+      background: linear-gradient(180deg, #a78bfa, #8b5cf6);
+    }
 
     .history {
       padding: 14px;
@@ -234,15 +301,22 @@
     .history-item {
       padding: 10px 12px;
       border-radius: 14px;
-      background: rgba(255,255,255,0.88);
+      background: rgba(255,255,255,0.9);
       font-size: 14px;
       display: flex;
       justify-content: space-between;
       gap: 10px;
     }
 
-    .tag-plus { color: var(--green); font-weight: 700; }
-    .tag-minus { color: var(--red); font-weight: 700; }
+    .tag-plus {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .tag-minus {
+      color: var(--red);
+      font-weight: 700;
+    }
 
     .footer-actions {
       display: grid;
@@ -262,15 +336,24 @@
     .burst {
       position: absolute;
       z-index: 5;
-      font-size: 32px;
+      font-size: 30px;
       animation: burstUp 1s ease forwards;
       pointer-events: none;
+      white-space: nowrap;
     }
 
     @keyframes burstUp {
-      0% { transform: translateY(0) scale(0.7); opacity: 0; }
-      20% { opacity: 1; }
-      100% { transform: translateY(-70px) scale(1.1); opacity: 0; }
+      0% {
+        transform: translateY(0) scale(0.7);
+        opacity: 0;
+      }
+      20% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-70px) scale(1.08);
+        opacity: 0;
+      }
     }
 
     .evolve-glow {
@@ -278,15 +361,32 @@
     }
 
     @keyframes glow {
-      0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 204, 0, 0)); }
-      50% { transform: scale(1.12); filter: drop-shadow(0 0 16px rgba(255, 204, 0, 0.8)); }
-      100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 204, 0, 0)); }
+      0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(236, 72, 153, 0));
+      }
+      50% {
+        transform: scale(1.12);
+        filter: drop-shadow(0 0 18px rgba(236, 72, 153, 0.85));
+      }
+      100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(236, 72, 153, 0));
+      }
     }
 
     @media (max-width: 380px) {
-      .character { font-size: 88px; }
-      .action-grid { grid-template-columns: 1fr; }
-      .egg-selector { grid-template-columns: repeat(2, 1fr); }
+      .character {
+        font-size: 88px;
+      }
+
+      .action-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .egg-selector {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
   </style>
 </head>
@@ -304,16 +404,19 @@
     </div>
 
     <div class="main card">
-      <div class="hint" id="topHint">先选一个喜欢的蛋，成长之旅就开始啦。</div>
+      <div class="hint" id="topHint">先选一个喜欢的蛋，开启你的海洋精灵成长之旅。</div>
 
-      <div class="dino-stage" id="stageBox">
-        <div class="cloud"></div>
-        <div class="cloud2"></div>
-        <div class="stage-ground"></div>
+      <div class="ocean-stage" id="stageBox">
+        <div class="bubble1"></div>
+        <div class="bubble2"></div>
+        <div class="bubble3"></div>
+        <div class="wave2"></div>
+        <div class="wave1"></div>
+
         <div class="character-wrap" id="characterWrap">
           <div class="character" id="characterEmoji">🥚</div>
-          <div class="stage-name" id="stageName">一级：恐龙蛋</div>
-          <div class="stage-desc" id="stageDesc">请选择下方 4 个蛋中的一个</div>
+          <div class="stage-name" id="stageName">一级：魔法贝壳蛋</div>
+          <div class="stage-desc" id="stageDesc">请选择下方 4 个蛋中的一个，开启你的海洋精灵之旅</div>
         </div>
       </div>
 
@@ -342,22 +445,22 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'mike_dino_growth_game_v1';
+    const STORAGE_KEY = 'mike_mermaid_growth_game_v1';
 
     const eggs = [
-      { id: 1, emoji: '🥚', name: '阳光蛋' },
-      { id: 2, emoji: '🪺', name: '森林蛋' },
-      { id: 3, emoji: '🥚', name: '勇气蛋' },
-      { id: 4, emoji: '🪺', name: '星光蛋' },
+      { id: 1, emoji: '🥚', name: '珍珠蛋' },
+      { id: 2, emoji: '🪺', name: '珊瑚蛋' },
+      { id: 3, emoji: '🥚', name: '海星蛋' },
+      { id: 4, emoji: '🪺', name: '月光蛋' }
     ];
 
     const stages = [
-      { level: 1, min: 0, max: 9, emoji: '🥚', name: '一级：恐龙蛋', desc: '小恐龙还在蛋里积蓄能量' },
-      { level: 2, min: 10, max: 19, emoji: '🦖', name: '二级：小恐龙', desc: '已经破壳而出，开始探索世界' },
-      { level: 3, min: 20, max: 29, emoji: '🐲', name: '三级：青春期恐龙', desc: '正在快速成长，越来越有力量' },
-      { level: 4, min: 30, max: 39, emoji: '🦕', name: '四级：成年恐龙', desc: '已经变得稳重又强壮' },
-      { level: 5, min: 40, max: 50, emoji: '🐉', name: '五级：大恐龙', desc: '超级厉害，已经是成长高手' },
-      { level: 6, min: 51, max: Infinity, emoji: '👑🦖', name: '六级：霸王龙', desc: '顶级进化完成，成为最强霸王龙' },
+      { level: 1, min: 0, max: 9, emoji: '🥚', name: '一级：魔法贝壳蛋', desc: '小精灵正在蛋里悄悄积蓄魔法能量' },
+      { level: 2, min: 10, max: 19, emoji: '🧚', name: '二级：小海精灵', desc: '已经苏醒，开始在海洋世界里探索成长' },
+      { level: 3, min: 20, max: 29, emoji: '🧜', name: '三级：小人鱼宝宝', desc: '尾巴和魔法都变得更明显了，越来越可爱' },
+      { level: 4, min: 30, max: 39, emoji: '🧜‍♀️', name: '四级：青春期小美人鱼', desc: '正在蜕变，变得更优雅、更自信' },
+      { level: 5, min: 40, max: 50, emoji: '✨🧜‍♀️', name: '五级：绝美美人鱼', desc: '已经进化成非常非常美丽的美人鱼啦' },
+      { level: 6, min: 51, max: Infinity, emoji: '👑🧜‍♀️', name: '六级：皇冠美人鱼女王', desc: '顶级进化完成，成为戴皇冠的美人鱼女王' }
     ];
 
     let state = {
@@ -425,6 +528,7 @@
     function renderHistory() {
       const list = document.getElementById('historyList');
       list.innerHTML = '';
+
       if (!state.history.length) {
         const empty = document.createElement('div');
         empty.className = 'history-item';
@@ -467,7 +571,7 @@
 
       if (level.level === 1 && state.eggId) {
         displayEmoji = selectedEgg?.emoji || '🥚';
-        displayDesc = `${selectedEgg?.name || '恐龙蛋'} 已经选定，继续加分就会孵化`;
+        displayDesc = `${selectedEgg?.name || '魔法蛋'} 已经选定，继续加分就会孵化`;
       }
 
       characterEmoji.textContent = displayEmoji;
@@ -475,9 +579,9 @@
       stageDesc.textContent = displayDesc;
 
       if (!state.eggId) {
-        topHint.textContent = '先选一个喜欢的蛋，成长之旅就开始啦。';
+        topHint.textContent = '先选一个喜欢的蛋，开启你的海洋精灵成长之旅。';
       } else {
-        topHint.textContent = `当前伙伴：${getEggName(state.eggId)} ｜ 再努力一点，它会自动进化。`;
+        topHint.textContent = `当前伙伴：${getEggName(state.eggId)} ｜ 继续努力，它会自动进化成更美的海洋精灵。`;
       }
 
       if (leveledUp) {
@@ -510,12 +614,19 @@
         alert('请先在上方选择一个蛋，再开始加分或扣分。');
         return;
       }
+
       const oldLevel = getLevelByScore(state.score).level;
       state.score += delta;
+
       if (state.score < 0) state.score = 0;
+
       const actualDelta = (delta >= 0 ? '+' : '') + delta;
       state.history.unshift(makeHistory(label, actualDelta));
-      if (state.history.length > 100) state.history = state.history.slice(0, 100);
+
+      if (state.history.length > 100) {
+        state.history = state.history.slice(0, 100);
+      }
+
       const newLevel = getLevelByScore(state.score).level;
       saveState();
       renderAll(newLevel > oldLevel);
@@ -525,7 +636,7 @@
 
       if (newLevel > oldLevel) {
         setTimeout(() => {
-          alert(`恭喜升级到 ${newLevel} 级！\n你的恐龙进化啦！`);
+          alert(`恭喜升级到 ${newLevel} 级！\n你的海洋精灵进化啦！`);
         }, 80);
       }
     }
@@ -540,7 +651,11 @@
 
     function clearAllData() {
       if (!confirm('确定清空全部数据吗？分数、记录、已领取的蛋都会清除。')) return;
-      state = { score: 0, eggId: null, history: [] };
+      state = {
+        score: 0,
+        eggId: null,
+        history: []
+      };
       saveState();
       renderAll();
     }
