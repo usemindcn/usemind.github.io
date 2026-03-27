@@ -1,1190 +1,552 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Maggie小红花计数器</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#FF85A1',
-                        secondary: '#FFC0D3',
-                        accent: '#FF5C8D',
-                        girl: {
-                            pink: '#FF85A1',
-                            lightpink: '#FFC0D3',
-                            hotpink: '#FF5C8D',
-                            lavender: '#E6E6FA',
-                            peach: '#FFDAB9',
-                            blush: '#FFB6C1',
-                        },
-                        pastel: {
-                            green: '#9DDAC6',
-                            blue: '#98D1EB',
-                            yellow: '#FFE082',
-                            pink: '#FFB6C1',
-                            purple: '#D8BFD8'
-                        }
-                    },
-                    borderRadius: {
-                        'xl': '1rem',
-                        '2xl': '1.5rem',
-                        '3xl': '2rem'
-                    }
-                }
-            },
-            darkMode: 'class'
-        }
-    </script>
-    <style>
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #FFE6EE; /* 更简洁的浅粉色 */
-        }
-        
-        .dark body {
-            background-color: #332E3C; /* 暗色模式下的深紫粉色 */
-        }
-        
-        .score-change {
-            position: absolute;
-            animation: float-up 1s forwards;
-            font-weight: bold;
-            pointer-events: none;
-            font-size: 1.2rem;
-        }
-        
-        @keyframes float-up {
-            0% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-40px);
-            }
-        }
-        
-        .card {
-            border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(255, 133, 161, 0.15);
-            transition: all 0.3s;
-            border: 3px solid transparent;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .score-card {
-            background-color: white;
-            border-color: #FFC0D3;
-        }
-        
-        .timer-card {
-            background-color: white;
-            border-color: #98D1EB;
-        }
-        
-        .dark .score-card {
-            background-color: #2D2A33;
-            color: white;
-            border-color: #FF85A1;
-        }
-        
-        .dark .timer-card {
-            background-color: #2D2A33;
-            color: white;
-            border-color: #74c0e3;
-        }
-        
-        .button-container {
-            position: relative;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>小朋友成长恐龙</title>
+  <style>
+    :root {
+      --bg1: #fff8e8;
+      --bg2: #f4fff2;
+      --card: rgba(255,255,255,0.82);
+      --text: #2d3a2e;
+      --sub: #6d7a6f;
+      --green: #43b66c;
+      --red: #ff6b6b;
+      --yellow: #ffcb57;
+      --shadow: 0 10px 28px rgba(0,0,0,0.08);
+      --radius: 22px;
+    }
 
-        .flower {
-            display: inline-block;
-            color: #FF5C8D;
-            font-size: 1.5rem;
-            animation: appear 0.5s ease-out;
-            margin: 0 2px;
-            filter: drop-shadow(0 0 2px rgba(255, 92, 141, 0.3));
-        }
-        
-        #flowers-container {
-            max-height: 100px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        #flowers-container.has-overflow::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 30px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%);
-            pointer-events: none;
-        }
-        
-        .dark #flowers-container.has-overflow::after {
-            background: linear-gradient(to bottom, rgba(45,42,51,0) 0%, rgba(45,42,51,1) 100%);
-        }
-        
-        @keyframes appear {
-            0% {
-                transform: scale(0) rotate(-45deg);
-                opacity: 0;
-            }
-            70% {
-                transform: scale(1.2) rotate(15deg);
-            }
-            100% {
-                transform: scale(1) rotate(0);
-                opacity: 1;
-            }
-        }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        .flower-icon {
-            width: 24px;
-            height: 24px;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        
-        .cute-button {
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            box-shadow: 0 4px 6px rgba(255, 133, 161, 0.2);
-            transition: all 0.2s;
-            transform: translateY(0);
-        }
-        
-        .cute-button:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 2px rgba(255, 133, 161, 0.1);
-        }
-        
-        .add-button {
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s;
-            transform: translateY(0);
-        }
-        
-        .add-button:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
-        }
-        
-        .bounce {
-            animation: bounce 0.5s;
-        }
-        
-        @keyframes bounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-        
-        /* 奖品模态窗口 */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        
-        .modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .modal-content {
-            background-color: white;
-            border-radius: 20px;
-            padding: 20px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            transform: scale(0.8);
-            transition: transform 0.3s;
-            box-shadow: 0 10px 25px rgba(255, 133, 161, 0.3);
-            border: 3px solid #FFC0D3;
-        }
-        
-        .dark .modal-content {
-            background-color: #2D2A33;
-            color: white;
-            border-color: #FF85A1;
-        }
-        
-        .modal.show .modal-content {
-            transform: scale(1);
-        }
-        
-        .reward-item {
-            border: 2px solid transparent;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        
-        .reward-item:hover {
-            transform: translateY(-3px);
-        }
-        
-        .reward-item.selected {
-            border-color: #FF85A1;
-            background-color: rgba(255, 133, 161, 0.1);
-        }
-        
-        .dark .reward-item.selected {
-            background-color: rgba(255, 133, 161, 0.2);
-        }
-        
-        .reward-price {
-            display: flex;
-            align-items: center;
-            font-weight: bold;
-            color: #FF5C8D;
-        }
-        
-        .reward-price .flower {
-            font-size: 1rem;
-            margin-left: 4px;
-        }
-        
-        .reward-image {
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        
-        .shake {
-            animation: shake 0.5s;
-        }
-        
-        @keyframes success-animation {
-            0% { transform: scale(0.8); opacity: 0; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        
-        .success-animation {
-            animation: success-animation 0.5s;
-        }
-        
-        .exchange-notification {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 15px 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(255, 133, 161, 0.3);
-            z-index: 100;
-            display: none;
-            border: 2px solid #FFC0D3;
-        }
-        
-        .dark .exchange-notification {
-            background-color: #2D2A33;
-            color: white;
-            border-color: #FF85A1;
-        }
-        
-        .notification-icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
-        }
-        
-        .btn-pink-gradient {
-            background: linear-gradient(to right, #FF85A1, #FF5C8D);
-        }
-        
-        .btn-pink-gradient:hover {
-            background: linear-gradient(to right, #FF7694, #FF4D7E);
-        }
-        
-        /* 历史记录表格样式 */
-        .history-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        
-        .history-table th,
-        .history-table td {
-            padding: 8px 12px;
-            text-align: left;
-        }
-        
-        .history-table th {
-            background-color: #FFF0F5;
-            font-weight: 600;
-        }
-        
-        .dark .history-table th {
-            background-color: #3A3644;
-        }
-        
-        .history-table tr:nth-child(even) {
-            background-color: rgba(255, 192, 211, 0.1);
-        }
-        
-        .dark .history-table tr:nth-child(even) {
-            background-color: rgba(255, 192, 211, 0.05);
-        }
-        
-        .history-table tr:hover {
-            background-color: rgba(255, 192, 211, 0.2);
-        }
-        
-        /* 数据状态指示器 */
-        .data-status {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            background-color: rgba(255, 255, 255, 0.8);
-            color: #FF5C8D;
-            padding: 4px 8px;
-            border-radius: 10px;
-            font-size: 0.7rem;
-            opacity: 0;
-            transition: opacity 0.5s;
-            z-index: 999;
-        }
-        
-        .data-status.show {
-            opacity: 1;
-        }
-        
-        .dark .data-status {
-            background-color: rgba(45, 42, 51, 0.8);
-            color: #FFB6C1;
-        }
-    </style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 460px;
+      min-height: calc(100vh - 28px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.7);
+    }
+
+    .topbar {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat {
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.78);
+      text-align: center;
+    }
+
+    .stat .label {
+      font-size: 13px;
+      color: var(--sub);
+      margin-bottom: 6px;
+    }
+
+    .stat .value {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .main {
+      padding: 18px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .hint {
+      font-size: 14px;
+      color: var(--sub);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .dino-stage {
+      width: 100%;
+      min-height: 250px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, #dff7ff 0%, #eefde7 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .stage-ground {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 64px;
+      background: linear-gradient(180deg, #9ae38b, #73c867);
+      border-radius: 40px 40px 0 0;
+    }
+
+    .cloud, .cloud2 {
+      position: absolute;
+      background: rgba(255,255,255,0.78);
+      border-radius: 999px;
+      filter: blur(0.2px);
+    }
+    .cloud { width: 84px; height: 30px; top: 22px; left: 20px; }
+    .cloud2 { width: 62px; height: 22px; top: 52px; right: 28px; }
+
+    .character-wrap {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      animation: float 2.8s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .character {
+      font-size: 100px;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .stage-name {
+      margin-top: 8px;
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .stage-desc {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--sub);
+    }
+
+    .egg-selector {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .egg-card {
+      border: 2px solid transparent;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.88);
+      padding: 12px 6px;
+      text-align: center;
+      font-size: 13px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease;
+    }
+
+    .egg-card:active { transform: scale(0.96); }
+    .egg-card.selected {
+      border-color: #ffb84d;
+      background: #fff7d9;
+    }
+
+    .egg-emoji {
+      font-size: 38px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .actions {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .actions h3, .history h3 {
+      font-size: 16px;
+      margin: 0 0 6px 0;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 18px;
+      padding: 14px 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .plus2 { background: linear-gradient(180deg, #55d38a, #33b769); }
+    .plus1 { background: linear-gradient(180deg, #7ddf6c, #55c95d); }
+    .minus1 { background: linear-gradient(180deg, #ff8d8d, #ff6767); }
+    .minus2 { background: linear-gradient(180deg, #ff7373, #ef4c4c); }
+    .ghost { background: linear-gradient(180deg, #8da4ff, #6887ff); }
+
+    .history {
+      padding: 14px;
+      margin-bottom: 8px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 8px;
+      max-height: 180px;
+      overflow: auto;
+      margin-top: 8px;
+    }
+
+    .history-item {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.88);
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .tag-plus { color: var(--green); font-weight: 700; }
+    .tag-minus { color: var(--red); font-weight: 700; }
+
+    .footer-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .tiny {
+      text-align: center;
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 2px;
+      line-height: 1.5;
+    }
+
+    .burst {
+      position: absolute;
+      z-index: 5;
+      font-size: 32px;
+      animation: burstUp 1s ease forwards;
+      pointer-events: none;
+    }
+
+    @keyframes burstUp {
+      0% { transform: translateY(0) scale(0.7); opacity: 0; }
+      20% { opacity: 1; }
+      100% { transform: translateY(-70px) scale(1.1); opacity: 0; }
+    }
+
+    .evolve-glow {
+      animation: glow 0.7s ease 2;
+    }
+
+    @keyframes glow {
+      0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 204, 0, 0)); }
+      50% { transform: scale(1.12); filter: drop-shadow(0 0 16px rgba(255, 204, 0, 0.8)); }
+      100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 204, 0, 0)); }
+    }
+
+    @media (max-width: 380px) {
+      .character { font-size: 88px; }
+      .action-grid { grid-template-columns: 1fr; }
+      .egg-selector { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
 </head>
 <body>
-    <div class="container mx-auto p-4 max-w-md">
-        <h1 class="text-3xl font-bold text-center text-girl-hotpink dark:text-girl-lightpink mb-6">
-            Maggie小红花计数器
-            <span class="flower">🌺</span>
-        </h1>
-        
-        <!-- 总分数显示 -->
-        <div class="card score-card p-6 mb-6 text-center transition-colors duration-300">
-            <h2 class="text-xl text-girl-hotpink dark:text-girl-lightpink mb-3 font-bold">小红花总数</h2>
-            <div class="flex justify-center items-center">
-                <div class="text-5xl font-bold text-girl-hotpink" id="total-score">0</div>
-            </div>
-            <div id="flowers-container" class="mt-4 min-h-16 flex flex-wrap justify-center"></div>
-            
-            <!-- 兑换按钮 -->
-            <button id="exchange-button" class="mt-4 btn-pink-gradient text-white font-bold py-2 px-6 rounded-full shadow-lg transform transition-all duration-300 hover:scale-105">
-                <span class="flex items-center justify-center">
-                    🎁 兑换奖品
-                </span>
-            </button>
-        </div>
-        
-        <!-- 计时器 -->
-        <div class="card timer-card p-5 mb-6 transition-colors duration-300">
-            <h2 class="text-xl text-blue-600 dark:text-blue-300 mb-3 text-center font-bold">学习时间</h2>
-            <div class="text-3xl font-mono text-center text-gray-700 dark:text-gray-100" id="timer">00:00:00</div>
-            <div class="flex justify-center mt-4 space-x-3">
-                <button id="start-timer" class="cute-button bg-pastel-green hover:bg-green-400 text-green-800 font-medium py-2 px-4 rounded-xl">
-                    <span class="flex items-center">▶️ 开始</span>
-                </button>
-                <button id="pause-timer" class="cute-button bg-pastel-yellow hover:bg-yellow-300 text-yellow-800 font-medium py-2 px-4 rounded-xl">
-                    <span class="flex items-center">⏸️ 暂停</span>
-                </button>
-                <button id="reset-timer" class="cute-button bg-pastel-pink hover:bg-red-300 text-red-800 font-medium py-2 px-4 rounded-xl">
-                    <span class="flex items-center">🔄 重置</span>
-                </button>
-            </div>
-        </div>
-        
-        <!-- 加分项 -->
-        <div class="mb-5">
-            <h2 class="text-xl font-bold mb-3 text-girl-hotpink dark:text-girl-lightpink flex items-center">
-                <span class="mr-2">✨</span>加分项<span class="ml-2">✨</span>
-            </h2>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="button-container">
-                    <button data-points="2" class="add-button w-full bg-gradient-to-br from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-medium py-3 px-4 rounded-xl">
-                        <span class="flex items-center justify-center">🧍‍♀️ 坐姿端正 +2</span>
-                    </button>
-                </div>
-                <div class="button-container">
-                    <button data-points="1" class="add-button w-full bg-gradient-to-br from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-medium py-3 px-4 rounded-xl">
-                        <span class="flex items-center justify-center">✅ 回答正确 +1</span>
-                    </button>
-                </div>
-                <div class="button-container">
-                    <button data-points="3" class="add-button w-full bg-gradient-to-br from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-medium py-3 px-4 rounded-xl">
-                        <span class="flex items-center justify-center">📚 专心学习 +3</span>
-                    </button>
-                </div>
-                <div class="button-container">
-                    <button data-points="5" class="add-button w-full bg-gradient-to-br from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white font-medium py-3 px-4 rounded-xl">
-                        <span class="flex items-center justify-center">🎉 完成作业 +5</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 扣分项 -->
-        <div class="mb-5">
-            <h2 class="text-xl font-bold mb-3 text-pink-600 dark:text-pink-300 flex items-center">
-                <span class="mr-2">⚠️</span>扣分项<span class="ml-2">⚠️</span>
-            </h2>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="button-container">
-                    <button data-points="-1" class="add-button w-full bg-gradient-to-br from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white font-medium py-3 px-4 rounded-xl">
-                        <span class="flex items-center justify-center">😖 坐姿不端正 -1</span>
-                    </button>
-                </div>
-                <div class="button-container">
-                    <button data-points="-2" class="add-button w-full bg-gradient-to-br from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white font-medium py-3 px-4 rounded-xl">
-                        <span class="flex items-center justify-center">🙄 走神 -2</span>
-                    </button>
-                </div>
-                <div class="button-container">
-                    <button data-points="-3" class="add-button w-full bg-gradient-to-br from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white font-medium py-3 px-4 rounded-xl">
-                        <span class="flex items-center justify-center">🎮 做其他事情 -3</span>
-                    </button>
-                </div>
-                <div class="button-container">
-                    <button data-points="-5" class="add-button w-full bg-gradient-to-br from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white font-medium py-3 px-4 rounded-xl">
-                        <span class="flex items-center justify-center">❌ 拒绝完成 -5</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="py-3 text-center text-girl-hotpink dark:text-girl-lightpink text-sm">
-            🌟 用爱和鼓励陪伴 Maggie 成长 🌟
-        </div>
-    </div>
-    
-    <!-- 数据状态指示器 -->
-    <div id="data-status" class="data-status">数据已保存</div>
-    
-    <!-- 兑换奖品模态窗口 -->
-    <div id="rewards-modal" class="modal">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-girl-hotpink dark:text-girl-lightpink">奖品兑换中心</h2>
-                <button id="close-modal" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-2xl">
-                    &times;
-                </button>
-            </div>
-            
-            <p class="text-gray-600 dark:text-gray-300 mb-4">
-                Maggie 当前的小红花: <span id="modal-flower-count" class="font-bold text-girl-hotpink">0</span>
-            </p>
-            
-            <div class="grid grid-cols-2 gap-4 mb-4" id="rewards-container">
-                <!-- 奖品将通过JS动态生成 -->
-            </div>
-            
-            <div id="reward-detail" class="hidden p-4 bg-girl-lavender dark:bg-gray-800 rounded-xl mt-4">
-                <h3 id="detail-title" class="text-xl font-bold mb-2 text-girl-hotpink dark:text-girl-lightpink">奖品名称</h3>
-                <p id="detail-description" class="text-gray-600 dark:text-gray-300 mb-3">奖品描述...</p>
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center">
-                        <span>价格: </span>
-                        <span id="detail-price" class="font-bold text-girl-hotpink ml-1">20</span>
-                        <span class="ml-1">🌺</span>
-                    </div>
-                    <button id="confirm-exchange" class="bg-gradient-to-r from-girl-pink to-girl-hotpink hover:from-girl-hotpink hover:to-girl-pink text-white font-bold py-2 px-4 rounded-lg">
-                        确认兑换
-                    </button>
-                </div>
-            </div>
-            
-            <!-- 兑换历史记录 -->
-            <div id="exchange-history" class="mt-6">
-                <h3 class="text-xl font-bold mb-2 text-girl-hotpink dark:text-girl-lightpink">兑换历史</h3>
-                <div class="exchange-history-container overflow-auto max-h-40">
-                    <table class="history-table">
-                        <thead>
-                            <tr>
-                                <th class="rounded-tl-lg">奖品</th>
-                                <th>花朵</th>
-                                <th class="rounded-tr-lg">时间</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table-body">
-                            <!-- 历史记录将通过JS动态生成 -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="no-history" class="text-center text-gray-500 py-4">暂无兑换记录</div>
-            </div>
-            
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-4 text-center">
-                点击奖品查看详情并兑换
-            </p>
-        </div>
-    </div>
-    
-    <!-- 兑换结果通知 -->
-    <div id="exchange-notification" class="exchange-notification">
-        <div class="text-center">
-            <div id="notification-icon" class="notification-icon">🎉</div>
-            <div id="notification-message" class="font-bold text-lg">兑换成功!</div>
-        </div>
+  <div class="app">
+    <div class="topbar card">
+      <div class="stat">
+        <div class="label">当前分数</div>
+        <div class="value" id="scoreValue">0</div>
+      </div>
+      <div class="stat">
+        <div class="label">当前等级</div>
+        <div class="value" id="levelValue">1级</div>
+      </div>
     </div>
 
-    <script>
-        // 检测暗黑模式
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.classList.add('dark');
-        }
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-            if (event.matches) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        });
+    <div class="main card">
+      <div class="hint" id="topHint">先选一个喜欢的蛋，成长之旅就开始啦。</div>
 
-        // 初始化变量
-        let score = 0;
-        let timerInterval = null;
-        let seconds = 0;
-        let isRunning = false;
-        let selectedReward = null;
-        let exchangeHistory = [];
-        
-        // 本地存储键名
-        const STORAGE_KEY = 'maggie_flower_data';
-        const dataStatusEl = document.getElementById('data-status');
-        
-        // 增强的存储系统，处理多种浏览器环境
-        const storageSystem = {
-            // 检测存储可用性
-            isLocalStorageAvailable: function() {
-                try {
-                    localStorage.setItem('test', 'test');
-                    localStorage.removeItem('test');
-                    return true;
-                } catch (e) {
-                    return false;
-                }
-            },
-            
-            isSessionStorageAvailable: function() {
-                try {
-                    sessionStorage.setItem('test', 'test');
-                    sessionStorage.removeItem('test');
-                    return true;
-                } catch (e) {
-                    return false;
-                }
-            },
-            
-            // Cookies作为备选存储方式
-            setCookie: function(name, value, days) {
-                let expires = "";
-                if (days) {
-                    const date = new Date();
-                    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                    expires = "; expires=" + date.toUTCString();
-                }
-                document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + expires + "; path=/";
-            },
-            
-            getCookie: function(name) {
-                const nameEQ = name + "=";
-                const ca = document.cookie.split(';');
-                for(let i = 0; i < ca.length; i++) {
-                    let c = ca[i];
-                    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                    if (c.indexOf(nameEQ) === 0) {
-                        try {
-                            return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
-                        } catch (e) {
-                            return null;
-                        }
-                    }
-                }
-                return null;
-            },
-            
-            // 保存数据，尝试多种存储方式
-            saveData: function(key, data) {
-                let savedSuccessfully = false;
-                
-                // 尝试使用localStorage
-                if (this.isLocalStorageAvailable()) {
-                    try {
-                        localStorage.setItem(key, JSON.stringify(data));
-                        savedSuccessfully = true;
-                        showDataStatus("数据已保存到本地");
-                    } catch (e) {
-                        console.warn("localStorage保存失败", e);
-                    }
-                }
-                
-                // 如果localStorage失败，尝试sessionStorage
-                if (!savedSuccessfully && this.isSessionStorageAvailable()) {
-                    try {
-                        sessionStorage.setItem(key, JSON.stringify(data));
-                        savedSuccessfully = true;
-                        showDataStatus("数据已保存到会话");
-                    } catch (e) {
-                        console.warn("sessionStorage保存失败", e);
-                    }
-                }
-                
-                // 如果以上都失败，使用Cookie
-                if (!savedSuccessfully) {
-                    try {
-                        this.setCookie(key, data, 30); // 30天有效期
-                        savedSuccessfully = true;
-                        showDataStatus("数据已保存到Cookie");
-                    } catch (e) {
-                        console.error("所有存储方式都失败", e);
-                        showDataStatus("数据保存失败", true);
-                    }
-                }
-                
-                return savedSuccessfully;
-            },
-            
-            // 加载数据，尝试多种存储方式
-            loadData: function(key) {
-                let data = null;
-                
-                // 尝试从localStorage加载
-                if (this.isLocalStorageAvailable()) {
-                    try {
-                        const storedData = localStorage.getItem(key);
-                        if (storedData) {
-                            data = JSON.parse(storedData);
-                            showDataStatus("从本地存储加载数据");
-                        }
-                    } catch (e) {
-                        console.warn("从localStorage加载失败", e);
-                    }
-                }
-                
-                // 如果localStorage没有数据，尝试sessionStorage
-                if (!data && this.isSessionStorageAvailable()) {
-                    try {
-                        const storedData = sessionStorage.getItem(key);
-                        if (storedData) {
-                            data = JSON.parse(storedData);
-                            showDataStatus("从会话存储加载数据");
-                        }
-                    } catch (e) {
-                        console.warn("从sessionStorage加载失败", e);
-                    }
-                }
-                
-                // 如果以上都没有数据，尝试Cookie
-                if (!data) {
-                    try {
-                        data = this.getCookie(key);
-                        if (data) {
-                            showDataStatus("从Cookie加载数据");
-                        }
-                    } catch (e) {
-                        console.warn("从Cookie加载失败", e);
-                    }
-                }
-                
-                if (!data) {
-                    showDataStatus("没有找到保存的数据", true);
-                }
-                
-                return data;
-            }
+      <div class="dino-stage" id="stageBox">
+        <div class="cloud"></div>
+        <div class="cloud2"></div>
+        <div class="stage-ground"></div>
+        <div class="character-wrap" id="characterWrap">
+          <div class="character" id="characterEmoji">🥚</div>
+          <div class="stage-name" id="stageName">一级：恐龙蛋</div>
+          <div class="stage-desc" id="stageDesc">请选择下方 4 个蛋中的一个</div>
+        </div>
+      </div>
+
+      <div class="egg-selector" id="eggSelector"></div>
+    </div>
+
+    <div class="actions card">
+      <h3>加分项 / 减分项</h3>
+      <div class="action-grid">
+        <button class="btn plus2" onclick="changeScore(2, '作业完成')">作业完成 +2</button>
+        <button class="btn plus1" onclick="changeScore(1, '表现好')">表现好 +1</button>
+        <button class="btn minus1" onclick="changeScore(-1, '表现差')">表现差 -1</button>
+        <button class="btn minus2" onclick="changeScore(-2, '作业没完成')">作业没完成 -2</button>
+      </div>
+      <div class="footer-actions">
+        <button class="btn ghost" onclick="resetToday()">重置分数</button>
+        <button class="btn ghost" onclick="clearAllData()">清空全部</button>
+      </div>
+      <div class="tiny">数据会自动保存在本机浏览器里，下次打开还在。</div>
+    </div>
+
+    <div class="history card">
+      <h3>成长记录</h3>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'mike_dino_growth_game_v1';
+
+    const eggs = [
+      { id: 1, emoji: '🥚', name: '阳光蛋' },
+      { id: 2, emoji: '🪺', name: '森林蛋' },
+      { id: 3, emoji: '🥚', name: '勇气蛋' },
+      { id: 4, emoji: '🪺', name: '星光蛋' },
+    ];
+
+    const stages = [
+      { level: 1, min: 0, max: 9, emoji: '🥚', name: '一级：恐龙蛋', desc: '小恐龙还在蛋里积蓄能量' },
+      { level: 2, min: 10, max: 19, emoji: '🦖', name: '二级：小恐龙', desc: '已经破壳而出，开始探索世界' },
+      { level: 3, min: 20, max: 29, emoji: '🐲', name: '三级：青春期恐龙', desc: '正在快速成长，越来越有力量' },
+      { level: 4, min: 30, max: 39, emoji: '🦕', name: '四级：成年恐龙', desc: '已经变得稳重又强壮' },
+      { level: 5, min: 40, max: 50, emoji: '🐉', name: '五级：大恐龙', desc: '超级厉害，已经是成长高手' },
+      { level: 6, min: 51, max: Infinity, emoji: '👑🦖', name: '六级：霸王龙', desc: '顶级进化完成，成为最强霸王龙' },
+    ];
+
+    let state = {
+      score: 0,
+      eggId: null,
+      history: []
+    };
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) state = JSON.parse(raw);
+      } catch (e) {}
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getLevelByScore(score) {
+      return stages.find(s => score >= s.min && score <= s.max) || stages[0];
+    }
+
+    function getEggName(id) {
+      return eggs.find(e => e.id === id)?.name || '未选蛋';
+    }
+
+    function renderEggs() {
+      const wrap = document.getElementById('eggSelector');
+      wrap.innerHTML = '';
+      const isLocked = !!state.eggId;
+
+      eggs.forEach(egg => {
+        const div = document.createElement('div');
+        div.className = 'egg-card' + (state.eggId === egg.id ? ' selected' : '');
+        div.innerHTML = `
+          <span class="egg-emoji">${egg.emoji}</span>
+          <div>${egg.name}</div>
+        `;
+        div.onclick = () => {
+          if (isLocked) return;
+          state.eggId = egg.id;
+          state.history.unshift(makeHistory('领取了 ' + egg.name, '+0'));
+          saveState();
+          renderAll();
+          showBurst('✨已领取');
         };
-        
-        // 奖品列表
-        const rewards = [
-            { id: 1, name: '糖果', emoji: '🍬', description: '美味的糖果，小小的甜蜜！', price: 25 },
-            { id: 2, name: '动画片20分钟', emoji: '📺', description: '看20分钟你最喜欢的动画片！', price: 50 },
-            { id: 3, name: '饮料', emoji: '🥤', description: '好喝的饮料，解渴又美味！', price: 70 },
-            { id: 4, name: '冰淇淋', emoji: '🍦', description: '美味的冰淇淋，甜蜜清凉的享受！', price: 100 },
-            { id: 5, name: '旋转木马', emoji: '🎠', description: '坐旋转木马，童话般的美好体验！', price: 150 },
-            { id: 6, name: '汉堡', emoji: '🍔', description: '美味的汉堡，大大的满足！', price: 200 }
-        ];
-        
-        // 获取DOM元素
-        const totalScoreEl = document.getElementById('total-score');
-        const timerEl = document.getElementById('timer');
-        const startBtn = document.getElementById('start-timer');
-        const pauseBtn = document.getElementById('pause-timer');
-        const resetBtn = document.getElementById('reset-timer');
-        const addButtons = document.querySelectorAll('.add-button');
-        const flowersContainer = document.getElementById('flowers-container');
-        
-        // 兑换奖品相关元素
-        const rewardsModal = document.getElementById('rewards-modal');
-        const closeModalBtn = document.getElementById('close-modal');
-        const exchangeBtn = document.getElementById('exchange-button');
-        const rewardsContainer = document.getElementById('rewards-container');
-        const modalFlowerCount = document.getElementById('modal-flower-count');
-        const rewardDetail = document.getElementById('reward-detail');
-        const detailTitle = document.getElementById('detail-title');
-        const detailDescription = document.getElementById('detail-description');
-        const detailPrice = document.getElementById('detail-price');
-        const confirmExchangeBtn = document.getElementById('confirm-exchange');
-        const exchangeNotification = document.getElementById('exchange-notification');
-        const notificationIcon = document.getElementById('notification-icon');
-        const notificationMessage = document.getElementById('notification-message');
-        const historyTableBody = document.getElementById('history-table-body');
-        const noHistoryMessage = document.getElementById('no-history');
-        
-        // 显示数据存储状态
-        function showDataStatus(message, isError = false) {
-            dataStatusEl.textContent = message;
-            dataStatusEl.style.color = isError ? '#F44336' : '#FF5C8D';
-            dataStatusEl.classList.add('show');
-            
-            setTimeout(() => {
-                dataStatusEl.classList.remove('show');
-            }, 2000);
-        }
-        
-        // 本地存储相关方法
-        function saveData() {
-            const data = {
-                score: score,
-                seconds: seconds,
-                isRunning: isRunning,
-                exchangeHistory: exchangeHistory,
-                lastSaved: new Date().getTime()
-            };
-            
-            try {
-                storageSystem.saveData(STORAGE_KEY, data);
-            } catch (error) {
-                console.error('保存数据失败:', error);
-                showDataStatus('保存数据失败', true);
-            }
-        }
-        
-        function loadData() {
-            try {
-                const data = storageSystem.loadData(STORAGE_KEY);
-                
-                if (data) {
-                    // 恢复分数
-                    score = data.score || 0;
-                    updateScoreDisplay(false); // 不要再次保存，防止循环
-                    
-                    // 恢复计时器状态
-                    seconds = data.seconds || 0;
-                    timerEl.textContent = formatTime(seconds);
-                    
-                    // 恢复是否正在计时
-                    if (data.isRunning) {
-                        startTimer(false); // 不要再次保存，防止循环
-                    }
-                    
-                    // 恢复兑换历史
-                    exchangeHistory = data.exchangeHistory || [];
-                    
-                    // 显示上次保存时间
-                    if (data.lastSaved) {
-                        const lastSavedDate = new Date(data.lastSaved);
-                        const timeStr = lastSavedDate.toLocaleTimeString();
-                        showDataStatus(`数据已恢复 (${timeStr})`);
-                    } else {
-                        showDataStatus('数据已恢复');
-                    }
-                    
-                    console.log('数据已加载', data);
-                } else {
-                    console.log('没有找到保存的数据');
-                }
-            } catch (error) {
-                console.error('加载数据失败:', error);
-                showDataStatus('加载数据失败', true);
-            }
-        }
-        
-        // 更新分数显示
-        function updateScoreDisplay(shouldSave = true) {
-            totalScoreEl.textContent = score;
-            totalScoreEl.classList.add('bounce');
-            setTimeout(() => {
-                totalScoreEl.classList.remove('bounce');
-            }, 500);
-            modalFlowerCount.textContent = score;
-            updateFlowers();
-            
-            if (shouldSave) {
-                saveData();
-            }
-        }
-        
-        // 更新小红花显示
-        function updateFlowers() {
-            flowersContainer.innerHTML = '';
-            const flowerCount = Math.max(0, score); // 确保不显示负数的花
-            
-            // 设置一个上限，防止显示太多花朵
-            const maxVisibleFlowers = 40; // 显示的最大花朵数量
-            const displayCount = Math.min(flowerCount, maxVisibleFlowers);
-            
-            for (let i = 0; i < displayCount; i++) {
-                const flower = document.createElement('span');
-                flower.className = 'flower';
-                flower.textContent = '🌺';
-                // 增加一点随机延迟，让花朵出现更自然
-                setTimeout(() => {
-                    flowersContainer.appendChild(flower);
-                }, i * 50); // 减少延迟，加快显示速度
-            }
-            
-            // 如果实际花朵数量超过显示上限，添加"更多"的提示
-            if (flowerCount > maxVisibleFlowers) {
-                flowersContainer.classList.add('has-overflow');
-                
-                // 添加一个额外的显示，表明有更多花朵
-                const moreText = document.createElement('div');
-                moreText.className = 'text-girl-hotpink mt-2 text-sm font-bold';
-                moreText.textContent = `还有更多小红花...共 ${flowerCount} 朵`;
-                flowersContainer.appendChild(moreText);
-            } else {
-                flowersContainer.classList.remove('has-overflow');
-            }
-        }
+        wrap.appendChild(div);
+      });
+    }
 
-        // 格式化时间
-        function formatTime(totalSeconds) {
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const secs = totalSeconds % 60;
-            
-            return [
-                hours.toString().padStart(2, '0'),
-                minutes.toString().padStart(2, '0'),
-                secs.toString().padStart(2, '0')
-            ].join(':');
-        }
-        
-        // 更新计时器
-        function updateTimer() {
-            seconds++;
-            timerEl.textContent = formatTime(seconds);
-            saveData();
-        }
-        
-        // 开始计时器
-        function startTimer(shouldSave = true) {
-            if (!isRunning) {
-                isRunning = true;
-                timerInterval = setInterval(updateTimer, 1000);
-                startBtn.classList.add('bg-opacity-50');
-                pauseBtn.classList.remove('bg-opacity-50');
-                
-                if (shouldSave) {
-                    saveData();
-                }
-            }
-        }
-        
-        // 暂停计时器
-        function pauseTimer() {
-            if (isRunning) {
-                isRunning = false;
-                clearInterval(timerInterval);
-                pauseBtn.classList.add('bg-opacity-50');
-                startBtn.classList.remove('bg-opacity-50');
-                saveData();
-            }
-        }
-        
-        // 重置计时器
-        function resetTimer() {
-            pauseTimer();
-            seconds = 0;
-            timerEl.textContent = formatTime(seconds);
-            saveData();
-        }
-        
-        // 显示分数变化动画
-        function showScoreChange(button, points) {
-            const scoreChange = document.createElement('div');
-            scoreChange.className = 'score-change';
-            scoreChange.textContent = points > 0 ? `+${points}` : points;
-            scoreChange.style.color = points > 0 ? '#FF5C8D' : '#F44336';
-            
-            button.parentElement.appendChild(scoreChange);
-            
-            // 定位在按钮上方中央
-            const buttonRect = button.getBoundingClientRect();
-            
-            scoreChange.style.left = `${buttonRect.width / 2 - scoreChange.offsetWidth / 2}px`;
-            scoreChange.style.top = `${-scoreChange.offsetHeight}px`;
-            
-            // 移除元素
-            setTimeout(() => {
-                scoreChange.remove();
-            }, 1000);
-        }
-        
-        // 打开奖品模态窗口
-        function openRewardsModal() {
-            rewardsModal.classList.add('show');
-            modalFlowerCount.textContent = score;
-            renderRewards();
-            updateExchangeHistory();
-        }
-        
-        // 关闭奖品模态窗口
-        function closeRewardsModal() {
-            rewardsModal.classList.remove('show');
-            rewardDetail.classList.add('hidden');
-            selectedReward = null;
-            
-            // 移除选中状态
-            document.querySelectorAll('.reward-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-        }
-        
-        // 渲染奖品列表
-        function renderRewards() {
-            rewardsContainer.innerHTML = '';
-            
-            rewards.forEach(reward => {
-                const rewardItem = document.createElement('div');
-                rewardItem.className = 'reward-item rounded-xl p-3 bg-white dark:bg-gray-700 shadow-md';
-                rewardItem.dataset.id = reward.id;
-                
-                rewardItem.innerHTML = `
-                    <div class="reward-image mb-2">${reward.emoji}</div>
-                    <h3 class="font-bold text-gray-800 dark:text-gray-100 text-center mb-1">${reward.name}</h3>
-                    <div class="reward-price justify-center">
-                        <span>${reward.price}</span>
-                        <span class="flower">🌺</span>
-                    </div>
-                `;
-                
-                rewardItem.addEventListener('click', () => {
-                    selectReward(reward);
-                });
-                
-                rewardsContainer.appendChild(rewardItem);
-            });
-        }
-        
-        // 选择奖品
-        function selectReward(reward) {
-            // 移除其他项的选中状态
-            document.querySelectorAll('.reward-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            
-            // 添加选中状态到当前项
-            const selectedItem = document.querySelector(`.reward-item[data-id="${reward.id}"]`);
-            if (selectedItem) {
-                selectedItem.classList.add('selected');
-            }
-            
-            // 更新详情区域
-            selectedReward = reward;
-            detailTitle.textContent = reward.name;
-            detailDescription.textContent = reward.description;
-            detailPrice.textContent = reward.price;
-            
-            // 显示详情区域
-            rewardDetail.classList.remove('hidden');
-        }
-        
-        // 更新兑换历史记录
-        function updateExchangeHistory() {
-            historyTableBody.innerHTML = '';
-            
-            if (exchangeHistory.length === 0) {
-                noHistoryMessage.style.display = 'block';
-                return;
-            }
-            
-            noHistoryMessage.style.display = 'none';
-            
-            // 按照时间倒序排列
-            const sortedHistory = [...exchangeHistory].reverse();
-            
-            sortedHistory.forEach(record => {
-                const row = document.createElement('tr');
-                
-                const nameCell = document.createElement('td');
-                nameCell.innerHTML = `${record.emoji} ${record.name}`;
-                
-                const priceCell = document.createElement('td');
-                priceCell.innerHTML = `${record.price} <span class="flower">🌺</span>`;
-                
-                const dateCell = document.createElement('td');
-                const date = new Date(record.timestamp);
-                dateCell.textContent = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
-                
-                row.appendChild(nameCell);
-                row.appendChild(priceCell);
-                row.appendChild(dateCell);
-                
-                historyTableBody.appendChild(row);
-            });
-        }
-        
-        // 确认兑换奖品
-        function confirmExchange() {
-            if (!selectedReward) return;
-            
-            if (score >= selectedReward.price) {
-                // 扣减分数
-                score -= selectedReward.price;
-                updateScoreDisplay();
-                
-                // 添加到兑换历史
-                const exchange = {
-                    id: selectedReward.id,
-                    name: selectedReward.name,
-                    emoji: selectedReward.emoji,
-                    price: selectedReward.price,
-                    timestamp: new Date().getTime()
-                };
-                
-                exchangeHistory.push(exchange);
-                updateExchangeHistory();
-                saveData();
-                
-                // 显示成功通知
-                showExchangeNotification(true, `成功兑换 ${selectedReward.name}！`);
-                
-                // 关闭模态窗口
-                setTimeout(() => {
-                    closeRewardsModal();
-                }, 500);
-            } else {
-                // 余额不足，显示错误
-                showExchangeNotification(false, `小红花不足，还需要 ${selectedReward.price - score} 朵小红花`);
-                
-                // 显示分数抖动动画
-                modalFlowerCount.classList.add('shake');
-                setTimeout(() => {
-                    modalFlowerCount.classList.remove('shake');
-                }, 500);
-            }
-        }
-        
-        // 显示兑换通知
-        function showExchangeNotification(success, message) {
-            notificationIcon.textContent = success ? '🎉' : '❗';
-            notificationMessage.textContent = message;
-            exchangeNotification.style.display = 'block';
-            exchangeNotification.classList.add('success-animation');
-            
-            setTimeout(() => {
-                exchangeNotification.classList.remove('success-animation');
-                exchangeNotification.style.display = 'none';
-            }, 2000);
-        }
-        
-        // 事件监听器
-        startBtn.addEventListener('click', () => startTimer());
-        pauseBtn.addEventListener('click', pauseTimer);
-        resetBtn.addEventListener('click', resetTimer);
-        exchangeBtn.addEventListener('click', openRewardsModal);
-        closeModalBtn.addEventListener('click', closeRewardsModal);
-        confirmExchangeBtn.addEventListener('click', confirmExchange);
-        
-        // 点击模态窗口背景关闭
-        rewardsModal.addEventListener('click', (e) => {
-            if (e.target === rewardsModal) {
-                closeRewardsModal();
-            }
-        });
-        
-        // 加/扣分按钮事件
-        addButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const points = parseInt(button.dataset.points);
-                score += points;
-                showScoreChange(button, points);
-                updateScoreDisplay();
-                
-                // 添加按钮动画
-                button.classList.add('scale-95');
-                setTimeout(() => {
-                    button.classList.remove('scale-95');
-                }, 200);
-            });
-        });
-        
-        // 增强的数据加载功能，确保页面完全加载后执行
-        function initializeApp() {
-            loadData();
-            updateExchangeHistory();
-            
-            // 立即显示初始数据
-            updateScoreDisplay(false);
-        }
-        
-        // 确保DOM完全加载后再初始化应用
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            initializeApp();
-        }
-        
-        // 每5秒自动保存一次数据
-        setInterval(saveData, 5000);
-        
-        // 页面可见性变化时保存数据（用户切换标签页或最小化浏览器）
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') {
-                saveData();
-            }
-        });
-        
-        // 页面关闭前保存数据
-        window.addEventListener('beforeunload', saveData);
-        
-        // 在微信环境中可能需要的额外处理
-        // 微信网页SDK加载完成后执行
-        if (typeof WeixinJSBridge !== 'undefined') {
-            document.addEventListener('WeixinJSBridgeReady', saveData);
-        }
-    </script>
+    function makeHistory(label, delta) {
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mi = String(now.getMinutes()).padStart(2, '0');
+      return {
+        label,
+        delta,
+        time: `${mm}-${dd} ${hh}:${mi}`
+      };
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('historyList');
+      list.innerHTML = '';
+      if (!state.history.length) {
+        const empty = document.createElement('div');
+        empty.className = 'history-item';
+        empty.innerHTML = `<span>还没有记录，快开始成长吧～</span><span></span>`;
+        list.appendChild(empty);
+        return;
+      }
+
+      state.history.slice(0, 20).forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'history-item';
+        const cls = item.delta.startsWith('-') ? 'tag-minus' : 'tag-plus';
+        row.innerHTML = `
+          <div>
+            <div>${item.label}</div>
+            <div style="font-size:12px;color:#7c8a7f;margin-top:4px;">${item.time}</div>
+          </div>
+          <div class="${cls}">${item.delta}</div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function renderStage(leveledUp = false) {
+      const level = getLevelByScore(state.score);
+      const selectedEgg = eggs.find(e => e.id === state.eggId);
+      const scoreValue = document.getElementById('scoreValue');
+      const levelValue = document.getElementById('levelValue');
+      const characterEmoji = document.getElementById('characterEmoji');
+      const stageName = document.getElementById('stageName');
+      const stageDesc = document.getElementById('stageDesc');
+      const topHint = document.getElementById('topHint');
+      const characterWrap = document.getElementById('characterWrap');
+
+      scoreValue.textContent = state.score;
+      levelValue.textContent = `${level.level}级`;
+
+      let displayEmoji = level.emoji;
+      let displayDesc = level.desc;
+
+      if (level.level === 1 && state.eggId) {
+        displayEmoji = selectedEgg?.emoji || '🥚';
+        displayDesc = `${selectedEgg?.name || '恐龙蛋'} 已经选定，继续加分就会孵化`;
+      }
+
+      characterEmoji.textContent = displayEmoji;
+      stageName.textContent = level.name;
+      stageDesc.textContent = displayDesc;
+
+      if (!state.eggId) {
+        topHint.textContent = '先选一个喜欢的蛋，成长之旅就开始啦。';
+      } else {
+        topHint.textContent = `当前伙伴：${getEggName(state.eggId)} ｜ 再努力一点，它会自动进化。`;
+      }
+
+      if (leveledUp) {
+        characterWrap.classList.remove('evolve-glow');
+        void characterWrap.offsetWidth;
+        characterWrap.classList.add('evolve-glow');
+      }
+    }
+
+    function renderAll(leveledUp = false) {
+      renderEggs();
+      renderStage(leveledUp);
+      renderHistory();
+    }
+
+    function showBurst(text) {
+      const stageBox = document.getElementById('stageBox');
+      const div = document.createElement('div');
+      div.className = 'burst';
+      div.textContent = text;
+      div.style.left = '50%';
+      div.style.top = '48%';
+      div.style.transform = 'translateX(-50%)';
+      stageBox.appendChild(div);
+      setTimeout(() => div.remove(), 1000);
+    }
+
+    function changeScore(delta, label) {
+      if (!state.eggId) {
+        alert('请先在上方选择一个蛋，再开始加分或扣分。');
+        return;
+      }
+      const oldLevel = getLevelByScore(state.score).level;
+      state.score += delta;
+      if (state.score < 0) state.score = 0;
+      const actualDelta = (delta >= 0 ? '+' : '') + delta;
+      state.history.unshift(makeHistory(label, actualDelta));
+      if (state.history.length > 100) state.history = state.history.slice(0, 100);
+      const newLevel = getLevelByScore(state.score).level;
+      saveState();
+      renderAll(newLevel > oldLevel);
+
+      if (delta > 0) showBurst(`+${delta}`);
+      else showBurst(`${delta}`);
+
+      if (newLevel > oldLevel) {
+        setTimeout(() => {
+          alert(`恭喜升级到 ${newLevel} 级！\n你的恐龙进化啦！`);
+        }, 80);
+      }
+    }
+
+    function resetToday() {
+      if (!confirm('确定要把分数重置为 0 分吗？蛋会保留。')) return;
+      state.score = 0;
+      state.history.unshift(makeHistory('重置分数', '+0'));
+      saveState();
+      renderAll();
+    }
+
+    function clearAllData() {
+      if (!confirm('确定清空全部数据吗？分数、记录、已领取的蛋都会清除。')) return;
+      state = { score: 0, eggId: null, history: [] };
+      saveState();
+      renderAll();
+    }
+
+    loadState();
+    renderAll();
+  </script>
 </body>
 </html>
