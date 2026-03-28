@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>学生积分养成系统（10人版）</title>
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --panel:#ffffff;
+    --line:#e6ebf5;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --primary:#4f46e5;
+    --primary2:#7c3aed;
+    --green:#16a34a;
+    --red:#dc2626;
+    --gold:#f59e0b;
+    --shadow:0 10px 28px rgba(15,23,42,.08);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--text);
+    background:linear-gradient(180deg,#f6f8fd,#eef3fb);
+  }
+  .app{
+    max-width:1440px;
+    margin:0 auto;
+    padding:20px;
+  }
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .title h1{
+    margin:0;
+    font-size:30px;
+    line-height:1.2;
+  }
+  .title p{
+    margin:8px 0 0;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    border:none;
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+    color:#fff;
+    padding:11px 16px;
+    border-radius:12px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .btn.secondary{
+    background:#fff;
+    color:var(--text);
+    border:1px solid var(--line);
+    box-shadow:none;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns:1.8fr .95fr;
+    gap:18px;
+    align-items:start;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .panel-head{
+    padding:16px 18px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .panel-head h2{
+    margin:0;
+    font-size:18px;
+  }
+  .panel-head .muted{
+    color:var(--muted);
+    font-size:13px;
+  }
+  .panel-body{
+    padding:18px;
+  }
+
+  .setup-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+  }
+  .student-setup{
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+    background:#fafbff;
+  }
+  .student-setup label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  input[type="text"], input[type="number"], select{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    font-size:14px;
+    outline:none;
+    background:#fff;
+  }
+
+  .students-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0,1fr));
+    gap:14px;
+  }
+  .student-card{
+    border:2px solid var(--line);
+    border-radius:18px;
+    background:linear-gradient(180deg,#fff,#fbfcff);
+    padding:14px;
+    cursor:pointer;
+    transition:.18s ease;
+    min-height:220px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .student-card:hover{
+    transform:translateY(-2px);
+    box-shadow:var(--shadow);
+  }
+  .student-card.active{
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(79,70,229,.10);
+  }
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .student-name{
+    font-size:20px;
+    font-weight:800;
+    line-height:1.2;
+  }
+  .student-level{
+    font-size:13px;
+    color:var(--primary);
+    font-weight:700;
+    background:rgba(79,70,229,.08);
+    padding:6px 10px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .pet-box{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:108px;
+    margin:6px 0 4px;
+  }
+  .pet-art{
+    font-size:64px;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,.08));
+    user-select:none;
+  }
+  .evo-name{
+    text-align:center;
+    font-size:15px;
+    font-weight:700;
+    margin-bottom:8px;
+  }
+  .score-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-top:10px;
+  }
+  .score-box{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    background:#fff;
+  }
+  .score-box .small{
+    color:var(--muted);
+    font-size:12px;
+    margin-bottom:2px;
+  }
+  .score-box .big{
+    font-size:22px;
+    font-weight:800;
+  }
+
+  .control-box{
+    display:grid;
+    gap:14px;
+  }
+  .selected-name{
+    font-size:22px;
+    font-weight:800;
+    margin-bottom:4px;
+  }
+  .selected-sub{
+    color:var(--muted);
+    font-size:13px;
+  }
+  .control-row{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+  }
+  .btn-score{
+    border:none;
+    border-radius:14px;
+    padding:16px 8px;
+    font-size:18px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .btn-plus{background:#eaf8ef;color:var(--green);border:1px solid #bfe8cb}
+  .btn-minus{background:#fff1f1;color:var(--red);border:1px solid #f2c3c3}
+  .quick-row{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:8px;
+  }
+  .quick-btn{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:12px;
+    padding:10px 8px;
+    cursor:pointer;
+    font-weight:700;
+  }
+
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .tab{
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    font-weight:700;
+  }
+  .tab.active{
+    background:linear-gradient(135deg,var(--primary),var(--primary2));
+    color:#fff;
+    border-color:transparent;
+  }
+  .tab-pane{display:none}
+  .tab-pane.active{display:block}
+
+  .reward-item{
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+    align-items:center;
+    background:#fff;
+    margin-bottom:10px;
+  }
+  .reward-item h4{
+    margin:0 0 6px;
+    font-size:15px;
+  }
+  .reward-item p{
+    margin:0;
+    color:var(--muted);
+    font-size:13px;
+  }
+  .reward-item .cost{
+    font-weight:800;
+    color:var(--gold);
+    font-size:14px;
+    margin-top:4px;
+  }
+  .btn-exchange{
+    border:none;
+    border-radius:12px;
+    padding:10px 12px;
+    background:#111827;
+    color:#fff;
+    cursor:pointer;
+    font-weight:700;
+  }
+  .history{
+    max-height:220px;
+    overflow:auto;
+    display:grid;
+    gap:8px;
+  }
+  .log{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    font-size:13px;
+    color:#374151;
+    background:#fafbff;
+  }
+  .empty{
+    color:var(--muted);
+    font-size:13px;
+    padding:12px;
+    text-align:center;
+    border:1px dashed var(--line);
+    border-radius:12px;
+  }
+  .reward-config{
+    display:grid;
+    gap:10px;
+  }
+  .reward-config-item{
+    display:grid;
+    grid-template-columns:1.4fr .8fr auto;
+    gap:8px;
+    align-items:center;
+  }
+  .footer-tip{
+    margin-top:12px;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  @media (max-width:1180px){
+    .layout{grid-template-columns:1fr}
+  }
+  @media (max-width:900px){
+    .students-grid,.setup-grid{grid-template-columns:1fr}
+    .control-row{grid-template-columns:repeat(2,1fr)}
+    .quick-row{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (max-width:540px){
+    .app{padding:12px}
+    .title h1{font-size:24px}
+    .student-name{font-size:18px}
+    .reward-config-item{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="title">
+      <h1>学生积分养成系统（10人版）</h1>
+      <p>支持输入 10 个学生姓名、挑选 4 种蛋、根据积分进化显示形态，并支持加减分与积分兑换。</p>
+    </div>
+    <div class="actions">
+      <button class="btn secondary" onclick="openSetup()">初始化 / 修改学生</button>
+      <button class="btn secondary" onclick="resetAllData()">重置全部数据</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>首页 · 学生卡片</h2>
+          <div class="muted">这里默认显示积分、等级、当前蛋/龙样式，以及学生姓名。</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="studentsGrid" class="students-grid"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>右侧功能区</h2>
+          <div class="muted">Tab 1：积分操作　Tab 2：奖品兑换与配置</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="tabs">
+          <button class="tab active" data-tab="tab1" onclick="switchTab('tab1')">Tab 1 · 加减分</button>
+          <button class="tab" data-tab="tab2" onclick="switchTab('tab2')">Tab 2 · 兑换功能</button>
+        </div>
+
+        <div class="tab-pane active" id="tab1">
+          <div class="control-box">
+            <div>
+              <div class="selected-name" id="selectedName">请选择一位学生</div>
+              <div class="selected-sub" id="selectedSub">选中学生卡片后，下方即可直接加分或减分。</div>
+            </div>
+
+            <div class="control-row">
+              <button class="btn-score btn-plus" onclick="changeScore(1)">+1</button>
+              <button class="btn-score btn-plus" onclick="changeScore(5)">+5</button>
+              <button class="btn-score btn-plus" onclick="changeScore(10)">+10</button>
+              <button class="btn-score btn-plus" onclick="changeScore(20)">+20</button>
+              <button class="btn-score btn-minus" onclick="changeScore(-1)">-1</button>
+              <button class="btn-score btn-minus" onclick="changeScore(-5)">-5</button>
+              <button class="btn-score btn-minus" onclick="changeScore(-10)">-10</button>
+              <button class="btn-score btn-minus" onclick="changeScore(-20)">-20</button>
+            </div>
+
+            <div>
+              <div class="selected-sub" style="margin-bottom:8px;">快捷奖励 / 扣分动作</div>
+              <div class="quick-row">
+                <button class="quick-btn" onclick="changeScore(2)">回答问题 +2</button>
+                <button class="quick-btn" onclick="changeScore(3)">主动发言 +3</button>
+                <button class="quick-btn" onclick="changeScore(5)">完成任务 +5</button>
+                <button class="quick-btn" onclick="changeScore(-2)">提醒一次 -2</button>
+                <button class="quick-btn" onclick="changeScore(-3)">纪律扣分 -3</button>
+                <button class="quick-btn" onclick="changeScore(-5)">未交作业 -5</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="selected-sub" style="margin-bottom:8px;">最近操作记录</div>
+              <div id="historyBox" class="history"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane" id="tab2">
+          <div class="control-box">
+            <div>
+              <div class="selected-name" id="exchangeStudentName">请选择一位学生</div>
+              <div class="selected-sub">右侧支持用积分兑换各种奖品，奖品名和积分要求都可自定义。</div>
+            </div>
+
+            <div>
+              <h3 style="margin:0 0 10px;font-size:16px;">奖品兑换</h3>
+              <div id="rewardList"></div>
+            </div>
+
+            <div>
+              <h3 style="margin:0 0 10px;font-size:16px;">奖品配置</h3>
+              <div id="rewardConfig" class="reward-config"></div>
+              <div style="margin-top:10px;">
+                <button class="btn secondary" onclick="addReward()">新增奖品</button>
+              </div>
+              <div class="footer-tip">你可以直接改奖品名称和所需积分，系统会自动保存。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="setupPanel" style="margin-top:18px; display:none;">
+    <div class="panel-head">
+      <div>
+        <h2>初始化 / 修改学生信息</h2>
+        <div class="muted">支持 10 个学生，初始可输入姓名，并从 4 个蛋中挑选一个；姓名和蛋样式都能修改。</div>
+      </div>
+      <button class="btn secondary" onclick="closeSetup()">关闭</button>
+    </div>
+    <div class="panel-body">
+      <div class="setup-grid" id="setupGrid"></div>
+      <div style="margin-top:14px;">
+        <button class="btn" onclick="saveSetup()">保存学生设置</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'student_points_evolution_v2';
+
+const PETS = {
+  mermaid: {
+    label:'人鱼蛋',
+    stages:[
+      {name:'人鱼蛋', icon:'🥚'},
+      {name:'小人鱼', icon:'🧜‍♀️'},
+      {name:'珊瑚人鱼', icon:'🪸'},
+      {name:'深海人鱼', icon:'🧜'},
+      {name:'海洋守护者', icon:'👑'}
+    ]
+  },
+  elf: {
+    label:'精灵蛋',
+    stages:[
+      {name:'精灵蛋', icon:'🥚'},
+      {name:'小精灵', icon:'🧚'},
+      {name:'森林精灵', icon:'🌿'},
+      {name:'月光精灵', icon:'✨'},
+      {name:'精灵王', icon:'🧝'}
+    ]
+  },
+  dragon: {
+    label:'龙王蛋',
+    stages:[
+      {name:'龙王蛋', icon:'🥚'},
+      {name:'幼龙', icon:'🐉'},
+      {name:'火焰龙', icon:'🔥'},
+      {name:'苍穹龙', icon:'⚡'},
+      {name:'龙王', icon:'👑🐉'}
+    ]
+  },
+  crystal: {
+    label:'水晶蛋',
+    stages:[
+      {name:'砂晶蛋', icon:'🥚'},
+      {name:'小晶石', icon:'💎'},
+      {name:'彩晶体', icon:'🔮'},
+      {name:'光辉水晶', icon:'✨💎'},
+      {name:'水晶王', icon:'👑💎'}
+    ]
+  }
+};
+
+const LEVEL_RULES = [
+  { level:1, min:0, title:'Lv.1 新手' },
+  { level:2, min:10, title:'Lv.2 起步' },
+  { level:3, min:25, title:'Lv.3 成长' },
+  { level:4, min:50, title:'Lv.4 进阶' },
+  { level:5, min:80, title:'Lv.5 高手' },
+  { level:6, min:120, title:'Lv.6 大师' }
+];
+
+const EVO_THRESHOLDS = [0, 10, 30, 60, 100];
+
+const defaultStudents = Array.from({length:10}, (_,i)=>({
+  id:i+1,
+  name:`学生${i+1}`,
+  pet:'mermaid',
+  score:0
+}));
+
+const defaultRewards = [
+  { id:1, name:'贴纸一张', cost:10 },
+  { id:2, name:'糖果一颗', cost:20 },
+  { id:3, name:'小奖章', cost:30 },
+  { id:4, name:'抽奖一次', cost:50 }
+];
+
+const defaultState = {
+  students: defaultStudents,
+  selectedStudentId: 1,
+  rewards: defaultRewards,
+  logs:[]
+};
+
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return structuredClone(defaultState);
+    return { ...structuredClone(defaultState), ...JSON.parse(raw) };
+  }catch(e){
+    return structuredClone(defaultState);
+  }
+}
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function getStudent(id){
+  return state.students.find(s=>s.id===id);
+}
+
+function getLevel(score){
+  let current = LEVEL_RULES[0];
+  for(const rule of LEVEL_RULES){
+    if(score >= rule.min) current = rule;
+  }
+  return current;
+}
+
+function getStageIndex(score){
+  let idx = 0;
+  for(let i=0;i<EVO_THRESHOLDS.length;i++){
+    if(score >= EVO_THRESHOLDS[i]) idx = i;
+  }
+  return Math.min(idx,4);
+}
+
+function getPetStage(student){
+  const pet = PETS[student.pet] || PETS.mermaid;
+  return pet.stages[getStageIndex(student.score)];
+}
+
+function renderStudents(){
+  const box = document.getElementById('studentsGrid');
+  box.innerHTML = '';
+  state.students.forEach(student=>{
+    const level = getLevel(student.score);
+    const stage = getPetStage(student);
+    const card = document.createElement('div');
+    card.className = 'student-card' + (state.selectedStudentId === student.id ? ' active' : '');
+    card.onclick = ()=>selectStudent(student.id);
+    card.innerHTML = `
+      <div>
+        <div class="card-top">
+          <div class="student-name">${escapeHtml(student.name || '未命名')}</div>
+          <div class="student-level">${level.title}</div>
+        </div>
+        <div class="pet-box">
+          <div class="pet-art">${stage.icon}</div>
+        </div>
+        <div class="evo-name">${stage.name}</div>
+      </div>
+      <div class="score-row">
+        <div class="score-box">
+          <div class="small">积分</div>
+          <div class="big">${student.score}</div>
+        </div>
+        <div class="score-box">
+          <div class="small">蛋型</div>
+          <div class="big" style="font-size:16px;">${PETS[student.pet].label}</div>
+        </div>
+      </div>
+    `;
+    box.appendChild(card);
+  });
+}
+
+function renderSelectedInfo(){
+  const s = getStudent(state.selectedStudentId);
+  if(!s){
+    document.getElementById('selectedName').textContent = '请选择一位学生';
+    document.getElementById('selectedSub').textContent = '选中学生卡片后，下方即可直接加分或减分。';
+    document.getElementById('exchangeStudentName').textContent = '请选择一位学生';
+    return;
+  }
+  const stage = getPetStage(s);
+  document.getElementById('selectedName').textContent = `${s.name}`;
+  document.getElementById('selectedSub').textContent = `当前积分 ${s.score} · 当前形态 ${stage.name} · 可直接点击按钮加减分`;
+  document.getElementById('exchangeStudentName').textContent = `${s.name}（当前积分：${s.score}）`;
+}
+
+function renderHistory(){
+  const box = document.getElementById('historyBox');
+  if(!state.logs.length){
+    box.innerHTML = `<div class="empty">还没有记录，先选中学生并操作一次加分或减分。</div>`;
+    return;
+  }
+  box.innerHTML = state.logs.slice(0,20).map(log=>`
+    <div class="log">${escapeHtml(log)}</div>
+  `).join('');
+}
+
+function renderRewards(){
+  const box = document.getElementById('rewardList');
+  const student = getStudent(state.selectedStudentId);
+  box.innerHTML = '';
+  state.rewards.forEach(item=>{
+    const can = student && student.score >= Number(item.cost || 0);
+    const div = document.createElement('div');
+    div.className = 'reward-item';
+    div.innerHTML = `
+      <div>
+        <h4>${escapeHtml(item.name || '未命名奖品')}</h4>
+        <p>使用积分兑换该奖品</p>
+        <div class="cost">需要 ${item.cost || 0} 积分</div>
+      </div>
+      <div>
+        <button class="btn-exchange" onclick="exchangeReward(${item.id})">
+          ${can ? '立即兑换' : '积分不足'}
+        </button>
+      </div>
+    `;
+    box.appendChild(div);
+  });
+}
+
+function renderRewardConfig(){
+  const box = document.getElementById('rewardConfig');
+  box.innerHTML = '';
+  state.rewards.forEach(item=>{
+    const row = document.createElement('div');
+    row.className = 'reward-config-item';
+    row.innerHTML = `
+      <input type="text" value="${escapeAttr(item.name)}" onchange="updateRewardName(${item.id}, this.value)" placeholder="奖品名称">
+      <input type="number" value="${item.cost}" onchange="updateRewardCost(${item.id}, this.value)" placeholder="所需积分">
+      <button class="btn secondary" onclick="removeReward(${item.id})">删除</button>
+    `;
+    box.appendChild(row);
+  });
+}
+
+function renderSetup(){
+  const box = document.getElementById('setupGrid');
+  box.innerHTML = '';
+  state.students.forEach(student=>{
+    const div = document.createElement('div');
+    div.className = 'student-setup';
+    div.innerHTML = `
+      <label>学生姓名</label>
+      <input type="text" value="${escapeAttr(student.name)}" id="name_${student.id}" placeholder="请输入姓名">
+      <label style="margin-top:10px;">选择蛋的样式</label>
+      <select id="pet_${student.id}">
+        ${Object.entries(PETS).map(([key,val])=>`
+          <option value="${key}" ${student.pet===key?'selected':''}>${val.label}</option>
+        `).join('')}
+      </select>
+    `;
+    box.appendChild(div);
+  });
+}
+
+function selectStudent(id){
+  state.selectedStudentId = id;
+  saveState();
+  renderAll();
+}
+
+function changeScore(delta){
+  const s = getStudent(state.selectedStudentId);
+  if(!s){
+    alert('请先选中一位学生');
+    return;
+  }
+  s.score = Math.max(0, s.score + delta);
+  const action = delta > 0 ? `+${delta}` : `${delta}`;
+  const stage = getPetStage(s).name;
+  const log = `${formatTime()} · ${s.name} ${action} 分，当前 ${s.score} 分，形态：${stage}`;
+  state.logs.unshift(log);
+  state.logs = state.logs.slice(0,100);
+  saveState();
+  renderAll();
+}
+
+function exchangeReward(id){
+  const s = getStudent(state.selectedStudentId);
+  if(!s){
+    alert('请先选中一位学生');
+    return;
+  }
+  const item = state.rewards.find(r=>r.id===id);
+  if(!item) return;
+  const cost = Number(item.cost || 0);
+  if(s.score < cost){
+    alert('当前积分不足，无法兑换');
+    return;
+  }
+  s.score -= cost;
+  const log = `${formatTime()} · ${s.name} 兑换了「${item.name}」，消耗 ${cost} 分，剩余 ${s.score} 分`;
+  state.logs.unshift(log);
+  state.logs = state.logs.slice(0,100);
+  saveState();
+  renderAll();
+  alert(`兑换成功：${s.name} 已兑换 ${item.name}`);
+}
+
+function updateRewardName(id, value){
+  const item = state.rewards.find(r=>r.id===id);
+  if(!item) return;
+  item.name = value;
+  saveState();
+  renderRewards();
+}
+function updateRewardCost(id, value){
+  const item = state.rewards.find(r=>r.id===id);
+  if(!item) return;
+  item.cost = Math.max(0, Number(value || 0));
+  saveState();
+  renderRewards();
+}
+function addReward(){
+  const maxId = state.rewards.length ? Math.max(...state.rewards.map(r=>r.id)) : 0;
+  state.rewards.push({ id:maxId+1, name:'新奖品', cost:10 });
+  saveState();
+  renderRewardConfig();
+  renderRewards();
+}
+function removeReward(id){
+  state.rewards = state.rewards.filter(r=>r.id!==id);
+  saveState();
+  renderRewardConfig();
+  renderRewards();
+}
+
+function openSetup(){
+  document.getElementById('setupPanel').style.display = 'block';
+  renderSetup();
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+function closeSetup(){
+  document.getElementById('setupPanel').style.display = 'none';
+}
+
+function saveSetup(){
+  state.students.forEach(student=>{
+    const name = document.getElementById(`name_${student.id}`).value.trim();
+    const pet = document.getElementById(`pet_${student.id}`).value;
+    student.name = name || `学生${student.id}`;
+    student.pet = pet in PETS ? pet : 'mermaid';
+  });
+  saveState();
+  renderAll();
+  closeSetup();
+  alert('学生设置已保存');
+}
+
+function switchTab(tabId){
+  document.querySelectorAll('.tab').forEach(el=>{
+    el.classList.toggle('active', el.dataset.tab === tabId);
+  });
+  document.querySelectorAll('.tab-pane').forEach(el=>{
+    el.classList.toggle('active', el.id === tabId);
+  });
+}
+
+function resetAllData(){
+  if(!confirm('确定要重置全部学生、积分、奖品和记录吗？')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = structuredClone(defaultState);
+  renderAll();
+  alert('已重置全部数据');
+}
+
+function renderAll(){
+  renderStudents();
+  renderSelectedInfo();
+  renderHistory();
+  renderRewards();
+  renderRewardConfig();
+  renderSetup();
+}
+
+function formatTime(){
+  const d = new Date();
+  return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function escapeHtml(str=''){
+  return str.replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
+}
+function escapeAttr(str=''){
+  return escapeHtml(str);
+}
+
+renderAll();
+</script>
+</body>
+</html>
