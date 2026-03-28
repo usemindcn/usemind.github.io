@@ -16,6 +16,7 @@
     --green:#16a34a;
     --red:#dc2626;
     --gold:#f59e0b;
+    --sun:#fbbf24;
     --shadow:0 10px 30px rgba(15,23,42,.08);
     --radius:18px;
   }
@@ -144,12 +145,28 @@
     gap:8px;
     margin-bottom:4px;
   }
+  .student-name-wrap{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    max-width:68%;
+    flex-wrap:wrap;
+  }
   .student-name{
     font-size:18px;
     font-weight:800;
     line-height:1.2;
-    max-width:60%;
     word-break:break-word;
+  }
+  .sun-badges{
+    display:flex;
+    gap:2px;
+    flex-wrap:wrap;
+  }
+  .sun{
+    font-size:14px;
+    line-height:1;
+    color:var(--sun);
   }
   .student-level{
     font-size:12px;
@@ -183,6 +200,15 @@
     border-radius:12px;
     padding:10px 12px;
     background:#fff;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:flex-start;
+    min-height:82px;
+  }
+  .score-left{
+    min-width:0;
+    flex:1;
   }
   .score-wrap .small{
     font-size:12px;
@@ -194,19 +220,16 @@
     font-weight:900;
   }
 
-  /* 悬停加减分 */
+  /* 悬停加减分：2x2，放在积分右侧 */
   .hover-actions{
-    position:absolute;
-    left:10px;
-    right:10px;
-    bottom:10px;
+    width:96px;
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:6px;
     opacity:0;
     transform:translateY(8px);
     pointer-events:none;
     transition:.18s ease;
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:8px;
   }
   .student-card:hover .hover-actions{
     opacity:1;
@@ -216,8 +239,8 @@
   .action-btn{
     border:none;
     border-radius:10px;
-    padding:8px 6px;
-    font-size:13px;
+    padding:7px 6px;
+    font-size:12px;
     font-weight:800;
     cursor:pointer;
     backdrop-filter:blur(8px);
@@ -243,7 +266,7 @@
     color:var(--muted);
     margin-bottom:6px;
   }
-  input[type="text"], input[type="number"], select{
+  input[type="text"], input[type="number"], select, textarea{
     width:100%;
     border:1px solid var(--line);
     border-radius:12px;
@@ -251,6 +274,21 @@
     font-size:14px;
     outline:none;
     background:#fff;
+  }
+  textarea{
+    min-height:110px;
+    resize:vertical;
+  }
+  .setup-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .json-box{
+    margin-top:14px;
+    display:grid;
+    gap:10px;
   }
 
   /* 兑换页 */
@@ -277,9 +315,15 @@
     border-color:var(--primary);
     box-shadow:0 0 0 4px rgba(79,70,229,.08);
   }
+  .mini-student .name-line{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-bottom:6px;
+  }
   .mini-student .name{
     font-weight:800;
-    margin-bottom:6px;
   }
   .mini-student .meta{
     font-size:13px;
@@ -359,7 +403,6 @@
     .app{padding:12px}
     .title h1{font-size:24px}
     .students-grid,.setup-grid,.student-select-grid{grid-template-columns:1fr}
-    .hover-actions{grid-template-columns:repeat(2,1fr)}
     .student-card{min-height:210px}
   }
 </style>
@@ -385,7 +428,7 @@
       <div class="panel-head">
         <div>
           <h2>学生卡片</h2>
-          <div class="muted">悬停学生卡片时，会显示加分和减分按钮。</div>
+          <div class="muted">悬停学生卡片时，会在积分右侧显示 2×2 的加减分按钮。</div>
         </div>
       </div>
       <div class="panel-body">
@@ -400,15 +443,22 @@
       <div class="panel-head">
         <div>
           <h2>学生初始化 / 修改</h2>
-          <div class="muted">可配置 10 个学生的姓名与蛋样式，保存后会同步更新首页。</div>
+          <div class="muted">可配置 10 个学生的姓名、蛋样式和积分，保存后会同步更新首页。</div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn secondary" onclick="resetAllData()">重置全部数据</button>
+        <div class="setup-actions">
           <button class="btn" onclick="saveSetup()">保存学生设置</button>
+          <button class="btn secondary" onclick="exportJson()">导出 JSON</button>
+          <button class="btn secondary" onclick="importJson()">导入 JSON</button>
+          <button class="btn secondary" onclick="resetAllData()">重置全部数据</button>
         </div>
       </div>
       <div class="panel-body">
         <div id="setupGrid" class="setup-grid"></div>
+
+        <div class="json-box">
+          <div class="muted">JSON 数据框：点击“导出 JSON”会写入这里；也可以把外部 JSON 粘贴到这里，再点击“导入 JSON”。</div>
+          <textarea id="jsonTextarea" placeholder="这里显示导出的 JSON，或粘贴 JSON 后导入"></textarea>
+        </div>
       </div>
     </div>
   </div>
@@ -456,7 +506,7 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'student_points_evolution_v3';
+const STORAGE_KEY = 'student_points_evolution_v4';
 
 const PETS = {
   mermaid: {
@@ -574,6 +624,16 @@ function getPetStage(student){
   return pet.stages[getStageIndex(student.score)];
 }
 
+function getSunCount(score){
+  return Math.min(5, Math.floor(score / 60));
+}
+
+function renderSuns(score){
+  const count = getSunCount(score);
+  if(count <= 0) return '';
+  return `<span class="sun-badges">${Array.from({length:count}, () => `<span class="sun">☀️</span>`).join('')}</span>`;
+}
+
 function switchPage(pageId){
   document.querySelectorAll('.menu-tab').forEach(el=>{
     el.classList.toggle('active', el.dataset.page === pageId);
@@ -594,7 +654,10 @@ function renderStudents(){
     card.innerHTML = `
       <div>
         <div class="card-top">
-          <div class="student-name">${escapeHtml(student.name || '未命名')}</div>
+          <div class="student-name-wrap">
+            <div class="student-name">${escapeHtml(student.name || '未命名')}</div>
+            ${renderSuns(student.score)}
+          </div>
           <div class="student-level">${level.title}</div>
         </div>
         <div class="pet-box">
@@ -602,16 +665,19 @@ function renderStudents(){
         </div>
         <div class="evo-name">${stage.name}</div>
       </div>
-      <div class="score-wrap">
-        <div class="small">积分</div>
-        <div class="big">${student.score}</div>
-      </div>
 
-      <div class="hover-actions">
-        <button class="action-btn plus" onclick="event.stopPropagation(); changeScore(${student.id}, 1)">+1</button>
-        <button class="action-btn plus" onclick="event.stopPropagation(); changeScore(${student.id}, 5)">+5</button>
-        <button class="action-btn minus" onclick="event.stopPropagation(); changeScore(${student.id}, -1)">-1</button>
-        <button class="action-btn minus" onclick="event.stopPropagation(); changeScore(${student.id}, -5)">-5</button>
+      <div class="score-wrap">
+        <div class="score-left">
+          <div class="small">积分</div>
+          <div class="big">${student.score}</div>
+        </div>
+
+        <div class="hover-actions">
+          <button class="action-btn plus" onclick="event.stopPropagation(); changeScore(${student.id}, 1)">+1</button>
+          <button class="action-btn plus" onclick="event.stopPropagation(); changeScore(${student.id}, 5)">+5</button>
+          <button class="action-btn minus" onclick="event.stopPropagation(); changeScore(${student.id}, -1)">-1</button>
+          <button class="action-btn minus" onclick="event.stopPropagation(); changeScore(${student.id}, -5)">-5</button>
+        </div>
       </div>
     `;
     box.appendChild(card);
@@ -634,6 +700,9 @@ function renderSetup(){
           <option value="${key}" ${student.pet===key?'selected':''}>${val.label}</option>
         `).join('')}
       </select>
+
+      <label style="margin-top:10px;">当前积分</label>
+      <input type="number" value="${student.score}" id="score_${student.id}" placeholder="请输入积分">
     `;
     box.appendChild(div);
   });
@@ -656,7 +725,10 @@ function renderExchangeStudents(){
     div.className = 'mini-student' + (state.selectedStudentId === student.id ? ' active' : '');
     div.onclick = ()=>selectStudent(student.id);
     div.innerHTML = `
-      <div class="name">${escapeHtml(student.name)}</div>
+      <div class="name-line">
+        <span class="name">${escapeHtml(student.name)}</span>
+        ${renderSuns(student.score)}
+      </div>
       <div class="meta">积分：${student.score}</div>
       <div class="meta">等级：${getLevel(student.score).title}</div>
     `;
@@ -786,18 +858,76 @@ function saveSetup(){
   state.students.forEach(student=>{
     const name = document.getElementById(`name_${student.id}`).value.trim();
     const pet = document.getElementById(`pet_${student.id}`).value;
+    const score = Number(document.getElementById(`score_${student.id}`).value || 0);
     student.name = name || `学生${student.id}`;
     student.pet = pet in PETS ? pet : 'mermaid';
+    student.score = Math.max(0, score);
   });
   saveState();
   renderAll();
   alert('学生设置已保存');
 }
 
+function exportJson(){
+  const text = JSON.stringify(state, null, 2);
+  document.getElementById('jsonTextarea').value = text;
+  try{
+    navigator.clipboard.writeText(text);
+  }catch(e){}
+  alert('JSON 已导出到文本框，并尝试复制到剪贴板');
+}
+
+function importJson(){
+  const text = document.getElementById('jsonTextarea').value.trim();
+  if(!text){
+    alert('请先在文本框里粘贴 JSON');
+    return;
+  }
+  try{
+    const parsed = JSON.parse(text);
+    if(!parsed.students || !Array.isArray(parsed.students)){
+      alert('JSON 格式不正确：缺少 students');
+      return;
+    }
+    state = {
+      students: parsed.students.map((s, index) => ({
+        id: index + 1,
+        name: s.name || `学生${index+1}`,
+        pet: PETS[s.pet] ? s.pet : 'mermaid',
+        score: Math.max(0, Number(s.score || 0))
+      })).slice(0,10),
+      selectedStudentId: Number(parsed.selectedStudentId || 1),
+      rewards: Array.isArray(parsed.rewards) ? parsed.rewards.map((r, i)=>({
+        id: Number(r.id || i+1),
+        name: r.name || `奖品${i+1}`,
+        cost: Math.max(0, Number(r.cost || 0))
+      })) : structuredClone(defaultRewards),
+      logs: Array.isArray(parsed.logs) ? parsed.logs.slice(0,100) : []
+    };
+    while(state.students.length < 10){
+      state.students.push({
+        id: state.students.length + 1,
+        name: `学生${state.students.length + 1}`,
+        pet: 'mermaid',
+        score: 0
+      });
+    }
+    if(!getStudent(state.selectedStudentId)){
+      state.selectedStudentId = 1;
+    }
+    saveState();
+    renderAll();
+    alert('JSON 导入成功');
+  }catch(e){
+    alert('JSON 格式解析失败，请检查内容');
+  }
+}
+
 function resetAllData(){
   if(!confirm('确定要重置全部学生、积分、奖品和记录吗？')) return;
   localStorage.removeItem(STORAGE_KEY);
   state = structuredClone(defaultState);
+  document.getElementById('jsonTextarea').value = '';
   renderAll();
   alert('已重置全部数据');
 }
@@ -817,7 +947,7 @@ function formatTime(){
 }
 
 function escapeHtml(str=''){
-  return str.replace(/[&<>"']/g, m => ({
+  return String(str).replace(/[&<>"']/g, m => ({
     '&':'&amp;',
     '<':'&lt;',
     '>':'&gt;',
