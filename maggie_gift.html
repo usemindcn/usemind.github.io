@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maggie 的幸运卡片抽奖机</title>
+  <style>
+    :root {
+      --bg-1: #fff4fb;
+      --bg-2: #eef7ff;
+      --bg-3: #fff8df;
+      --purple: #9b6cff;
+      --purple-deep: #7450dc;
+      --pink: #ff8fc7;
+      --yellow: #ffd76f;
+      --green: #79d6a3;
+      --blue: #75b9ff;
+      --orange: #ffae6d;
+      --text: #40365f;
+      --muted: #7a7196;
+      --card-w: 150px;
+      --card-h: 132px;
+      --radius: 26px;
+      --shadow: 0 18px 38px rgba(120, 88, 210, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Baloo 2", "Comic Sans MS", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 8% 12%, rgba(255, 216, 112, 0.45) 0, transparent 24%),
+        radial-gradient(circle at 88% 18%, rgba(160, 216, 255, 0.55) 0, transparent 22%),
+        radial-gradient(circle at 80% 88%, rgba(255, 143, 199, 0.35) 0, transparent 26%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 52%, var(--bg-3));
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      filter: blur(4px);
+      opacity: 0.45;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before {
+      left: -80px;
+      bottom: -80px;
+      background: repeating-linear-gradient(45deg, #fff, #fff 12px, #ffe8f5 12px, #ffe8f5 24px);
+    }
+
+    body::after {
+      right: -100px;
+      top: -80px;
+      background: repeating-linear-gradient(-45deg, #fff, #fff 12px, #e7dcff 12px, #e7dcff 24px);
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .mascot {
+      width: 72px;
+      height: 72px;
+      border-radius: 26px;
+      background: linear-gradient(145deg, #fff, #ffe0f2);
+      box-shadow: var(--shadow);
+      display: grid;
+      place-items: center;
+      font-size: 42px;
+      animation: floaty 2.6s ease-in-out infinite;
+      border: 4px solid rgba(255, 255, 255, 0.85);
+    }
+
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0) rotate(-2deg); }
+      50% { transform: translateY(-8px) rotate(3deg); }
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 48px);
+      letter-spacing: 1px;
+      color: #6a4bd9;
+      text-shadow: 0 3px 0 rgba(255, 255, 255, 0.8);
+      line-height: 1.05;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      font-size: 17px;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 800;
+      color: #fff;
+      border-radius: 999px;
+      padding: 14px 20px;
+      font-size: 17px;
+      box-shadow: 0 12px 22px rgba(111, 77, 214, 0.2), inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+      transition: transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
+      white-space: nowrap;
+    }
+
+    button:hover { transform: translateY(-2px); filter: brightness(1.03); }
+    button:active { transform: translateY(1px) scale(0.98); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-primary { background: linear-gradient(135deg, #ff83c3, #8c6cff); }
+    .btn-secondary { background: linear-gradient(135deg, #78c6ff, #7e73ff); }
+    .btn-reset { background: linear-gradient(135deg, #ffb36b, #ff7a9d); }
+    .btn-settings {
+      width: 54px;
+      height: 54px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      background: linear-gradient(135deg, #fff, #e9ddff);
+      color: #6a4bd9;
+      border: 3px solid rgba(255,255,255,0.9);
+    }
+    .btn-small {
+      padding: 9px 13px;
+      font-size: 14px;
+      box-shadow: 0 8px 16px rgba(111, 77, 214, 0.16), inset 0 -3px 0 rgba(0,0,0,0.1);
+    }
+    .btn-danger { background: linear-gradient(135deg, #ff8a8a, #ff5fa2); }
+    .btn-add { background: linear-gradient(135deg, #74d9a8, #65b9ff); }
+
+    .panel {
+      position: relative;
+      background: rgba(255, 255, 255, 0.72);
+      border: 4px solid rgba(255, 255, 255, 0.88);
+      border-radius: 36px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .panel::before {
+      content: "★ ✦ ❤ ✧ ★ ✦ ❤ ✧ ★";
+      position: absolute;
+      top: 12px;
+      left: 28px;
+      right: 28px;
+      color: rgba(147, 112, 255, 0.16);
+      font-size: 28px;
+      letter-spacing: 22px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .status-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 15px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.78);
+      color: #6c5c92;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .counter {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 15px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 232, 121, 0.88), rgba(255, 255, 255, 0.85));
+      color: #7a4c00;
+      font-weight: 900;
+      font-size: 17px;
+      box-shadow: inset 0 -3px 0 rgba(120, 80, 0, 0.08);
+    }
+
+    .grid-wrap {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(6, var(--card-w));
+      grid-template-rows: repeat(3, var(--card-h));
+      gap: 18px;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      transition: filter 0.2s ease;
+    }
+
+    .cards-grid.shuffling {
+      animation: gridPulse 0.22s ease-in-out infinite alternate;
+    }
+
+    @keyframes gridPulse {
+      from { filter: blur(0.5px) saturate(1.1); transform: scale(1); }
+      to { filter: blur(2px) saturate(1.45); transform: scale(1.012); }
+    }
+
+    .card {
+      width: var(--card-w);
+      height: var(--card-h);
+      perspective: 1000px;
+      border-radius: var(--radius);
+      position: relative;
+    }
+
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius);
+      transform-style: preserve-3d;
+      transition: transform 0.7s cubic-bezier(.2,.85,.22,1.18), scale 0.25s ease;
+      cursor: pointer;
+    }
+
+    .card:hover .card-inner {
+      scale: 1.035;
+    }
+
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front,
+    .card-back {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+      backface-visibility: hidden;
+      overflow: hidden;
+      border: 4px solid rgba(255,255,255,0.82);
+      box-shadow: 0 14px 28px rgba(110, 83, 183, 0.16), inset 0 -7px 0 rgba(0,0,0,0.08);
+      user-select: none;
+    }
+
+    .card-front::after,
+    .card-back::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 20px;
+      border: 2px dashed rgba(255,255,255,0.55);
+      pointer-events: none;
+    }
+
+    .card-front {
+      transform: rotateY(180deg);
+      background: linear-gradient(145deg, var(--front-a), var(--front-b));
+      color: #fff;
+      padding: 12px;
+    }
+
+    .card-back {
+      background:
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.85) 0 7px, transparent 8px),
+        radial-gradient(circle at 74% 70%, rgba(255,255,255,0.62) 0 8px, transparent 9px),
+        linear-gradient(145deg, #a88bff, #ff8fc7);
+      color: #fff;
+      font-size: 44px;
+    }
+
+    .card-back .back-title {
+      position: relative;
+      z-index: 1;
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 0 rgba(100, 60, 160, 0.22);
+    }
+
+    .emoji {
+      position: relative;
+      z-index: 1;
+      font-size: 36px;
+      line-height: 1;
+      filter: drop-shadow(0 5px 2px rgba(80, 50, 120, 0.12));
+    }
+
+    .reward-text {
+      position: relative;
+      z-index: 1;
+      font-size: 17px;
+      line-height: 1.18;
+      font-weight: 900;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.1);
+      max-width: 118px;
+    }
+
+    .prob-text {
+      position: relative;
+      z-index: 1;
+      font-size: 12px;
+      opacity: 0.9;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.22);
+    }
+
+    .card.shake {
+      animation: shake 0.36s linear infinite;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0,0) rotate(0); }
+      20% { transform: translate(-14px, 8px) rotate(-8deg); }
+      40% { transform: translate(12px, -8px) rotate(7deg); }
+      60% { transform: translate(-8px, -10px) rotate(5deg); }
+      80% { transform: translate(10px, 9px) rotate(-7deg); }
+      100% { transform: translate(0,0) rotate(0); }
+    }
+
+    .card.picked {
+      z-index: 5;
+      animation: pickedPop 0.78s ease both;
+    }
+
+    @keyframes pickedPop {
+      0% { transform: scale(1); }
+      35% { transform: scale(1.22) translateY(-10px); }
+      100% { transform: scale(1); }
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 30;
+      transform: translate(-50%, -50%) scale(0.86);
+      min-width: 360px;
+      max-width: min(560px, calc(100vw - 40px));
+      padding: 26px 30px;
+      border-radius: 34px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 5px solid rgba(255, 255, 255, 0.98);
+      box-shadow: 0 28px 70px rgba(99, 66, 186, 0.32);
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.28s cubic-bezier(.2,.9,.22,1.22);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .toast .big {
+      font-size: 54px;
+      margin-bottom: 8px;
+    }
+
+    .toast h2 {
+      margin: 0 0 8px;
+      font-size: 31px;
+      color: #6a4bd9;
+    }
+
+    .toast p {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 900;
+      color: #ff6ba9;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(72, 52, 130, 0.18);
+      backdrop-filter: blur(3px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .settings-modal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 50;
+      width: min(860px, calc(100vw - 36px));
+      max-height: min(86vh, 780px);
+      transform: translate(-50%, -50%) scale(0.92);
+      opacity: 0;
+      pointer-events: none;
+      border-radius: 34px;
+      background: rgba(255, 255, 255, 0.97);
+      border: 5px solid rgba(255,255,255,0.98);
+      box-shadow: 0 28px 80px rgba(82, 57, 160, 0.35);
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(.2,.9,.22,1.15);
+    }
+
+    .settings-modal.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, rgba(255, 238, 249, 0.95), rgba(236, 229, 255, 0.95));
+      border-bottom: 3px solid rgba(144, 112, 255, 0.12);
+    }
+
+    .settings-header h2 {
+      margin: 0;
+      color: #6a4bd9;
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .settings-header p {
+      margin: 8px 0 0;
+      color: #7a7196;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .icon-close {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      background: linear-gradient(135deg, #ff9abf, #9a82ff);
+    }
+
+    .settings-body {
+      padding: 18px 22px 20px;
+      overflow: auto;
+      max-height: calc(min(86vh, 780px) - 170px);
+    }
+
+    .prob-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .summary-card {
+      border-radius: 20px;
+      padding: 14px;
+      background: linear-gradient(135deg, #fff, #f5f0ff);
+      border: 2px solid rgba(156, 128, 255, 0.18);
+    }
+
+    .summary-card .label {
+      color: #7a7196;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .summary-card .value {
+      margin-top: 5px;
+      color: #6a4bd9;
+      font-size: 24px;
+      font-weight: 1000;
+    }
+
+    .settings-tip {
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255, 248, 214, 0.9);
+      color: #806120;
+      font-weight: 800;
+      border: 2px solid rgba(255, 216, 112, 0.55);
+      line-height: 1.5;
+    }
+
+    .reward-table {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .reward-row {
+      display: grid;
+      grid-template-columns: 76px 1.45fr 128px 128px 104px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 20px;
+      background: rgba(247, 243, 255, 0.76);
+      border: 2px solid rgba(156, 128, 255, 0.12);
+    }
+
+    .reward-row.header {
+      background: transparent;
+      border: none;
+      color: #7a7196;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 0 10px;
+    }
+
+    .reward-row input,
+    .reward-row select {
+      width: 100%;
+      height: 42px;
+      border: 2px solid rgba(152, 124, 255, 0.24);
+      border-radius: 15px;
+      padding: 0 11px;
+      outline: none;
+      background: #fff;
+      color: #4c426c;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .reward-row input:focus {
+      border-color: rgba(155, 108, 255, 0.68);
+      box-shadow: 0 0 0 4px rgba(155, 108, 255, 0.12);
+    }
+
+    .reward-row input[readonly] {
+      background: #f4f1ff;
+      color: #7a7196;
+      cursor: not-allowed;
+    }
+
+    .settings-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 22px 20px;
+      background: rgba(250, 247, 255, 0.96);
+      border-top: 3px solid rgba(144, 112, 255, 0.12);
+    }
+
+    .settings-error {
+      color: #ff4e8e;
+      font-weight: 900;
+      font-size: 14px;
+    }
+
+    .settings-footer-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .confetti-piece {
+      position: fixed;
+      top: -18px;
+      z-index: 40;
+      width: 10px;
+      height: 16px;
+      border-radius: 5px;
+      animation: confettiFall 1.8s linear forwards;
+      pointer-events: none;
+    }
+
+    @keyframes confettiFall {
+      to { transform: translateY(calc(100vh + 80px)) rotate(720deg); opacity: 0.5; }
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: #786b9c;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .tag {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.65);
+      border: 2px solid rgba(255,255,255,0.9);
+    }
+
+    @media (max-width: 1060px) {
+      :root {
+        --card-w: 128px;
+        --card-h: 118px;
+      }
+      .cards-grid { gap: 14px; }
+      .reward-text { font-size: 15px; max-width: 100px; }
+      .emoji { font-size: 30px; }
+      .reward-row { grid-template-columns: 64px 1.2fr 108px 108px 92px; }
+    }
+
+    @media (max-width: 860px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .actions { justify-content: flex-start; }
+      :root {
+        --card-w: 112px;
+        --card-h: 104px;
+      }
+      .cards-grid { gap: 10px; }
+      .panel { padding: 16px; }
+      .prob-summary { grid-template-columns: 1fr; }
+      .reward-row,
+      .reward-row.header {
+        grid-template-columns: 1fr;
+      }
+      .reward-row.header { display: none; }
+      .settings-footer { flex-direction: column; align-items: stretch; }
+      .settings-footer-actions { justify-content: stretch; }
+      .settings-footer-actions button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay"></div>
+  <div class="toast" id="toast" aria-live="polite">
+    <div class="big" id="toastEmoji">🎉</div>
+    <h2 id="toastTitle">恭喜你！</h2>
+    <p id="toastText">获得奖励</p>
+  </div>
+
+  <section class="settings-modal" id="settingsModal" aria-modal="true" role="dialog">
+    <div class="settings-header">
+      <div>
+        <h2>⚙️ 奖品设置</h2>
+        <p>可以增加、删除奖品，也可以调整中奖概率。“谢谢参与”会自动补足到 100%。</p>
+      </div>
+      <button class="icon-close" id="closeSettingsBtn">✕</button>
+    </div>
+    <div class="settings-body">
+      <div class="prob-summary">
+        <div class="summary-card">
+          <div class="label">其他奖品概率合计</div>
+          <div class="value" id="otherProbText">70%</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">谢谢参与兜底概率</div>
+          <div class="value" id="thanksProbText">30%</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">总概率</div>
+          <div class="value">100%</div>
+        </div>
+      </div>
+      <p class="settings-tip">小提醒：除“谢谢参与”外，其他奖品概率合计不能超过 100%。如果合计是 72%，那么“谢谢参与”自动变成 28%。</p>
+      <div class="reward-table" id="rewardEditor">
+        <div class="reward-row header">
+          <div>图标</div>
+          <div>奖品名称</div>
+          <div>概率 %</div>
+          <div>颜色风格</div>
+          <div>操作</div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-footer">
+      <div class="settings-error" id="settingsError"></div>
+      <div class="settings-footer-actions">
+        <button class="btn-small btn-add" id="addRewardBtn">➕ 新增奖品</button>
+        <button class="btn-small btn-secondary" id="cancelSettingsBtn">取消</button>
+        <button class="btn-small btn-primary" id="saveSettingsBtn">保存并应用</button>
+      </div>
+    </div>
+  </section>
+
+  <main class="page">
+    <header class="topbar">
+      <section class="brand">
+        <div class="mascot">🐰</div>
+        <div>
+          <h1>Maggie 的幸运卡片抽奖机</h1>
+          <p class="subtitle">先看清奖励，再点“准备抽奖”，卡片会飞快洗牌。每局最多翻开 3 张卡片哦！</p>
+        </div>
+      </section>
+      <nav class="actions">
+        <button class="btn-settings" id="settingsBtn" title="奖品设置">⚙️</button>
+        <button class="btn-secondary" id="autoBtn">✨ 你帮我抽</button>
+        <button class="btn-reset" id="resetBtn">🔄 重新抽奖</button>
+        <button class="btn-primary" id="startBtn">🎁 准备抽奖</button>
+      </nav>
+    </header>
+
+    <section class="panel">
+      <div class="status-row">
+        <div class="hint" id="hint">🌈 游戏开始前，所有奖励都先亮出来；准备好后就开始洗牌！</div>
+        <div class="counter" id="counter">已翻开：0 / 3</div>
+      </div>
+      <div class="grid-wrap">
+        <div class="cards-grid" id="cardsGrid"></div>
+      </div>
+    </section>
+
+    <section class="footer-note">
+      <span class="tag">💡 小规则：超过 3 次会提醒重新开始</span>
+      <span class="tag">🎲 “谢谢参与”自动作为兜底概率</span>
+      <span class="tag">🧸 适合电脑端大屏使用</span>
+    </section>
+  </main>
+
+  <script>
+    const colorThemes = [
+      { name: "梦幻紫粉", colors: ["#ff9ccf", "#9a82ff"] },
+      { name: "天空蓝紫", colors: ["#7ac8ff", "#7e73ff"] },
+      { name: "清新绿蓝", colors: ["#83deb0", "#6fc7ff"] },
+      { name: "奶油橙粉", colors: ["#ffb86c", "#ff75b7"] },
+      { name: "阳光黄橙", colors: ["#ffe36f", "#ff8a65"] },
+      { name: "彩虹粉黄", colors: ["#ff8ac2", "#ffd36c"] },
+      { name: "温柔紫蓝", colors: ["#b6a4ff", "#8cc8ff"] }
+    ];
+
+    const STORAGE_KEY = "maggie_lottery_rewards_v1";
+
+    const defaultRewards = [
+      { id: cryptoId(), name: "谢谢参与", probability: 30, emoji: "🌈", colors: ["#b6a4ff", "#8cc8ff"], isFallback: true },
+      { id: cryptoId(), name: "自由选音乐 1 首", probability: 20, emoji: "🎵", colors: ["#ff9ccf", "#9a82ff"] },
+      { id: cryptoId(), name: "解锁新 APP 游戏 1 个", probability: 10, emoji: "🎮", colors: ["#7ac8ff", "#7e73ff"] },
+      { id: cryptoId(), name: "自由选择休息时间 1 次", probability: 10, emoji: "🛋️", colors: ["#83deb0", "#6fc7ff"] },
+      { id: cryptoId(), name: "生日自由选择美味 1 次", probability: 2, emoji: "🎂", colors: ["#ffb86c", "#ff75b7"] },
+      { id: cryptoId(), name: "新的自行车 1 辆", probability: 0.5, emoji: "🚲", colors: ["#ffe36f", "#ff8a65"] },
+      { id: cryptoId(), name: "漂亮彩笔 1 盒", probability: 1.5, emoji: "🖍️", colors: ["#ff8ac2", "#ffd36c"] },
+      { id: cryptoId(), name: "宝宝巴士 30 分钟", probability: 12, emoji: "🚌", colors: ["#ffd36c", "#ff9d6c"] },
+      { id: cryptoId(), name: "跳绳 20 分钟", probability: 10, emoji: "🪢", colors: ["#7ee2b8", "#8cb6ff"] },
+      { id: cryptoId(), name: "免校外作业 2 面", probability: 4, emoji: "📚", colors: ["#ba8cff", "#ff90c8"] }
+    ];
+
+    let rewards = loadRewardsFromStorage();
+
+    const cardCount = 18;
+    const maxPicks = 3;
+    let started = false;
+    let isAnimating = false;
+    let pickCount = 0;
+    let cards = [];
+    let editingRewards = [];
+
+    const grid = document.getElementById("cardsGrid");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const autoBtn = document.getElementById("autoBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const hint = document.getElementById("hint");
+    const counter = document.getElementById("counter");
+    const toast = document.getElementById("toast");
+    const toastEmoji = document.getElementById("toastEmoji");
+    const toastTitle = document.getElementById("toastTitle");
+    const toastText = document.getElementById("toastText");
+    const overlay = document.getElementById("overlay");
+    const settingsModal = document.getElementById("settingsModal");
+    const rewardEditor = document.getElementById("rewardEditor");
+    const addRewardBtn = document.getElementById("addRewardBtn");
+    const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+    const cancelSettingsBtn = document.getElementById("cancelSettingsBtn");
+    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    const settingsError = document.getElementById("settingsError");
+    const otherProbText = document.getElementById("otherProbText");
+    const thanksProbText = document.getElementById("thanksProbText");
+
+    function cryptoId() {
+      return "r_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+    }
+
+    function loadRewardsFromStorage() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return structuredClone(defaultRewards);
+
+        const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed) || parsed.length === 0) return structuredClone(defaultRewards);
+
+        const normalized = parsed
+          .filter(item => item && typeof item === "object")
+          .map(item => ({
+            id: item.id || cryptoId(),
+            name: String(item.name || "新的小奖励").trim(),
+            probability: Math.max(0, Number(item.probability || 0)),
+            emoji: String(item.emoji || "🎁").trim() || "🎁",
+            colors: Array.isArray(item.colors) && item.colors.length >= 2 ? item.colors : ["#ff9ccf", "#9a82ff"],
+            isFallback: !!item.isFallback || item.name === "谢谢参与"
+          }));
+
+        let fallback = normalized.find(item => item.isFallback || item.name === "谢谢参与");
+        if (!fallback) {
+          fallback = { id: cryptoId(), name: "谢谢参与", probability: 0, emoji: "🌈", colors: ["#b6a4ff", "#8cc8ff"], isFallback: true };
+          normalized.unshift(fallback);
+        }
+
+        normalized.forEach(item => {
+          if (item !== fallback) item.isFallback = false;
+        });
+        fallback.name = "谢谢参与";
+        fallback.emoji = fallback.emoji || "🌈";
+        fallback.isFallback = true;
+        recalcFallback(normalized);
+        return normalized;
+      } catch (error) {
+        console.warn("读取本地奖品设置失败，已使用默认配置：", error);
+        return structuredClone(defaultRewards);
+      }
+    }
+
+    function saveRewardsToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rewards));
+      } catch (error) {
+        console.warn("保存本地奖品设置失败：", error);
+        showToast({ emoji: "⚠️", title: "保存到本地失败", text: "浏览器可能限制了本地缓存" });
+      }
+    }
+
+    function roundPercent(num) {
+      return Math.round((Number(num) + Number.EPSILON) * 100) / 100;
+    }
+
+    function getFallbackReward(list = rewards) {
+      return list.find(item => item.isFallback) || list.find(item => item.name === "谢谢参与");
+    }
+
+    function recalcFallback(list) {
+      const fallback = getFallbackReward(list);
+      const otherTotal = list
+        .filter(item => !item.isFallback)
+        .reduce((sum, item) => sum + Number(item.probability || 0), 0);
+      if (fallback) fallback.probability = roundPercent(Math.max(0, 100 - otherTotal));
+      return { otherTotal: roundPercent(otherTotal), fallbackProb: fallback ? fallback.probability : 0 };
+    }
+
+    function weightedRandomReward() {
+      recalcFallback(rewards);
+      const total = rewards.reduce((sum, item) => sum + Number(item.probability || 0), 0);
+      let random = Math.random() * total;
+      for (const item of rewards) {
+        random -= Number(item.probability || 0);
+        if (random <= 0) return item;
+      }
+      return getFallbackReward(rewards) || rewards[0];
+    }
+
+    function previewRewards() {
+      recalcFallback(rewards);
+      const previewList = [];
+      rewards.forEach((reward) => {
+        const count = Math.max(1, Math.round(Number(reward.probability || 0) / 6));
+        for (let i = 0; i < count; i++) previewList.push(reward);
+      });
+      while (previewList.length < cardCount) {
+        previewList.push(rewards[previewList.length % rewards.length]);
+      }
+      return shuffle(previewList).slice(0, cardCount);
+    }
+
+    function shuffle(arr) {
+      const clone = [...arr];
+      for (let i = clone.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [clone[i], clone[j]] = [clone[j], clone[i]];
+      }
+      return clone;
+    }
+
+    function renderCards({ reveal = true } = {}) {
+      grid.innerHTML = "";
+      cards = previewRewards().map((reward, index) => ({
+        id: index,
+        reward,
+        flipped: reveal,
+        locked: false
+      }));
+
+      cards.forEach((card) => {
+        grid.appendChild(createCardElement(card));
+      });
+    }
+
+    function createCardElement(card) {
+      const el = document.createElement("div");
+      el.className = `card ${card.flipped ? "flipped" : ""}`;
+      el.dataset.id = card.id;
+      el.style.setProperty("--front-a", card.reward.colors[0]);
+      el.style.setProperty("--front-b", card.reward.colors[1]);
+
+      el.innerHTML = `
+        <div class="card-inner">
+          <div class="card-back">
+            <div class="emoji">🎀</div>
+            <div class="back-title">幸运卡片</div>
+          </div>
+          <div class="card-front">
+            <div class="emoji">${escapeHtml(card.reward.emoji)}</div>
+            <div class="reward-text">${escapeHtml(card.reward.name)}</div>
+            <div class="prob-text">Maggie 奖励</div>
+          </div>
+        </div>
+      `;
+
+      el.addEventListener("click", () => pickCard(el));
+      return el;
+    }
+
+    function updateCounter() {
+      counter.textContent = `已翻开：${pickCount} / ${maxPicks}`;
+    }
+
+    function setButtonsDisabled(disabled) {
+      startBtn.disabled = disabled;
+      resetBtn.disabled = disabled;
+      autoBtn.disabled = disabled;
+      settingsBtn.disabled = disabled;
+    }
+
+    async function startGame() {
+      if (isAnimating) return;
+      isAnimating = true;
+      setButtonsDisabled(true);
+      started = true;
+      pickCount = 0;
+      updateCounter();
+      hint.textContent = "🌀 正在超高速洗牌中……眼睛追不上啦！";
+
+      document.querySelectorAll(".card").forEach((el) => {
+        el.classList.remove("flipped", "picked");
+        el.classList.add("shake");
+      });
+      grid.classList.add("shuffling");
+
+      await wait(1100);
+
+      const newCards = Array.from({ length: cardCount }).map((_, index) => ({
+        id: index,
+        reward: weightedRandomReward(),
+        flipped: false,
+        locked: false
+      }));
+      cards = shuffle(newCards).map((card, index) => ({ ...card, id: index }));
+      grid.innerHTML = "";
+      cards.forEach((card) => grid.appendChild(createCardElement(card)));
+
+      grid.classList.remove("shuffling");
+      document.querySelectorAll(".card").forEach((el) => el.classList.remove("shake"));
+
+      hint.textContent = "🎯 可以开始翻卡片啦！每局最多翻 3 张。";
+      isAnimating = false;
+      setButtonsDisabled(false);
+    }
+
+    async function pickCard(el, silent = false) {
+      if (isAnimating) return;
+      if (!started) {
+        showToast({ emoji: "👀", title: "先准备一下哦", text: "请先点击“准备抽奖”再翻卡片" });
+        return;
+      }
+
+      const id = Number(el.dataset.id);
+      const card = cards.find((item) => item.id === id);
+      if (!card || card.flipped || card.locked) return;
+
+      if (pickCount >= maxPicks) {
+        showToast({ emoji: "🔄", title: "本局次数用完啦", text: "最多翻开 3 张，请点击重新抽奖" });
+        hint.textContent = "⏰ 已经翻满 3 次啦，请重新抽奖再玩一局。";
+        return;
+      }
+
+      isAnimating = true;
+      card.reward = weightedRandomReward();
+      el.style.setProperty("--front-a", card.reward.colors[0]);
+      el.style.setProperty("--front-b", card.reward.colors[1]);
+      el.querySelector(".card-front").innerHTML = `
+        <div class="emoji">${escapeHtml(card.reward.emoji)}</div>
+        <div class="reward-text">${escapeHtml(card.reward.name)}</div>
+        <div class="prob-text">Maggie 奖励</div>
+      `;
+
+      el.classList.add("picked");
+      await wait(280);
+      el.classList.add("flipped");
+      card.flipped = true;
+      card.locked = true;
+      pickCount += 1;
+      updateCounter();
+      await wait(620);
+      el.classList.remove("picked");
+
+      const isThanks = card.reward.isFallback || card.reward.name === "谢谢参与";
+      showToast({
+        emoji: isThanks ? "🌈" : card.reward.emoji,
+        title: isThanks ? "差一点点啦" : "恭喜你！",
+        text: isThanks ? "这次是谢谢参与，下次好运来" : `获得：${card.reward.name}`
+      });
+      burstConfetti(isThanks ? 16 : 36);
+      hint.textContent = pickCount >= maxPicks
+        ? "🎈本局已经翻满 3 张啦，可以重新抽奖。"
+        : `✨ 还可以再翻 ${maxPicks - pickCount} 张卡片。`;
+
+      await wait(silent ? 400 : 700);
+      isAnimating = false;
+    }
+
+    async function autoPick() {
+      if (isAnimating) return;
+      if (!started) {
+        await startGame();
+        await wait(400);
+      }
+      if (pickCount >= maxPicks) {
+        showToast({ emoji: "🔄", title: "本局次数用完啦", text: "请点击重新抽奖再玩一局" });
+        return;
+      }
+      const available = Array.from(document.querySelectorAll(".card:not(.flipped)"));
+      if (!available.length) return;
+      const randomCard = available[Math.floor(Math.random() * available.length)];
+      randomCard.animate([
+        { transform: "scale(1)", filter: "brightness(1)" },
+        { transform: "scale(1.1)", filter: "brightness(1.15)" },
+        { transform: "scale(1)", filter: "brightness(1)" }
+      ], { duration: 420, easing: "ease-out" });
+      await wait(220);
+      pickCard(randomCard, true);
+    }
+
+    function resetGame() {
+      started = false;
+      isAnimating = false;
+      pickCount = 0;
+      updateCounter();
+      hideToast();
+      closeSettings();
+      hint.textContent = "🌈 游戏开始前，所有奖励都先亮出来；准备好后就开始洗牌！";
+      grid.classList.remove("shuffling");
+      recalcFallback(rewards);
+      renderCards({ reveal: true });
+    }
+
+    function openSettings() {
+      if (isAnimating) return;
+      hideToast();
+      editingRewards = structuredClone(rewards);
+      recalcFallback(editingRewards);
+      renderRewardEditor();
+      settingsError.textContent = "";
+      overlay.classList.add("show");
+      settingsModal.classList.add("show");
+    }
+
+    function closeSettings() {
+      settingsModal.classList.remove("show");
+      if (!toast.classList.contains("show")) overlay.classList.remove("show");
+    }
+
+    function renderRewardEditor() {
+      rewardEditor.querySelectorAll(".reward-row:not(.header)").forEach(row => row.remove());
+      recalcFallback(editingRewards);
+      updateSettingsSummary();
+
+      editingRewards.forEach((reward) => {
+        const row = document.createElement("div");
+        row.className = "reward-row";
+        row.dataset.id = reward.id;
+        const isFallback = !!reward.isFallback;
+        const themeIndex = findThemeIndex(reward.colors);
+
+        row.innerHTML = `
+          <input class="emoji-input" value="${escapeAttr(reward.emoji)}" maxlength="4" ${isFallback ? "readonly" : ""} title="图标" />
+          <input class="name-input" value="${escapeAttr(reward.name)}" ${isFallback ? "readonly" : ""} title="奖品名称" />
+          <input class="prob-input" type="number" min="0" max="100" step="0.1" value="${roundPercent(reward.probability)}" ${isFallback ? "readonly" : ""} title="中奖概率" />
+          <select class="theme-input" title="颜色风格" ${isFallback ? "disabled" : ""}>
+            ${colorThemes.map((theme, index) => `<option value="${index}" ${index === themeIndex ? "selected" : ""}>${theme.name}</option>`).join("")}
+          </select>
+          <button class="btn-small btn-danger delete-reward" ${isFallback ? "disabled" : ""}>删除</button>
+        `;
+        rewardEditor.appendChild(row);
+      });
+
+      bindEditorEvents();
+    }
+
+    function bindEditorEvents() {
+      rewardEditor.querySelectorAll(".reward-row:not(.header)").forEach((row) => {
+        const id = row.dataset.id;
+        const reward = editingRewards.find(item => item.id === id);
+        if (!reward) return;
+
+        row.querySelector(".emoji-input").addEventListener("input", (e) => {
+          reward.emoji = e.target.value.trim() || "🎁";
+        });
+        row.querySelector(".name-input").addEventListener("input", (e) => {
+          reward.name = e.target.value.trim();
+        });
+        row.querySelector(".prob-input").addEventListener("input", (e) => {
+          if (reward.isFallback) return;
+          reward.probability = Math.max(0, Number(e.target.value || 0));
+          recalcFallback(editingRewards);
+          updateSettingsSummary();
+          const fallback = getFallbackReward(editingRewards);
+          const fallbackRow = rewardEditor.querySelector(`[data-id="${fallback.id}"]`);
+          if (fallbackRow) fallbackRow.querySelector(".prob-input").value = roundPercent(fallback.probability);
+        });
+        row.querySelector(".theme-input").addEventListener("change", (e) => {
+          const theme = colorThemes[Number(e.target.value)] || colorThemes[0];
+          reward.colors = [...theme.colors];
+        });
+        row.querySelector(".delete-reward").addEventListener("click", () => {
+          editingRewards = editingRewards.filter(item => item.id !== id);
+          recalcFallback(editingRewards);
+          renderRewardEditor();
+        });
+      });
+    }
+
+    function updateSettingsSummary() {
+      const { otherTotal, fallbackProb } = recalcFallback(editingRewards);
+      otherProbText.textContent = `${roundPercent(otherTotal)}%`;
+      thanksProbText.textContent = `${roundPercent(fallbackProb)}%`;
+      if (otherTotal > 100) {
+        settingsError.textContent = "其他奖品概率合计超过 100% 了，请调小一点。";
+        thanksProbText.style.color = "#ff4e8e";
+      } else {
+        settingsError.textContent = "";
+        thanksProbText.style.color = "#6a4bd9";
+      }
+    }
+
+    function addReward() {
+      const theme = colorThemes[(editingRewards.length + 1) % colorThemes.length];
+      const fallbackIndex = editingRewards.findIndex(item => item.isFallback);
+      const newReward = {
+        id: cryptoId(),
+        name: "新的小奖励",
+        probability: 1,
+        emoji: "🎁",
+        colors: [...theme.colors]
+      };
+      if (fallbackIndex >= 0) {
+        editingRewards.splice(fallbackIndex + 1, 0, newReward);
+      } else {
+        editingRewards.push(newReward);
+      }
+      recalcFallback(editingRewards);
+      renderRewardEditor();
+    }
+
+    function saveSettings() {
+      readEditorValues();
+      const { otherTotal } = recalcFallback(editingRewards);
+      const hasEmptyName = editingRewards.some(item => !item.name.trim());
+      if (hasEmptyName) {
+        settingsError.textContent = "奖品名称不能为空哦。";
+        return;
+      }
+      if (otherTotal > 100) {
+        settingsError.textContent = "其他奖品概率合计超过 100% 了，请调小一点再保存。";
+        return;
+      }
+      const fallback = getFallbackReward(editingRewards);
+      if (!fallback) {
+        editingRewards.unshift({
+          id: cryptoId(),
+          name: "谢谢参与",
+          probability: 0,
+          emoji: "🌈",
+          colors: ["#b6a4ff", "#8cc8ff"],
+          isFallback: true
+        });
+      }
+      recalcFallback(editingRewards);
+      rewards = structuredClone(editingRewards);
+      saveRewardsToStorage();
+      closeSettings();
+      started = false;
+      pickCount = 0;
+      updateCounter();
+      hint.textContent = "✅ 奖品设置已保存！点击“准备抽奖”开始新一局。";
+      renderCards({ reveal: true });
+      showToast({ emoji: "✅", title: "保存成功", text: "新的奖品和概率已经应用啦" });
+    }
+
+    function readEditorValues() {
+      rewardEditor.querySelectorAll(".reward-row:not(.header)").forEach((row) => {
+        const reward = editingRewards.find(item => item.id === row.dataset.id);
+        if (!reward) return;
+        reward.emoji = row.querySelector(".emoji-input").value.trim() || "🎁";
+        reward.name = row.querySelector(".name-input").value.trim();
+        if (!reward.isFallback) {
+          reward.probability = Math.max(0, Number(row.querySelector(".prob-input").value || 0));
+          const theme = colorThemes[Number(row.querySelector(".theme-input").value)] || colorThemes[0];
+          reward.colors = [...theme.colors];
+        }
+      });
+      recalcFallback(editingRewards);
+    }
+
+    function findThemeIndex(colors) {
+      const index = colorThemes.findIndex(theme => theme.colors[0] === colors?.[0] && theme.colors[1] === colors?.[1]);
+      return index >= 0 ? index : 0;
+    }
+
+    function showToast({ emoji, title, text }) {
+      toastEmoji.textContent = emoji;
+      toastTitle.textContent = title;
+      toastText.textContent = text;
+      overlay.classList.add("show");
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(hideToast, 3000);
+    }
+
+    function hideToast() {
+      toast.classList.remove("show");
+      if (!settingsModal.classList.contains("show")) overlay.classList.remove("show");
+    }
+
+    function burstConfetti(count = 24) {
+      const colors = ["#ff8fc7", "#9b6cff", "#ffd76f", "#75b9ff", "#79d6a3", "#ffae6d"];
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = `${Math.random() * 100}vw`;
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = `${Math.random() * 0.25}s`;
+        piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 2200);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replaceAll("`", "&#096;");
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    startBtn.addEventListener("click", startGame);
+    resetBtn.addEventListener("click", resetGame);
+    autoBtn.addEventListener("click", autoPick);
+    settingsBtn.addEventListener("click", openSettings);
+    addRewardBtn.addEventListener("click", addReward);
+    saveSettingsBtn.addEventListener("click", saveSettings);
+    cancelSettingsBtn.addEventListener("click", closeSettings);
+    closeSettingsBtn.addEventListener("click", closeSettings);
+    overlay.addEventListener("click", () => {
+      if (settingsModal.classList.contains("show")) closeSettings();
+    });
+
+    resetGame();
+  </script>
+</body>
+</html>
