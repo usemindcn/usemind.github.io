@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maggie 小兔子学习赛跑 - 道具版</title>
+  <style>
+    :root {
+      --bg: #f7f8ff;
+      --card: #ffffff;
+      --ink: #26324d;
+      --muted: #7a849c;
+      --primary: #7c5cff;
+      --primary-2: #a58bff;
+      --rabbit: #ff7ab6;
+      --turtle: #41b883;
+      --warning: #ffb020;
+      --danger: #ff5c7a;
+      --ice: #46b9ff;
+      --energy: #ff9f1c;
+      --track: #e9ecf7;
+      --shadow: 0 24px 70px rgba(57, 70, 120, 0.16);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(255, 122, 182, 0.20), transparent 30%),
+        radial-gradient(circle at 90% 10%, rgba(124, 92, 255, 0.18), transparent 32%),
+        linear-gradient(135deg, #f8fbff 0%, #f6f1ff 48%, #fff9fb 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      min-height: 720px;
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(22px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 36px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bg-bubbles span {
+      position: absolute;
+      border-radius: 999px;
+      opacity: 0.45;
+      filter: blur(1px);
+      pointer-events: none;
+    }
+
+    .bg-bubbles span:nth-child(1) { width: 120px; height: 120px; background: #ffe2ef; left: -24px; bottom: 120px; }
+    .bg-bubbles span:nth-child(2) { width: 92px; height: 92px; background: #dff5ea; right: 46px; top: 80px; }
+    .bg-bubbles span:nth-child(3) { width: 60px; height: 60px; background: #e7dcff; right: 150px; bottom: 80px; }
+
+    .screen {
+      display: none;
+      min-height: 720px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .screen.active { display: block; }
+
+    .setup { padding: 42px; }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: 1.04fr 0.96fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .hero-card, .setting-card, .game-card, .modal-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 14px 40px rgba(56, 68, 105, 0.10);
+      border: 1px solid rgba(235, 238, 248, 0.95);
+    }
+
+    .hero-card {
+      padding: 42px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 636px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      right: -90px;
+      bottom: -80px;
+      background: linear-gradient(135deg, rgba(255, 122, 182, 0.25), rgba(124, 92, 255, 0.18));
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #f1edff;
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    h1 {
+      margin: 22px 0 14px;
+      font-size: clamp(36px, 5vw, 62px);
+      line-height: 1.04;
+      letter-spacing: -2px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.8;
+      max-width: 520px;
+    }
+
+    .characters {
+      display: flex;
+      gap: 20px;
+      align-items: flex-end;
+      margin-top: 26px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .character {
+      width: 142px;
+      height: 142px;
+      border-radius: 32px;
+      display: grid;
+      place-items: center;
+      font-size: 74px;
+      background: linear-gradient(180deg, #fff, #f7f8ff);
+      box-shadow: inset 0 -10px 30px rgba(106, 118, 160, 0.08), 0 16px 34px rgba(70, 80, 130, 0.10);
+    }
+
+    .rabbit-float { transform: translateY(-18px) rotate(-4deg); }
+
+    .setting-card {
+      padding: 30px;
+      min-height: 636px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      color: #48516a;
+      font-weight: 850;
+      font-size: 15px;
+    }
+
+    input {
+      width: 100%;
+      border: 2px solid #eef0f8;
+      border-radius: 18px;
+      padding: 16px 18px;
+      font-size: 20px;
+      outline: none;
+      transition: 0.2s;
+      color: var(--ink);
+      background: #fbfcff;
+      font-weight: 800;
+    }
+
+    input:focus {
+      border-color: var(--primary-2);
+      box-shadow: 0 0 0 5px rgba(124, 92, 255, 0.10);
+    }
+
+    .props-config {
+      margin: 8px 0 18px;
+      padding: 18px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #fff7fb, #f7f4ff);
+      border: 1px solid #f0eaff;
+    }
+
+    .props-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      font-weight: 950;
+    }
+
+    .props-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .prop-input-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 12px;
+      border: 1px solid #edf0fa;
+      box-shadow: 0 8px 18px rgba(56, 68, 105, 0.07);
+      text-align: center;
+    }
+
+    .prop-input-card .icon {
+      font-size: 32px;
+      margin-bottom: 6px;
+    }
+
+    .prop-input-card label {
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .prop-input-card input {
+      padding: 10px;
+      font-size: 18px;
+      text-align: center;
+      border-radius: 14px;
+    }
+
+    .tips {
+      background: #f8f9ff;
+      border: 1px dashed #dfe4f5;
+      border-radius: 22px;
+      padding: 16px;
+      color: #68738f;
+      line-height: 1.65;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .btn-row { display: flex; gap: 14px; flex-wrap: wrap; }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      border-radius: 18px;
+      padding: 16px 22px;
+      font-weight: 950;
+      font-size: 16px;
+      color: var(--ink);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      user-select: none;
+    }
+
+    button:hover { transform: translateY(-2px); }
+    button:active { transform: translateY(0); }
+
+    .primary-btn {
+      flex: 1;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), #ff7ab6);
+      box-shadow: 0 14px 28px rgba(124, 92, 255, 0.28);
+    }
+
+    .ghost-btn { background: #f4f6fd; color: #58627c; }
+    .danger-btn { background: #fff0f3; color: var(--danger); }
+
+    .game { padding: 30px 122px 30px 30px; }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .stat {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 18px 22px;
+      border: 1px solid rgba(235, 238, 248, 0.95);
+      box-shadow: 0 10px 28px rgba(56, 68, 105, 0.08);
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 1000;
+      letter-spacing: -0.5px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #eaf8f1;
+      color: #159765;
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #18b27a;
+      box-shadow: 0 0 0 8px rgba(24, 178, 122, 0.12);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .game-title h2 {
+      margin: 0 0 8px;
+      font-size: 34px;
+      letter-spacing: -1px;
+    }
+
+    .game-title p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .control-buttons { display: flex; gap: 12px; }
+
+    .game-card {
+      padding: 32px;
+      min-height: 452px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-card::before {
+      content: "";
+      position: absolute;
+      inset: auto -90px -120px auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: rgba(255, 122, 182, 0.09);
+    }
+
+    .track-block {
+      margin-bottom: 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .track-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      font-weight: 950;
+    }
+
+    .track-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+    }
+
+    .track-info {
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 850;
+    }
+
+    .freeze-countdown {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-left: 12px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #eaf7ff;
+      color: #138ad1;
+      font-size: 14px;
+      font-weight: 950;
+      border: 1px solid #ccecff;
+    }
+
+    .freeze-countdown.show { display: inline-flex; }
+
+    .track {
+      position: relative;
+      height: 44px;
+      background: var(--track);
+      border-radius: 999px;
+      overflow: visible;
+      border: 6px solid #f8f9ff;
+      box-shadow: inset 0 4px 14px rgba(80, 90, 130, 0.08);
+    }
+
+    .fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+
+    .fill.turtle-fill { background: linear-gradient(90deg, #b7f3d2, var(--turtle)); }
+    .fill.rabbit-fill { background: linear-gradient(90deg, #ffd1e4, var(--rabbit)); }
+
+    .runner {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      transform: translate(-50%, -60%);
+      width: 70px;
+      height: 70px;
+      display: grid;
+      place-items: center;
+      font-size: 48px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 12px 26px rgba(54, 68, 110, 0.18);
+      transition: left 0.25s ease, transform 0.15s ease, filter 0.2s ease;
+      z-index: 2;
+    }
+
+    .runner.bump { transform: translate(-50%, -60%) scale(1.12) rotate(-5deg); }
+    .runner.freeze { filter: drop-shadow(0 0 18px rgba(70,185,255,.95)) saturate(0.7); }
+    .runner.shake { animation: shake 0.52s ease; }
+    .runner.fly { animation: fly 0.72s ease; }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(-50%, -60%) rotate(0deg); }
+      20% { transform: translate(-58%, -66%) rotate(-12deg); }
+      40% { transform: translate(-44%, -56%) rotate(10deg); }
+      60% { transform: translate(-55%, -66%) rotate(-8deg); }
+      80% { transform: translate(-46%, -58%) rotate(7deg); }
+    }
+
+    @keyframes fly {
+      0% { transform: translate(-50%, -60%) scale(1); }
+      35% { transform: translate(-50%, -115%) scale(1.18) rotate(-8deg); }
+      70% { transform: translate(-50%, -60%) scale(1.08); }
+      100% { transform: translate(-50%, -60%) scale(1); }
+    }
+
+    .finish-flag {
+      position: absolute;
+      right: -8px;
+      top: 50%;
+      transform: translateY(-68%);
+      font-size: 36px;
+      z-index: 3;
+    }
+
+    .keyboard-help {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .key-card {
+      background: #f8f9ff;
+      border-radius: 20px;
+      padding: 16px;
+      color: #67728e;
+      font-weight: 850;
+      line-height: 1.55;
+    }
+
+    .key-card strong { color: var(--ink); font-size: 20px; }
+
+    .progress-big {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(135deg, #fff7fb, #f7f4ff);
+      border-radius: 26px;
+      padding: 22px 24px;
+      border: 1px solid #f1eaff;
+      position: relative;
+      z-index: 1;
+    }
+
+    .progress-big .num {
+      font-size: 42px;
+      font-weight: 1000;
+      letter-spacing: -1.5px;
+      color: var(--rabbit);
+    }
+
+    .progress-big .copy {
+      color: #69748e;
+      font-weight: 850;
+      line-height: 1.6;
+    }
+
+    .power-panel {
+      position: absolute;
+      right: 26px;
+      top: 126px;
+      width: 82px;
+      z-index: 8;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .power-title {
+      writing-mode: vertical-rl;
+      letter-spacing: 4px;
+      color: #7c5cff;
+      font-weight: 1000;
+      font-size: 14px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid #eee8ff;
+      border-radius: 999px;
+      padding: 12px 8px;
+      box-shadow: 0 10px 22px rgba(80,90,130,.10);
+      display: none;
+    }
+
+    .power-item {
+      position: relative;
+      width: 74px;
+      height: 74px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(235,238,248,.95);
+      box-shadow: 0 14px 30px rgba(56, 68, 105, 0.14);
+      display: grid;
+      place-items: center;
+      font-size: 36px;
+      cursor: pointer;
+      transition: .16s ease;
+      user-select: none;
+    }
+
+    .power-item:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 18px 36px rgba(56, 68, 105, 0.19);
+    }
+
+    .power-item.disabled {
+      opacity: .42;
+      cursor: not-allowed;
+      filter: grayscale(.75);
+    }
+
+    .power-count {
+      position: absolute;
+      right: -8px;
+      bottom: -8px;
+      min-width: 30px;
+      height: 30px;
+      padding: 0 7px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 1000;
+      border: 3px solid #fff;
+    }
+
+    .power-label {
+      position: absolute;
+      left: 50%;
+      bottom: -24px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      color: #5e6882;
+      font-size: 12px;
+      font-weight: 950;
+      background: rgba(255,255,255,.75);
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+
+    .bomb .power-count { background: var(--danger); }
+    .freeze-power .power-count { background: var(--ice); }
+    .energy-power .power-count { background: var(--energy); }
+
+    .effect-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+      overflow: hidden;
+    }
+
+    .effect-text {
+      position: absolute;
+      left: 50%;
+      top: 46%;
+      transform: translate(-50%, -50%) scale(.7);
+      opacity: 0;
+      font-size: 64px;
+      font-weight: 1000;
+      letter-spacing: -2px;
+      text-shadow: 0 8px 24px rgba(0,0,0,.15);
+      animation: effectPop 1.05s ease forwards;
+      white-space: nowrap;
+    }
+
+    .effect-text.bomb-text { color: #ff3f61; }
+    .effect-text.freeze-text { color: #25a8f2; }
+    .effect-text.energy-text { color: #ff9f1c; }
+
+    @keyframes effectPop {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(.6) rotate(-6deg); }
+      18% { opacity: 1; transform: translate(-50%, -50%) scale(1.04) rotate(2deg); }
+      70% { opacity: 1; transform: translate(-50%, -72%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -100%) scale(.92); }
+    }
+
+    .particle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      animation: particle 900ms ease-out forwards;
+    }
+
+    @keyframes particle {
+      0% { transform: translate(0,0) scale(.6); opacity: 1; }
+      100% { transform: translate(var(--x), var(--y)) scale(1.4); opacity: 0; }
+    }
+
+    .modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(37, 44, 70, 0.38);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      padding: 24px;
+    }
+
+    .modal.show { display: flex; }
+
+    .modal-card {
+      width: min(520px, 100%);
+      padding: 38px;
+      text-align: center;
+      animation: pop 0.28s ease;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-icon { font-size: 84px; margin-bottom: 12px; }
+    .modal-card h3 { font-size: 34px; margin: 0 0 12px; letter-spacing: -1px; }
+    .modal-card p { color: var(--muted); line-height: 1.8; margin-bottom: 26px; }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 26px;
+      transform: translateX(-50%) translateY(120px);
+      opacity: 0;
+      background: rgba(38, 50, 77, 0.92);
+      color: #fff;
+      border-radius: 999px;
+      padding: 13px 18px;
+      font-weight: 850;
+      z-index: 40;
+      transition: 0.24s ease;
+      pointer-events: none;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    @media (max-width: 920px) {
+      body { padding: 12px; align-items: flex-start; }
+      .app, .screen { min-height: calc(100vh - 24px); }
+      .setup, .game { padding: 20px; }
+      .game { padding-right: 20px; padding-bottom: 118px; }
+      .setup-grid, .topbar { grid-template-columns: 1fr; }
+      .props-grid { grid-template-columns: 1fr; }
+      .hero-card, .setting-card { min-height: auto; }
+      .hero-card { padding: 30px; }
+      .controls { align-items: flex-start; flex-direction: column; }
+      .control-buttons, .btn-row { width: 100%; }
+      .control-buttons button, .btn-row button { flex: 1; }
+      .keyboard-help { grid-template-columns: 1fr; }
+      .runner { width: 58px; height: 58px; font-size: 39px; }
+      .power-panel {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        top: auto;
+        bottom: 24px;
+        width: auto;
+        flex-direction: row;
+        justify-content: center;
+      }
+      .power-label { display: none; }
+    }
+  
+
+    .runner.dragging {
+      cursor: grabbing;
+      transform: translate(-50%, -60%) scale(1.16);
+      box-shadow: 0 18px 42px rgba(54, 68, 110, 0.28);
+      z-index: 10;
+    }
+
+    .runner.draggable {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .drag-hint {
+      position: absolute;
+      left: 50%;
+      top: -44px;
+      transform: translateX(-50%);
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(38, 50, 77, 0.9);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      transition: opacity .18s ease, top .18s ease;
+    }
+
+    .runner.dragging .drag-hint,
+    .runner:hover .drag-hint {
+      opacity: 1;
+      top: -52px;
+    }
+
+    .track.calibrating {
+      box-shadow: inset 0 4px 14px rgba(80, 90, 130, 0.08), 0 0 0 5px rgba(124, 92, 255, 0.12);
+    }
+
+
+    .emotion-panel {
+      position: absolute;
+      right: 20px;
+      top: 388px;
+      width: 116px;
+      height: 360px;
+      z-index: 7;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 10px;
+      border-radius: 30px;
+      background: rgba(255,255,255,.94);
+      border: 1px solid rgba(235,238,248,.95);
+      box-shadow: 0 16px 38px rgba(56, 68, 105, 0.16);
+      backdrop-filter: blur(16px);
+    }
+
+    .emotion-title {
+      color: #4f5b76;
+      font-size: 14px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .emotion-face {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #eefaf4;
+      font-size: 26px;
+      box-shadow: inset 0 -5px 12px rgba(60,80,120,.07);
+    }
+
+    .emotion-score {
+      min-width: 54px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #fff;
+      background: #18b27a;
+      font-size: 16px;
+      font-weight: 1000;
+      border: 3px solid #fff;
+      box-shadow: 0 8px 18px rgba(56,68,105,.12);
+    }
+
+    .thermo-wrap {
+      position: relative;
+      width: 86px;
+      flex: 1;
+      min-height: 224px;
+      display: flex;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .thermo-tube {
+      position: absolute;
+      left: 42%;
+      top: 4px;
+      bottom: 12px;
+      width: 32px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: #edf1fb;
+      border: 4px solid #fff;
+      box-shadow: inset 0 4px 12px rgba(75, 90, 130, .12), 0 8px 16px rgba(75,90,130,.10);
+      overflow: hidden;
+    }
+
+    .thermo-fill {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 80%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #53d990, #18b27a);
+      transition: height .22s ease, background .22s ease;
+    }
+
+    .thermo-bulb {
+      position: absolute;
+      left: 42%;
+      bottom: -4px;
+      width: 52px;
+      height: 52px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: #18b27a;
+      border: 5px solid #fff;
+      box-shadow: 0 10px 20px rgba(56,68,105,.16);
+      transition: background .22s ease;
+      z-index: 2;
+    }
+
+    .thermo-scale {
+      position: absolute;
+      inset: 4px 0 18px 0;
+      pointer-events: none;
+    }
+
+    .thermo-mark {
+      position: absolute;
+      right: 2px;
+      transform: translateY(50%);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #77839e;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .thermo-mark::before {
+      content: "";
+      display: block;
+      width: 13px;
+      height: 2px;
+      border-radius: 999px;
+      background: #9aa4ba;
+    }
+
+    .emotion-help {
+      color: #7b859f;
+      font-size: 10px;
+      font-weight: 850;
+      text-align: center;
+      line-height: 1.3;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 920px) {
+      .emotion-panel {
+        right: 18px;
+        top: auto;
+        bottom: 112px;
+        width: 106px;
+        height: 300px;
+      }
+    }
+</style>
+</head>
+<body>
+  <main class="app" id="app">
+    <div class="bg-bubbles"><span></span><span></span><span></span></div>
+    <div class="effect-layer" id="effectLayer"></div>
+
+    <section class="screen setup active" id="setupScreen">
+      <div class="setup-grid">
+        <div class="hero-card">
+          <div>
+            <div class="badge">🐢 VS 🐰 道具版学习陪跑</div>
+            <h1>Maggie 小兔子<br />学习赛跑</h1>
+            <p class="subtitle">
+              小乌龟代表时间，会匀速走向终点；Maggie 小兔子代表做题进度。
+              这一版新增了炸弹、冻结、能量棒三个道具，让学习挑战更像一场小游戏。
+            </p>
+          </div>
+          <div class="characters" aria-hidden="true">
+            <div class="character">🐢</div>
+            <div class="character rabbit-float">🐰</div>
+            <div class="character" style="font-size:64px;">🎒</div>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <div>
+            <div class="badge">⚙️ 初始设置</div>
+            <div class="form-group" style="margin-top: 22px;">
+              <label for="questionInput">题目总数</label>
+              <input id="questionInput" type="number" min="1" max="200" value="20" />
+            </div>
+            <div class="form-group">
+              <label for="minuteInput">规定时间（分钟）</label>
+              <input id="minuteInput" type="number" min="1" max="180" value="10" />
+            </div>
+
+            <div class="props-config">
+              <div class="props-title">
+                <span>🎒 道具领取数量</span>
+                <span style="font-size: 13px; color: var(--muted);">默认各 1 个</span>
+              </div>
+              <div class="props-grid">
+                <div class="prop-input-card">
+                  <div class="icon">💣</div>
+                  <label for="bombInput">炸弹</label>
+                  <input id="bombInput" type="number" min="0" max="20" value="1" />
+                </div>
+                <div class="prop-input-card">
+                  <div class="icon">🧊</div>
+                  <label for="freezeInput">冻结</label>
+                  <input id="freezeInput" type="number" min="0" max="20" value="1" />
+                </div>
+                <div class="prop-input-card">
+                  <div class="icon">⚡</div>
+                  <label for="energyInput">能量棒</label>
+                  <input id="energyInput" type="number" min="0" max="20" value="1" />
+                </div>
+              </div>
+            </div>
+
+            <div class="tips">
+              <strong>玩法说明：</strong><br />
+              右方向键 = 完成 1 道题，小兔子前进一格。<br />
+              左方向键 = 撤回 1 道题，小兔子后退一格。<br />
+              💣 炸弹：小乌龟倒退 5 格。🧊 冻结：小乌龟暂停 5 分钟。⚡ 能量棒：小兔子前进 5 步。
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="primary-btn" id="startBtn">开始学习挑战</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen game" id="gameScreen">
+      <aside class="power-panel" aria-label="道具栏">
+        <div class="power-title">道具栏</div>
+        <div class="power-item bomb" id="bombBtn" title="炸弹：小乌龟倒退 5 格">
+          💣
+          <span class="power-count" id="bombCount">×1</span>
+          <span class="power-label">炸弹</span>
+        </div>
+        <div class="power-item freeze-power" id="freezeBtn" title="冻结：小乌龟停止 5 分钟">
+          🧊
+          <span class="power-count" id="freezeCount">×1</span>
+          <span class="power-label">冻结</span>
+        </div>
+        <div class="power-item energy-power" id="energyBtn" title="能量棒：小兔子前进 5 步">
+          ⚡
+          <span class="power-count" id="energyCount">×1</span>
+          <span class="power-label">能量棒</span>
+        </div>
+      </aside>
+
+      <aside class="emotion-panel" aria-label="家长情绪表">
+        <div class="emotion-title">家长情绪表</div>
+        <div class="emotion-face" id="emotionFace">😊</div>
+        <div class="emotion-score" id="emotionScore">80</div>
+        <div class="thermo-wrap">
+          <div class="thermo-tube">
+            <div class="thermo-fill" id="thermoFill"></div>
+          </div>
+          <div class="thermo-bulb" id="thermoBulb"></div>
+          <div class="thermo-scale" aria-hidden="true">
+            <div class="thermo-mark" style="bottom: 100%;">100</div>
+            <div class="thermo-mark" style="bottom: 90%;">90</div>
+            <div class="thermo-mark" style="bottom: 80%;">80</div>
+            <div class="thermo-mark" style="bottom: 70%;">70</div>
+            <div class="thermo-mark" style="bottom: 60%;">60</div>
+            <div class="thermo-mark" style="bottom: 50%;">50</div>
+            <div class="thermo-mark" style="bottom: 40%;">40</div>
+            <div class="thermo-mark" style="bottom: 30%;">30</div>
+            <div class="thermo-mark" style="bottom: 20%;">20</div>
+            <div class="thermo-mark" style="bottom: 10%;">10</div>
+            <div class="thermo-mark" style="bottom: 0%;">0</div>
+          </div>
+        </div>
+        <div class="emotion-help">↑ 加 5<br />↓ 减 5</div>
+      </aside>
+
+      <div class="topbar">
+        <div class="stat">
+          <div class="stat-label">用时</div>
+          <div class="stat-value" id="elapsedText">00:00</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">剩余时间</div>
+          <div class="stat-value" id="remainText">10:00</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">工作状态</div>
+          <div class="status-pill" id="statusPill"><span class="status-dot"></span><span id="statusText">专注学习中</span></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="game-title">
+          <h2>小兔子，向前冲！</h2>
+          <p>完成一道题按 <strong>→</strong>，道具在右侧，关键时刻可以帮 Maggie 反超。</p>
+        </div>
+        <div class="control-buttons">
+          <button class="ghost-btn" id="pauseBtn">暂停</button>
+          <button class="danger-btn" id="endBtn">结束</button>
+        </div>
+      </div>
+
+      <div class="game-card">
+        <div class="track-block">
+          <div class="track-head">
+            <div class="track-name">
+              🐢 小乌龟时间轴
+              <span class="freeze-countdown" id="freezeCountdown">🧊 冻结中 05:00</span>
+            </div>
+            <div class="track-info" id="turtleInfo">时间进度 0%</div>
+          </div>
+          <div class="track">
+            <div class="fill turtle-fill" id="turtleFill"></div>
+            <div class="runner draggable" id="turtleRunner">🐢<span class="drag-hint">长按拖动，可调整时间</span></div>
+            <div class="finish-flag">🏁</div>
+          </div>
+        </div>
+
+        <div class="track-block" style="margin-bottom: 22px;">
+          <div class="track-head">
+            <div class="track-name">🐰 Maggie 小兔子</div>
+            <div class="track-info" id="rabbitInfo">做题进度 0/20</div>
+          </div>
+          <div class="track">
+            <div class="fill rabbit-fill" id="rabbitFill"></div>
+            <div class="runner draggable" id="rabbitRunner">🐰<span class="drag-hint">长按拖动，可调整题目数</span></div>
+            <div class="finish-flag">🏁</div>
+          </div>
+        </div>
+
+        <div class="progress-big">
+          <div>
+            <div class="num" id="questionProgress">0/20</div>
+            <div class="copy" id="encourageText">当前完成题目数。每前进一步，都是一次小小胜利。</div>
+          </div>
+          <div style="font-size: 54px;">⭐</div>
+        </div>
+
+        <div class="keyboard-help">
+          <div class="key-card"><strong>→ 右方向键</strong><br />完成 1 道题，小兔子前进。</div>
+          <div class="key-card"><strong>← 左方向键</strong><br />撤回 1 道题，小兔子后退。</div>
+          <div class="key-card"><strong>🎒 道具栏</strong><br />炸弹、冻结、能量棒都在右侧。</div>
+          <div class="key-card"><strong>👆 家长校准</strong><br />长按小乌龟或小兔子，左右拖动可调整进度。</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="modal" id="resultModal">
+      <div class="modal-card">
+        <div class="modal-icon" id="modalIcon">🎉</div>
+        <h3 id="modalTitle">恭喜你，赢了！</h3>
+        <p id="modalDesc">Maggie 小兔子在小乌龟到达终点前完成了全部题目。</p>
+        <div class="btn-row">
+          <button class="ghost-btn" id="backSetupBtn">重新设置</button>
+          <button class="primary-btn" id="restartBtn">再来一次</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">小兔子前进一格！</div>
+  </main>
+
+  <script>
+    const setupScreen = document.getElementById('setupScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const questionInput = document.getElementById('questionInput');
+    const minuteInput = document.getElementById('minuteInput');
+    const bombInput = document.getElementById('bombInput');
+    const freezeInput = document.getElementById('freezeInput');
+    const energyInput = document.getElementById('energyInput');
+
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const endBtn = document.getElementById('endBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const backSetupBtn = document.getElementById('backSetupBtn');
+
+    const elapsedText = document.getElementById('elapsedText');
+    const remainText = document.getElementById('remainText');
+    const statusText = document.getElementById('statusText');
+    const statusPill = document.getElementById('statusPill');
+    const turtleFill = document.getElementById('turtleFill');
+    const turtleRunner = document.getElementById('turtleRunner');
+    const rabbitFill = document.getElementById('rabbitFill');
+    const rabbitRunner = document.getElementById('rabbitRunner');
+    const turtleInfo = document.getElementById('turtleInfo');
+    const rabbitInfo = document.getElementById('rabbitInfo');
+    const questionProgress = document.getElementById('questionProgress');
+    const encourageText = document.getElementById('encourageText');
+    const freezeCountdown = document.getElementById('freezeCountdown');
+
+    const bombBtn = document.getElementById('bombBtn');
+    const freezeBtn = document.getElementById('freezeBtn');
+    const energyBtn = document.getElementById('energyBtn');
+    const bombCount = document.getElementById('bombCount');
+    const freezeCount = document.getElementById('freezeCount');
+    const energyCount = document.getElementById('energyCount');
+
+    const resultModal = document.getElementById('resultModal');
+    const modalIcon = document.getElementById('modalIcon');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDesc = document.getElementById('modalDesc');
+    const toast = document.getElementById('toast');
+    const effectLayer = document.getElementById('effectLayer');
+    const emotionFace = document.getElementById('emotionFace');
+    const emotionScore = document.getElementById('emotionScore');
+    const thermoFill = document.getElementById('thermoFill');
+    const thermoBulb = document.getElementById('thermoBulb');
+
+    let totalQuestions = 20;
+    let totalSeconds = 600;
+    let completed = 0;
+    let elapsed = 0;
+    let timer = null;
+    let paused = false;
+    let gameOver = false;
+
+    let bombLeft = 1;
+    let freezeLeft = 1;
+    let energyLeft = 1;
+    let freezeRemain = 0;
+    let parentEmotion = 80;
+
+    const FREEZE_SECONDS = 5 * 60;
+    const POWER_STEPS = 5;
+    const LONG_PRESS_MS = 420;
+
+    let dragState = {
+      type: null,
+      active: false,
+      armed: false,
+      pointerId: null,
+      trackEl: null,
+      runnerEl: null,
+      longPressTimer: null
+    };
+
+    let rabbitClickTimer = null;
+
+    function pad(num) { return String(num).padStart(2, '0'); }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${pad(m)}:${pad(s)}`;
+    }
+
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+
+    function getTurtleStepSeconds() {
+      return totalQuestions > 0 ? totalSeconds / totalQuestions : totalSeconds;
+    }
+
+    function updateStatus(text, mode = 'focus') {
+      statusText.textContent = text;
+      const dot = statusPill.querySelector('.status-dot');
+      if (mode === 'pause') {
+        statusPill.style.background = '#fff7df';
+        statusPill.style.color = '#b57900';
+        dot.style.background = '#ffb020';
+      } else if (mode === 'end') {
+        statusPill.style.background = '#fff0f3';
+        statusPill.style.color = '#d9365f';
+        dot.style.background = '#ff5c7a';
+      } else if (mode === 'freeze') {
+        statusPill.style.background = '#eaf7ff';
+        statusPill.style.color = '#138ad1';
+        dot.style.background = '#46b9ff';
+      } else {
+        statusPill.style.background = '#eaf8f1';
+        statusPill.style.color = '#159765';
+        dot.style.background = '#18b27a';
+      }
+    }
+
+    function updatePowerUI() {
+      bombCount.textContent = `×${bombLeft}`;
+      freezeCount.textContent = `×${freezeLeft}`;
+      energyCount.textContent = `×${energyLeft}`;
+      bombBtn.classList.toggle('disabled', bombLeft <= 0 || gameOver);
+      freezeBtn.classList.toggle('disabled', freezeLeft <= 0 || gameOver || freezeRemain > 0);
+      energyBtn.classList.toggle('disabled', energyLeft <= 0 || gameOver);
+    }
+
+    function updateFreezeUI() {
+      if (freezeRemain > 0 && !gameOver) {
+        freezeCountdown.classList.add('show');
+        freezeCountdown.textContent = `🧊 冻结中 ${formatTime(freezeRemain)}`;
+        turtleRunner.classList.add('freeze');
+      } else {
+        freezeCountdown.classList.remove('show');
+        turtleRunner.classList.remove('freeze');
+      }
+    }
+
+    function updateEmotionUI() {
+      const value = clamp(parentEmotion, 0, 100);
+      let color = '#18b27a';
+      let fill = 'linear-gradient(180deg, #53d990, #18b27a)';
+      let face = '😊';
+      let faceBg = '#eefaf4';
+
+      if (value > 70) {
+        color = '#18b27a';
+        fill = 'linear-gradient(180deg, #53d990, #18b27a)';
+        face = '😊';
+        faceBg = '#eefaf4';
+      } else if (value > 50 && value <= 70) {
+        color = '#ff9f1c';
+        fill = 'linear-gradient(180deg, #ffd166, #ff9f1c)';
+        face = '😐';
+        faceBg = '#fff6df';
+      } else if (value > 40 && value <= 50) {
+        color = '#ff7a8a';
+        fill = 'linear-gradient(180deg, #ffb0ba, #ff7a8a)';
+        face = '😫';
+        faceBg = '#fff0f2';
+      } else {
+        color = '#d9365f';
+        fill = 'linear-gradient(180deg, #ff6a80, #d9365f)';
+        face = '😡';
+        faceBg = '#ffe6eb';
+      }
+
+      emotionScore.textContent = value;
+      emotionScore.style.background = color;
+      emotionFace.textContent = face;
+      emotionFace.style.background = faceBg;
+      thermoFill.style.height = `${value}%`;
+      thermoFill.style.background = fill;
+      thermoBulb.style.background = color;
+    }
+
+    function changeParentEmotion(delta) {
+      if (!gameScreen.classList.contains('active') || gameOver) return;
+      parentEmotion = clamp(parentEmotion + delta, 0, 100);
+      updateEmotionUI();
+      showToast(delta > 0 ? `家长情绪 +5：当前 ${parentEmotion} 分` : `家长情绪 -5：当前 ${parentEmotion} 分`);
+    }
+
+    function updateUI() {
+      const turtlePercent = clamp((elapsed / totalSeconds) * 100, 0, 100);
+      const rabbitPercent = clamp((completed / totalQuestions) * 100, 0, 100);
+      const remain = clamp(totalSeconds - elapsed, 0, totalSeconds);
+
+      elapsedText.textContent = formatTime(elapsed);
+      remainText.textContent = formatTime(remain);
+
+      turtleFill.style.width = `${turtlePercent}%`;
+      turtleRunner.style.left = `${turtlePercent}%`;
+      turtleInfo.textContent = `时间进度 ${Math.round(turtlePercent)}%`;
+
+      rabbitFill.style.width = `${rabbitPercent}%`;
+      rabbitRunner.style.left = `${rabbitPercent}%`;
+      rabbitInfo.textContent = `做题进度 ${completed}/${totalQuestions}`;
+      questionProgress.textContent = `${completed}/${totalQuestions}`;
+
+      if (completed === 0) {
+        encourageText.textContent = '准备开始啦。完成一道题，就让小兔子前进一步。';
+      } else if (completed < totalQuestions) {
+        encourageText.textContent = `已经完成 ${completed} 道题，再坚持一下，小兔子正在追上小乌龟。`;
+      } else {
+        encourageText.textContent = '全部完成！Maggie 小兔子成功跑完全程。';
+      }
+
+      updateFreezeUI();
+      updatePowerUI();
+      updateEmotionUI();
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      window.clearTimeout(showToast._timer);
+      showToast._timer = window.setTimeout(() => toast.classList.remove('show'), 1200);
+    }
+
+    function bump(el) {
+      el.classList.add('bump');
+      window.setTimeout(() => el.classList.remove('bump'), 170);
+    }
+
+    function playEffect(type, text) {
+      const el = document.createElement('div');
+      el.className = `effect-text ${type}-text`;
+      el.textContent = text;
+      effectLayer.appendChild(el);
+      window.setTimeout(() => el.remove(), 1100);
+
+      const colors = {
+        bomb: ['#ff3f61', '#ffb020', '#2d3148'],
+        freeze: ['#46b9ff', '#bdefff', '#ffffff'],
+        energy: ['#ff9f1c', '#ffd166', '#ff7ab6']
+      }[type] || ['#7c5cff'];
+
+      for (let i = 0; i < 22; i++) {
+        const p = document.createElement('span');
+        p.className = 'particle';
+        p.style.left = `${48 + Math.random() * 8}%`;
+        p.style.top = `${43 + Math.random() * 10}%`;
+        p.style.background = colors[i % colors.length];
+        p.style.setProperty('--x', `${(Math.random() - 0.5) * 520}px`);
+        p.style.setProperty('--y', `${(Math.random() - 0.5) * 300}px`);
+        effectLayer.appendChild(p);
+        window.setTimeout(() => p.remove(), 950);
+      }
+    }
+
+    function getTrackPercentFromPointer(event, trackEl) {
+      const rect = trackEl.getBoundingClientRect();
+      const x = clamp(event.clientX - rect.left, 0, rect.width);
+      return clamp(x / rect.width, 0, 1);
+    }
+
+    function applyDragProgress(event) {
+      if (!dragState.active || !dragState.trackEl) return;
+      const percent = getTrackPercentFromPointer(event, dragState.trackEl);
+
+      if (dragState.type === 'turtle') {
+        elapsed = clamp(Math.round(percent * totalSeconds), 0, totalSeconds);
+        if (freezeRemain > 0) {
+          freezeRemain = 0;
+          showToast('已手动调整小乌龟，冻结状态自动结束');
+        }
+        updateStatus('家长调整时间中', 'pause');
+      }
+
+      if (dragState.type === 'rabbit') {
+        completed = clamp(Math.round(percent * totalQuestions), 0, totalQuestions);
+        updateStatus('家长调整题目中', 'pause');
+      }
+
+      updateUI();
+    }
+
+    function startLongPressDrag(type, runnerEl, event) {
+      if (!gameScreen.classList.contains('active') || gameOver) return;
+      event.preventDefault();
+
+      const trackEl = runnerEl.closest('.track');
+      dragState = {
+        type,
+        active: false,
+        armed: true,
+        pointerId: event.pointerId,
+        trackEl,
+        runnerEl,
+        longPressTimer: null
+      };
+
+      try { runnerEl.setPointerCapture(event.pointerId); } catch (e) {}
+
+      dragState.longPressTimer = window.setTimeout(() => {
+        if (!dragState.armed || dragState.pointerId !== event.pointerId) return;
+        dragState.active = true;
+        paused = true;
+        pauseBtn.textContent = '继续';
+        runnerEl.classList.add('dragging');
+        trackEl.classList.add('calibrating');
+        updateStatus(type === 'turtle' ? '家长调整时间中' : '家长调整题目中', 'pause');
+        showToast(type === 'turtle' ? '拖动小乌龟可调整时间进度' : '拖动小兔子可调整完成题数');
+        applyDragProgress(event);
+      }, LONG_PRESS_MS);
+    }
+
+    function moveLongPressDrag(event) {
+      if (!dragState.armed || dragState.pointerId !== event.pointerId) return;
+      event.preventDefault();
+      if (dragState.active) applyDragProgress(event);
+    }
+
+    function endLongPressDrag(event) {
+      if (!dragState.armed || dragState.pointerId !== event.pointerId) return;
+      event.preventDefault();
+      window.clearTimeout(dragState.longPressTimer);
+
+      if (dragState.active) {
+        if (dragState.runnerEl) dragState.runnerEl.classList.remove('dragging');
+        if (dragState.trackEl) dragState.trackEl.classList.remove('calibrating');
+
+        if (completed >= totalQuestions && elapsed < totalSeconds) {
+          finishGame(true, 'win');
+        } else if (elapsed >= totalSeconds && completed < totalQuestions) {
+          finishGame(false, 'timeout');
+        } else {
+          updateStatus('已校准，点击继续', 'pause');
+          showToast('校准完成，点击“继续”恢复挑战');
+        }
+      }
+
+      dragState = {
+        type: null,
+        active: false,
+        armed: false,
+        pointerId: null,
+        trackEl: null,
+        runnerEl: null,
+        longPressTimer: null
+      };
+      updateUI();
+    }
+
+    function startTimer() {
+      window.clearInterval(timer);
+      timer = window.setInterval(() => {
+        if (paused || gameOver) return;
+
+        if (freezeRemain > 0) {
+          freezeRemain -= 1;
+          updateStatus('小乌龟冻结中', 'freeze');
+        } else {
+          elapsed += 1;
+          updateStatus('专注学习中', 'focus');
+        }
+
+        updateUI();
+
+        if (elapsed >= totalSeconds && completed < totalQuestions) {
+          finishGame(false, 'timeout');
+        }
+      }, 1000);
+    }
+
+    function readNumber(input, fallback, min, max) {
+      return clamp(parseInt(input.value, 10) || fallback, min, max);
+    }
+
+    function startGame() {
+      totalQuestions = readNumber(questionInput, 20, 1, 200);
+      const minutes = readNumber(minuteInput, 10, 1, 180);
+      totalSeconds = minutes * 60;
+      completed = 0;
+      elapsed = 0;
+      paused = false;
+      gameOver = false;
+      freezeRemain = 0;
+      parentEmotion = 80;
+
+      bombLeft = readNumber(bombInput, 1, 0, 20);
+      freezeLeft = readNumber(freezeInput, 1, 0, 20);
+      energyLeft = readNumber(energyInput, 1, 0, 20);
+
+      pauseBtn.textContent = '暂停';
+      updateStatus('专注学习中', 'focus');
+      resultModal.classList.remove('show');
+      setupScreen.classList.remove('active');
+      gameScreen.classList.add('active');
+      updateUI();
+      startTimer();
+    }
+
+    function finishGame(win, reason = 'manual') {
+      if (gameOver) return;
+      gameOver = true;
+      paused = false;
+      freezeRemain = 0;
+      window.clearInterval(timer);
+      updateUI();
+      updateStatus('挑战已结束', 'end');
+
+      if (win) {
+        modalIcon.textContent = '🎉';
+        modalTitle.textContent = '恭喜你，赢了！';
+        modalDesc.textContent = `Maggie 小兔子在 ${formatTime(elapsed)} 内完成了 ${totalQuestions} 道题，成功跑完全程。`;
+      } else if (reason === 'manual') {
+        modalIcon.textContent = '🌙';
+        modalTitle.textContent = '本次学习已结束';
+        modalDesc.textContent = `这次完成了 ${completed}/${totalQuestions} 道题，用时 ${formatTime(elapsed)}。休息一下，下一轮继续。`;
+      } else {
+        modalIcon.textContent = '🥺';
+        modalTitle.textContent = '好可惜啊，下次继续加油';
+        modalDesc.textContent = `小乌龟已经到达终点，Maggie 小兔子完成了 ${completed}/${totalQuestions} 道题。下一次可以再快一点点。`;
+      }
+
+      resultModal.classList.add('show');
+    }
+
+    function moveRabbit(step, silent = false) {
+      if (gameOver || paused) {
+        if (paused) showToast('当前已暂停，继续后再操作哦');
+        return;
+      }
+
+      const next = clamp(completed + step, 0, totalQuestions);
+      if (next === completed) {
+        if (!silent) showToast(step > 0 ? '已经全部完成啦！' : '已经回到起点啦');
+        return;
+      }
+
+      completed = next;
+      updateUI();
+      bump(rabbitRunner);
+      if (!silent) showToast(step > 0 ? '小兔子前进一格！' : '小兔子后退一格');
+
+      if (completed >= totalQuestions && elapsed < totalSeconds) {
+        finishGame(true, 'win');
+      }
+    }
+
+    function handleRabbitSingleClick() {
+      if (dragState.active || gameOver || paused) {
+        if (paused) showToast('当前已暂停，继续后再点小兔子哦');
+        return;
+      }
+      moveRabbit(1, true);
+      bump(rabbitRunner);
+      showToast('点了一下小兔子：前进一步！');
+    }
+
+    function handleRabbitDoubleClick() {
+      if (dragState.active || gameOver || paused) {
+        if (paused) showToast('当前已暂停，继续后再点小兔子哦');
+        return;
+      }
+      moveRabbit(-1, true);
+      bump(rabbitRunner);
+      showToast('双击小兔子：后退一步');
+    }
+
+    function useBomb() {
+      if (gameOver || paused) {
+        showToast(paused ? '暂停时不能使用道具哦' : '挑战已结束');
+        return;
+      }
+      if (bombLeft <= 0) {
+        showToast('炸弹已经用完啦');
+        return;
+      }
+
+      bombLeft -= 1;
+      const rollbackSeconds = Math.round(getTurtleStepSeconds() * POWER_STEPS);
+      elapsed = clamp(elapsed - rollbackSeconds, 0, totalSeconds);
+      turtleRunner.classList.add('shake');
+      window.setTimeout(() => turtleRunner.classList.remove('shake'), 560);
+      playEffect('bomb', '💣 BOOM! 小乌龟后退 5 格');
+      showToast('炸弹生效：小乌龟后退 5 格');
+      updateUI();
+    }
+
+    function useFreeze() {
+      if (gameOver || paused) {
+        showToast(paused ? '暂停时不能使用道具哦' : '挑战已结束');
+        return;
+      }
+      if (freezeLeft <= 0) {
+        showToast('冻结已经用完啦');
+        return;
+      }
+      if (freezeRemain > 0) {
+        showToast('小乌龟已经被冻结中');
+        return;
+      }
+
+      freezeLeft -= 1;
+      freezeRemain = FREEZE_SECONDS;
+      playEffect('freeze', '🧊 冻结 5 分钟');
+      showToast('冻结生效：小乌龟 5 分钟不能动');
+      updateStatus('小乌龟冻结中', 'freeze');
+      updateUI();
+    }
+
+    function useEnergy() {
+      if (gameOver || paused) {
+        showToast(paused ? '暂停时不能使用道具哦' : '挑战已结束');
+        return;
+      }
+      if (energyLeft <= 0) {
+        showToast('能量棒已经用完啦');
+        return;
+      }
+
+      energyLeft -= 1;
+      completed = clamp(completed + POWER_STEPS, 0, totalQuestions);
+      rabbitRunner.classList.add('fly');
+      window.setTimeout(() => rabbitRunner.classList.remove('fly'), 760);
+      playEffect('energy', '⚡ 小兔子飞奔 5 步');
+      showToast('能量棒生效：小兔子前进 5 步');
+      updateUI();
+
+      if (completed >= totalQuestions && elapsed < totalSeconds) {
+        finishGame(true, 'win');
+      }
+    }
+
+    startBtn.addEventListener('click', startGame);
+
+    pauseBtn.addEventListener('click', () => {
+      if (gameOver) return;
+      paused = !paused;
+      pauseBtn.textContent = paused ? '继续' : '暂停';
+      if (paused) {
+        updateStatus('暂停休息中', 'pause');
+        showToast('已暂停，先喘口气');
+      } else {
+        updateStatus(freezeRemain > 0 ? '小乌龟冻结中' : '专注学习中', freezeRemain > 0 ? 'freeze' : 'focus');
+        showToast('继续挑战，小兔子加油');
+      }
+      updateUI();
+    });
+
+    endBtn.addEventListener('click', () => finishGame(false, 'manual'));
+    restartBtn.addEventListener('click', startGame);
+
+    backSetupBtn.addEventListener('click', () => {
+      window.clearInterval(timer);
+      resultModal.classList.remove('show');
+      gameScreen.classList.remove('active');
+      setupScreen.classList.add('active');
+    });
+
+    bombBtn.addEventListener('click', useBomb);
+    freezeBtn.addEventListener('click', useFreeze);
+    energyBtn.addEventListener('click', useEnergy);
+
+    turtleRunner.addEventListener('pointerdown', (event) => startLongPressDrag('turtle', turtleRunner, event));
+    rabbitRunner.addEventListener('pointerdown', (event) => startLongPressDrag('rabbit', rabbitRunner, event));
+    turtleRunner.addEventListener('pointermove', moveLongPressDrag);
+    rabbitRunner.addEventListener('pointermove', moveLongPressDrag);
+    turtleRunner.addEventListener('pointerup', endLongPressDrag);
+    rabbitRunner.addEventListener('pointerup', endLongPressDrag);
+    turtleRunner.addEventListener('pointercancel', endLongPressDrag);
+    rabbitRunner.addEventListener('pointercancel', endLongPressDrag);
+
+    rabbitRunner.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (dragState.active || dragState.armed) return;
+      window.clearTimeout(rabbitClickTimer);
+      rabbitClickTimer = window.setTimeout(() => {
+        handleRabbitSingleClick();
+      }, 230);
+    });
+
+    rabbitRunner.addEventListener('dblclick', (event) => {
+      event.preventDefault();
+      window.clearTimeout(rabbitClickTimer);
+      handleRabbitDoubleClick();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (!gameScreen.classList.contains('active')) return;
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        moveRabbit(1);
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        moveRabbit(-1);
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        changeParentEmotion(5);
+      }
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        changeParentEmotion(-5);
+      }
+      if (event.code === 'Space') {
+        event.preventDefault();
+        pauseBtn.click();
+      }
+      if (event.key === '1') useBomb();
+      if (event.key === '2') useFreeze();
+      if (event.key === '3') useEnergy();
+    });
+
+    updateUI();
+  </script>
+</body>
+</html>
