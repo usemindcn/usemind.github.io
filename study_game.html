@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Maggie 小兔子学习赛跑 - 道具版</title>
+  <title>学习赛跑 - 道具版</title>
   <style>
     :root {
       --bg: #f7f8ff;
@@ -191,6 +191,56 @@
     }
 
     input:focus {
+      border-color: var(--primary-2);
+      box-shadow: 0 0 0 5px rgba(124, 92, 255, 0.10);
+    }
+
+    .role-config {
+      margin: 8px 0 18px;
+      padding: 18px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #f5fffb, #f7f4ff);
+      border: 1px solid #e7f2ff;
+    }
+
+    .role-title {
+      margin-bottom: 14px;
+      font-weight: 950;
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .role-field {
+      background: #fff;
+      border-radius: 18px;
+      padding: 12px;
+      border: 1px solid #edf0fa;
+      box-shadow: 0 8px 18px rgba(56, 68, 105, 0.07);
+    }
+
+    .role-field label {
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    select {
+      width: 100%;
+      border: 2px solid #eef0f8;
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: var(--ink);
+      background: #fbfcff;
+      font-size: 16px;
+      font-weight: 850;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    select:focus {
       border-color: var(--primary-2);
       box-shadow: 0 0 0 5px rgba(124, 92, 255, 0.10);
     }
@@ -716,6 +766,7 @@
       .setup, .game { padding: 20px; }
       .game { padding-right: 20px; padding-bottom: 118px; }
       .setup-grid, .topbar { grid-template-columns: 1fr; }
+      .role-grid { grid-template-columns: 1fr; }
       .props-grid { grid-template-columns: 1fr; }
       .hero-card, .setting-card { min-height: auto; }
       .hero-card { padding: 30px; }
@@ -935,16 +986,39 @@
       <div class="setup-grid">
         <div class="hero-card">
           <div>
-            <div class="badge">🐢 VS 🐰 道具版学习陪跑</div>
-            <h1>Maggie 小兔子<br />学习赛跑</h1>
-            <p class="subtitle">
-              小乌龟代表时间，会匀速走向终点；Maggie 小兔子代表做题进度。
-              这一版新增了炸弹、冻结、能量棒三个道具，让学习挑战更像一场小游戏。
-            </p>
+            <div class="badge" id="roleBadge">🐢 VS 🐰 道具版学习赛跑</div>
+            <h1>学习赛跑</h1>
+            <div class="role-config">
+              <div class="role-title">🎭 挑战角色</div>
+              <div class="role-grid">
+                <div class="role-field">
+                  <label for="playerRoleSelect">我方角色</label>
+                  <select id="playerRoleSelect">
+                    <option value="rabbit" selected>🐰 小兔子</option>
+                    <option value="turtle">🐢 小乌龟</option>
+                    <option value="elsa">❄️ 爱莎公主</option>
+                    <option value="anna">👑 安娜公主</option>
+                    <option value="fairy">🧚 小精灵</option>
+                    <option value="monster">👾 小怪兽</option>
+                  </select>
+                </div>
+                <div class="role-field">
+                  <label for="opponentRoleSelect">对方角色</label>
+                  <select id="opponentRoleSelect">
+                    <option value="rabbit">🐰 小兔子</option>
+                    <option value="turtle" selected>🐢 小乌龟</option>
+                    <option value="elsa">❄️ 爱莎公主</option>
+                    <option value="anna">👑 安娜公主</option>
+                    <option value="fairy">🧚 小精灵</option>
+                    <option value="monster">👾 小怪兽</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="characters" aria-hidden="true">
-            <div class="character">🐢</div>
-            <div class="character rabbit-float">🐰</div>
+            <div class="character" id="heroOpponentCharacter">🐢</div>
+            <div class="character rabbit-float" id="heroPlayerCharacter">🐰</div>
             <div class="character" style="font-size:64px;">🎒</div>
           </div>
         </div>
@@ -987,9 +1061,9 @@
 
             <div class="tips">
               <strong>玩法说明：</strong><br />
-              右方向键 = 完成 1 道题，小兔子前进一格。<br />
-              左方向键 = 撤回 1 道题，小兔子后退一格。<br />
-              💣 炸弹：小乌龟倒退 5 格。🧊 冻结：小乌龟暂停 5 分钟。⚡ 能量棒：小兔子前进 5 步。
+              右方向键 = 完成 1 道题，我方角色前进一格。<br />
+              左方向键 = 撤回 1 道题，我方角色后退一格。<br />
+              💣 炸弹：对方角色倒退 5 格。🧊 冻结：对方角色暂停 5 分钟。⚡ 能量棒：我方角色前进 5 步。
             </div>
           </div>
           <div class="btn-row">
@@ -1062,8 +1136,8 @@
 
       <div class="controls">
         <div class="game-title">
-          <h2>小兔子，向前冲！</h2>
-          <p>完成一道题按 <strong>→</strong>，道具在右侧，关键时刻可以帮 Maggie 反超。</p>
+          <h2 id="gameHeadline">小兔子，向前冲！</h2>
+          <p id="gameIntro">完成一道题按 <strong>→</strong>，道具在右侧，关键时刻可以反超。</p>
         </div>
         <div class="control-buttons">
           <button class="ghost-btn" id="pauseBtn">暂停</button>
@@ -1075,26 +1149,26 @@
         <div class="track-block">
           <div class="track-head">
             <div class="track-name">
-              🐢 小乌龟时间轴
+              <span id="opponentTrackName">🐢 小乌龟时间轴</span>
               <span class="freeze-countdown" id="freezeCountdown">🧊 冻结中 05:00</span>
             </div>
             <div class="track-info" id="turtleInfo">时间进度 0%</div>
           </div>
           <div class="track">
             <div class="fill turtle-fill" id="turtleFill"></div>
-            <div class="runner draggable" id="turtleRunner">🐢<span class="drag-hint">长按拖动，可调整时间</span></div>
+            <div class="runner draggable" id="turtleRunner"><span class="runner-icon" id="turtleRunnerIcon">🐢</span><span class="drag-hint">长按拖动，可调整时间</span></div>
             <div class="finish-flag">🏁</div>
           </div>
         </div>
 
         <div class="track-block" style="margin-bottom: 22px;">
           <div class="track-head">
-            <div class="track-name">🐰 Maggie 小兔子</div>
+            <div class="track-name" id="playerTrackName">🐰 小兔子</div>
             <div class="track-info" id="rabbitInfo">做题进度 0/20</div>
           </div>
           <div class="track">
             <div class="fill rabbit-fill" id="rabbitFill"></div>
-            <div class="runner draggable" id="rabbitRunner">🐰<span class="drag-hint">长按拖动，可调整题目数</span></div>
+            <div class="runner draggable" id="rabbitRunner"><span class="runner-icon" id="rabbitRunnerIcon">🐰</span><span class="drag-hint">长按拖动，可调整题目数</span></div>
             <div class="finish-flag">🏁</div>
           </div>
         </div>
@@ -1108,10 +1182,10 @@
         </div>
 
         <div class="keyboard-help">
-          <div class="key-card"><strong>→ 右方向键</strong><br />完成 1 道题，小兔子前进。</div>
-          <div class="key-card"><strong>← 左方向键</strong><br />撤回 1 道题，小兔子后退。</div>
+          <div class="key-card"><strong>→ 右方向键</strong><br />完成 1 道题，我方角色前进。</div>
+          <div class="key-card"><strong>← 左方向键</strong><br />撤回 1 道题，我方角色后退。</div>
           <div class="key-card"><strong>🎒 道具栏</strong><br />炸弹、冻结、能量棒都在右侧。</div>
-          <div class="key-card"><strong>👆 家长校准</strong><br />长按小乌龟或小兔子，左右拖动可调整进度。</div>
+          <div class="key-card"><strong>👆 家长校准</strong><br />长按角色头像，左右拖动可调整进度。</div>
         </div>
       </div>
     </section>
@@ -1120,7 +1194,7 @@
       <div class="modal-card">
         <div class="modal-icon" id="modalIcon">🎉</div>
         <h3 id="modalTitle">恭喜你，赢了！</h3>
-        <p id="modalDesc">Maggie 小兔子在小乌龟到达终点前完成了全部题目。</p>
+        <p id="modalDesc">我方角色在对方角色到达终点前完成了全部题目。</p>
         <div class="btn-row">
           <button class="ghost-btn" id="backSetupBtn">重新设置</button>
           <button class="primary-btn" id="restartBtn">再来一次</button>
@@ -1139,6 +1213,8 @@
     const bombInput = document.getElementById('bombInput');
     const freezeInput = document.getElementById('freezeInput');
     const energyInput = document.getElementById('energyInput');
+    const playerRoleSelect = document.getElementById('playerRoleSelect');
+    const opponentRoleSelect = document.getElementById('opponentRoleSelect');
 
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
@@ -1152,13 +1228,22 @@
     const statusPill = document.getElementById('statusPill');
     const turtleFill = document.getElementById('turtleFill');
     const turtleRunner = document.getElementById('turtleRunner');
+    const turtleRunnerIcon = document.getElementById('turtleRunnerIcon');
     const rabbitFill = document.getElementById('rabbitFill');
     const rabbitRunner = document.getElementById('rabbitRunner');
+    const rabbitRunnerIcon = document.getElementById('rabbitRunnerIcon');
     const turtleInfo = document.getElementById('turtleInfo');
     const rabbitInfo = document.getElementById('rabbitInfo');
     const questionProgress = document.getElementById('questionProgress');
     const encourageText = document.getElementById('encourageText');
     const freezeCountdown = document.getElementById('freezeCountdown');
+    const heroOpponentCharacter = document.getElementById('heroOpponentCharacter');
+    const heroPlayerCharacter = document.getElementById('heroPlayerCharacter');
+    const roleBadge = document.getElementById('roleBadge');
+    const opponentTrackName = document.getElementById('opponentTrackName');
+    const playerTrackName = document.getElementById('playerTrackName');
+    const gameHeadline = document.getElementById('gameHeadline');
+    const gameIntro = document.getElementById('gameIntro');
 
     const bombBtn = document.getElementById('bombBtn');
     const freezeBtn = document.getElementById('freezeBtn');
@@ -1195,6 +1280,17 @@
     const FREEZE_SECONDS = 5 * 60;
     const POWER_STEPS = 5;
     const LONG_PRESS_MS = 420;
+    const ROLE_OPTIONS = {
+      rabbit: { emoji: '🐰', name: '小兔子' },
+      turtle: { emoji: '🐢', name: '小乌龟' },
+      elsa: { emoji: '❄️', name: '爱莎公主' },
+      anna: { emoji: '👑', name: '安娜公主' },
+      fairy: { emoji: '🧚', name: '小精灵' },
+      monster: { emoji: '👾', name: '小怪兽' }
+    };
+
+    let playerRole = ROLE_OPTIONS.rabbit;
+    let opponentRole = ROLE_OPTIONS.turtle;
 
     let dragState = {
       type: null,
@@ -1206,8 +1302,6 @@
       longPressTimer: null
     };
 
-    let rabbitClickTimer = null;
-
     function pad(num) { return String(num).padStart(2, '0'); }
 
     function formatTime(seconds) {
@@ -1217,6 +1311,33 @@
     }
 
     function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+
+    function readRole(select, fallback) {
+      return ROLE_OPTIONS[select.value] || fallback;
+    }
+
+    function roleText(role) {
+      return `${role.emoji} ${role.name}`;
+    }
+
+    function syncRoleUI() {
+      playerRole = readRole(playerRoleSelect, ROLE_OPTIONS.rabbit);
+      opponentRole = readRole(opponentRoleSelect, ROLE_OPTIONS.turtle);
+
+      heroOpponentCharacter.textContent = opponentRole.emoji;
+      heroPlayerCharacter.textContent = playerRole.emoji;
+      roleBadge.textContent = `${opponentRole.emoji} VS ${playerRole.emoji} 道具版学习赛跑`;
+      turtleRunnerIcon.textContent = opponentRole.emoji;
+      rabbitRunnerIcon.textContent = playerRole.emoji;
+      opponentTrackName.textContent = `${roleText(opponentRole)}时间轴`;
+      playerTrackName.textContent = roleText(playerRole);
+      gameHeadline.textContent = `${playerRole.name}，向前冲！`;
+      gameIntro.innerHTML = '完成一道题按 <strong>→</strong>，道具在右侧，关键时刻可以反超。';
+
+      bombBtn.title = `炸弹：${opponentRole.name}倒退 5 格`;
+      freezeBtn.title = `冻结：${opponentRole.name}停止 5 分钟`;
+      energyBtn.title = `能量棒：${playerRole.name}前进 5 步`;
+    }
 
     function getTurtleStepSeconds() {
       return totalQuestions > 0 ? totalSeconds / totalQuestions : totalSeconds;
@@ -1327,11 +1448,11 @@
       questionProgress.textContent = `${completed}/${totalQuestions}`;
 
       if (completed === 0) {
-        encourageText.textContent = '准备开始啦。完成一道题，就让小兔子前进一步。';
+        encourageText.textContent = `准备开始啦。完成一道题，就让${playerRole.name}前进一步。`;
       } else if (completed < totalQuestions) {
-        encourageText.textContent = `已经完成 ${completed} 道题，再坚持一下，小兔子正在追上小乌龟。`;
+        encourageText.textContent = `已经完成 ${completed} 道题，再坚持一下，${playerRole.name}正在追上${opponentRole.name}。`;
       } else {
-        encourageText.textContent = '全部完成！Maggie 小兔子成功跑完全程。';
+        encourageText.textContent = `全部完成！${playerRole.name}成功跑完全程。`;
       }
 
       updateFreezeUI();
@@ -1391,7 +1512,7 @@
         elapsed = clamp(Math.round(percent * totalSeconds), 0, totalSeconds);
         if (freezeRemain > 0) {
           freezeRemain = 0;
-          showToast('已手动调整小乌龟，冻结状态自动结束');
+          showToast(`已手动调整${opponentRole.name}，冻结状态自动结束`);
         }
         updateStatus('家长调整时间中', 'pause');
       }
@@ -1429,7 +1550,7 @@
         runnerEl.classList.add('dragging');
         trackEl.classList.add('calibrating');
         updateStatus(type === 'turtle' ? '家长调整时间中' : '家长调整题目中', 'pause');
-        showToast(type === 'turtle' ? '拖动小乌龟可调整时间进度' : '拖动小兔子可调整完成题数');
+        showToast(type === 'turtle' ? `拖动${opponentRole.name}可调整时间进度` : `拖动${playerRole.name}可调整完成题数`);
         applyDragProgress(event);
       }, LONG_PRESS_MS);
     }
@@ -1478,7 +1599,7 @@
 
         if (freezeRemain > 0) {
           freezeRemain -= 1;
-          updateStatus('小乌龟冻结中', 'freeze');
+        updateStatus(`${opponentRole.name}冻结中`, 'freeze');
         } else {
           elapsed += 1;
           updateStatus('专注学习中', 'focus');
@@ -1497,6 +1618,7 @@
     }
 
     function startGame() {
+      syncRoleUI();
       totalQuestions = readNumber(questionInput, 20, 1, 200);
       const minutes = readNumber(minuteInput, 10, 1, 180);
       totalSeconds = minutes * 60;
@@ -1532,7 +1654,7 @@
       if (win) {
         modalIcon.textContent = '🎉';
         modalTitle.textContent = '恭喜你，赢了！';
-        modalDesc.textContent = `Maggie 小兔子在 ${formatTime(elapsed)} 内完成了 ${totalQuestions} 道题，成功跑完全程。`;
+        modalDesc.textContent = `${playerRole.name}在 ${formatTime(elapsed)} 内完成了 ${totalQuestions} 道题，成功跑完全程。`;
       } else if (reason === 'manual') {
         modalIcon.textContent = '🌙';
         modalTitle.textContent = '本次学习已结束';
@@ -1540,7 +1662,7 @@
       } else {
         modalIcon.textContent = '🥺';
         modalTitle.textContent = '好可惜啊，下次继续加油';
-        modalDesc.textContent = `小乌龟已经到达终点，Maggie 小兔子完成了 ${completed}/${totalQuestions} 道题。下一次可以再快一点点。`;
+        modalDesc.textContent = `${opponentRole.name}已经到达终点，${playerRole.name}完成了 ${completed}/${totalQuestions} 道题。下一次可以再快一点点。`;
       }
 
       resultModal.classList.add('show');
@@ -1561,31 +1683,11 @@
       completed = next;
       updateUI();
       bump(rabbitRunner);
-      if (!silent) showToast(step > 0 ? '小兔子前进一格！' : '小兔子后退一格');
+      if (!silent) showToast(step > 0 ? `${playerRole.name}前进一格！` : `${playerRole.name}后退一格`);
 
       if (completed >= totalQuestions && elapsed < totalSeconds) {
         finishGame(true, 'win');
       }
-    }
-
-    function handleRabbitSingleClick() {
-      if (dragState.active || gameOver || paused) {
-        if (paused) showToast('当前已暂停，继续后再点小兔子哦');
-        return;
-      }
-      moveRabbit(1, true);
-      bump(rabbitRunner);
-      showToast('点了一下小兔子：前进一步！');
-    }
-
-    function handleRabbitDoubleClick() {
-      if (dragState.active || gameOver || paused) {
-        if (paused) showToast('当前已暂停，继续后再点小兔子哦');
-        return;
-      }
-      moveRabbit(-1, true);
-      bump(rabbitRunner);
-      showToast('双击小兔子：后退一步');
     }
 
     function useBomb() {
@@ -1603,8 +1705,8 @@
       elapsed = clamp(elapsed - rollbackSeconds, 0, totalSeconds);
       turtleRunner.classList.add('shake');
       window.setTimeout(() => turtleRunner.classList.remove('shake'), 560);
-      playEffect('bomb', '💣 BOOM! 小乌龟后退 5 格');
-      showToast('炸弹生效：小乌龟后退 5 格');
+      playEffect('bomb', `💣 BOOM! ${opponentRole.name}后退 5 格`);
+      showToast(`炸弹生效：${opponentRole.name}后退 5 格`);
       updateUI();
     }
 
@@ -1618,15 +1720,15 @@
         return;
       }
       if (freezeRemain > 0) {
-        showToast('小乌龟已经被冻结中');
+        showToast(`${opponentRole.name}已经被冻结中`);
         return;
       }
 
       freezeLeft -= 1;
       freezeRemain = FREEZE_SECONDS;
       playEffect('freeze', '🧊 冻结 5 分钟');
-      showToast('冻结生效：小乌龟 5 分钟不能动');
-      updateStatus('小乌龟冻结中', 'freeze');
+      showToast(`冻结生效：${opponentRole.name} 5 分钟不能动`);
+      updateStatus(`${opponentRole.name}冻结中`, 'freeze');
       updateUI();
     }
 
@@ -1644,8 +1746,8 @@
       completed = clamp(completed + POWER_STEPS, 0, totalQuestions);
       rabbitRunner.classList.add('fly');
       window.setTimeout(() => rabbitRunner.classList.remove('fly'), 760);
-      playEffect('energy', '⚡ 小兔子飞奔 5 步');
-      showToast('能量棒生效：小兔子前进 5 步');
+      playEffect('energy', `⚡ ${playerRole.name}飞奔 5 步`);
+      showToast(`能量棒生效：${playerRole.name}前进 5 步`);
       updateUI();
 
       if (completed >= totalQuestions && elapsed < totalSeconds) {
@@ -1663,8 +1765,8 @@
         updateStatus('暂停休息中', 'pause');
         showToast('已暂停，先喘口气');
       } else {
-        updateStatus(freezeRemain > 0 ? '小乌龟冻结中' : '专注学习中', freezeRemain > 0 ? 'freeze' : 'focus');
-        showToast('继续挑战，小兔子加油');
+        updateStatus(freezeRemain > 0 ? `${opponentRole.name}冻结中` : '专注学习中', freezeRemain > 0 ? 'freeze' : 'focus');
+        showToast(`继续挑战，${playerRole.name}加油`);
       }
       updateUI();
     });
@@ -1691,21 +1793,6 @@
     rabbitRunner.addEventListener('pointerup', endLongPressDrag);
     turtleRunner.addEventListener('pointercancel', endLongPressDrag);
     rabbitRunner.addEventListener('pointercancel', endLongPressDrag);
-
-    rabbitRunner.addEventListener('click', (event) => {
-      event.preventDefault();
-      if (dragState.active || dragState.armed) return;
-      window.clearTimeout(rabbitClickTimer);
-      rabbitClickTimer = window.setTimeout(() => {
-        handleRabbitSingleClick();
-      }, 230);
-    });
-
-    rabbitRunner.addEventListener('dblclick', (event) => {
-      event.preventDefault();
-      window.clearTimeout(rabbitClickTimer);
-      handleRabbitDoubleClick();
-    });
 
     document.addEventListener('keydown', (event) => {
       if (!gameScreen.classList.contains('active')) return;
@@ -1734,6 +1821,17 @@
       if (event.key === '3') useEnergy();
     });
 
+    playerRoleSelect.addEventListener('change', () => {
+      syncRoleUI();
+      updateUI();
+    });
+
+    opponentRoleSelect.addEventListener('change', () => {
+      syncRoleUI();
+      updateUI();
+    });
+
+    syncRoleUI();
     updateUI();
   </script>
 </body>
